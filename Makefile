@@ -154,9 +154,8 @@ go-build: | $(BUILD_DIRS)
 	    $(BUILD_IMAGE)                                          \
 	    ./hack/build.sh ./...
 
-
 run:
-	@./bin/$(OS)_$(ARCH)/expense-tracker-bot serve
+	@go run main.go serve
 
 fmt: # @HELP Formats project source codes
 fmt: $(BUILD_DIRS)
