@@ -15,6 +15,7 @@ func newIPMaskValue(val net.IPMask, p *net.IPMask) *ipMaskValue {
 }
 
 func (i *ipMaskValue) String() string { return net.IPMask(*i).String() }
+
 func (i *ipMaskValue) Set(s string) error {
 	ip := ParseIPv4Mask(s)
 	if ip == nil {

@@ -16,9 +16,11 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/masudur-rahman/expense-tracker-bot/api"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/masudur-rahman/expense-tracker-bot/api"
+
+	"github.com/spf13/cobra"
 )
 
 // serveCmd represents the serve command

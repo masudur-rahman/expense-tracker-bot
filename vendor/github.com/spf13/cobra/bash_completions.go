@@ -644,6 +644,7 @@ func writeCmdAliases(buf io.StringWriter, cmd *Command) {
 	WriteStringAndCheck(buf, `    fi`)
 	WriteStringAndCheck(buf, "\n")
 }
+
 func writeArgAliases(buf io.StringWriter, cmd *Command) {
 	WriteStringAndCheck(buf, "    noun_aliases=()\n")
 	sort.Strings(cmd.ArgAliases)
