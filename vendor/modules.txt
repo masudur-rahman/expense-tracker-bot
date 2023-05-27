@@ -21,6 +21,9 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/go-querystring v1.1.0
+## explicit; go 1.10
+github.com/google/go-querystring/query
 # github.com/graphql-go/graphql v0.8.1
 ## explicit; go 1.13
 github.com/graphql-go/graphql
@@ -45,6 +48,12 @@ github.com/inconshreveable/mousetrap
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/nedpals/postgrest-go v0.1.2 => github.com/nedpals/postgrest-go v0.1.3
+## explicit; go 1.16
+github.com/nedpals/postgrest-go/pkg
+# github.com/nedpals/supabase-go v0.2.1-0.20230521024904-481a63f56537
+## explicit; go 1.16
+github.com/nedpals/supabase-go
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -194,3 +203,4 @@ gopkg.in/telebot.v3
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/nedpals/postgrest-go => github.com/nedpals/postgrest-go v0.1.3

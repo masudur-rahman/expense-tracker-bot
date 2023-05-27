@@ -8,6 +8,7 @@ require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/iancoleman/strcase v0.2.0
 	github.com/lib/pq v1.10.9
+	github.com/nedpals/supabase-go v0.2.1-0.20230521024904-481a63f56537
 	github.com/rs/xid v1.5.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.0
@@ -22,7 +23,9 @@ require (
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/nedpals/postgrest-go v0.1.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -34,3 +37,5 @@ require (
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/nedpals/postgrest-go => github.com/nedpals/postgrest-go v0.1.3

@@ -16,9 +16,14 @@ limitations under the License.
 package cmd
 
 import (
+	"context"
 	"log"
 
 	"github.com/masudur-rahman/expense-tracker-bot/api"
+	"github.com/masudur-rahman/expense-tracker-bot/infra/database/sql"
+	"github.com/masudur-rahman/expense-tracker-bot/infra/database/sql/supabase"
+	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
+	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +39,8 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		bot, err := api.TeleBotRoutes()
+		svc := getServicesForSupabase(cmd.Context())
+		bot, err := api.TeleBotRoutes(svc)
 		if err != nil {
 			panic(err)
 		}
@@ -46,14 +52,13 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+}
 
-	// Here you will define your flags and configuration settings.
+func getServicesForSupabase(ctx context.Context) *all.Services {
+	supClient := supabase.InitializeSupabase(ctx)
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	var db sql.Database
+	db = supabase.NewSupabase(ctx, supClient)
+	logger := logr.DefaultLogger
+	return all.GetSQLServices(db, logger)
 }

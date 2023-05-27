@@ -1,0 +1,58 @@
+package expense
+
+import (
+	isql "github.com/masudur-rahman/expense-tracker-bot/infra/database/sql"
+	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
+	"github.com/masudur-rahman/expense-tracker-bot/models"
+
+	"github.com/rs/xid"
+)
+
+type SQLExpenseRepository struct {
+	db     isql.Database
+	logger logr.Logger
+}
+
+func NewSQLExpenseRepository(db isql.Database, logger logr.Logger) *SQLExpenseRepository {
+	return &SQLExpenseRepository{
+		db:     db.Table("expense"),
+		logger: logger,
+	}
+}
+
+func (e *SQLExpenseRepository) GetLastExpense() (*models.Expense, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e *SQLExpenseRepository) ListAllExpenses() ([]*models.Expense, error) {
+	e.logger.Infow("listing all expenses")
+	filter := models.Expense{}
+	expenses := make([]*models.Expense, 0)
+	err := e.db.FindMany(&expenses, filter)
+	return expenses, err
+}
+
+func (e *SQLExpenseRepository) AddNewExpense(expense *models.Expense) error {
+	e.logger.Infow("adding new expense")
+	if expense.ID == "" {
+		expense.ID = xid.New().String()
+	}
+
+	id, err := e.db.InsertOne(expense)
+	if err != nil {
+		return err
+	}
+	e.logger.Infow("expense created", "id", id)
+	return nil
+}
+
+func (e *SQLExpenseRepository) DeleteExpense(id string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (e *SQLExpenseRepository) EditExpense(expense *models.Expense) error {
+	//TODO implement me
+	panic("implement me")
+}
