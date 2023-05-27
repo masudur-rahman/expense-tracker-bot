@@ -1,9 +1,10 @@
 package api
 
 import (
-	"fmt"
 	"os"
 	"time"
+
+	"github.com/masudur-rahman/expense-tracker-bot/api/handlers"
 
 	"gopkg.in/telebot.v3"
 )
@@ -19,9 +20,9 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 		return nil, err
 	}
 
-	bot.Handle("/hello", func(ctx telebot.Context) error {
-		return ctx.Send(fmt.Sprintf("Hello %v!", ctx.Sender().Username))
-	})
+	bot.Handle("/hello", handlers.Hello)
+
+	bot.Handle("/", handlers.Welcome)
 
 	return bot, err
 }

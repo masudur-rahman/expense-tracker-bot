@@ -156,17 +156,7 @@ go-build: | $(BUILD_DIRS)
 
 
 run:
-	@docker compose up $(ARGS)
-run-with-build:
-	@docker compose up --build
-
-run-with-grpc:
-	@docker compose --file docker-compose-grpc.yml up $(ARGS)
-run-with-grpc-build:
-	@docker compose --file docker-compose-grpc.yml up --build
-
-stop:
-	@docker compose down
+	@./bin/$(OS)_$(ARCH)/expense-tracker-bot serve
 
 fmt: # @HELP Formats project source codes
 fmt: $(BUILD_DIRS)
