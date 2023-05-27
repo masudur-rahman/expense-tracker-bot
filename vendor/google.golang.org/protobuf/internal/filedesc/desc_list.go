@@ -10,10 +10,11 @@ import (
 	"sort"
 	"sync"
 
+	"google.golang.org/protobuf/internal/genid"
+
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/internal/descfmt"
 	"google.golang.org/protobuf/internal/errors"
-	"google.golang.org/protobuf/internal/genid"
 	"google.golang.org/protobuf/internal/pragma"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	pref "google.golang.org/protobuf/reflect/protoreflect"
@@ -21,12 +22,9 @@ import (
 
 type FileImports []pref.FileImport
 
-func (p *FileImports) Len() int { return len(*p) }
-
-func (p *FileImports) Get(i int) pref.FileImport { return (*p)[i] }
-
-func (p *FileImports) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
+func (p *FileImports) Len() int                            { return len(*p) }
+func (p *FileImports) Get(i int) pref.FileImport           { return (*p)[i] }
+func (p *FileImports) Format(s fmt.State, r rune)          { descfmt.FormatList(s, r, p) }
 func (p *FileImports) ProtoInternal(pragma.DoNotImplement) {}
 
 type Names struct {
@@ -35,16 +33,11 @@ type Names struct {
 	has  map[pref.Name]int // protected by once
 }
 
-func (p *Names) Len() int { return len(p.List) }
-
-func (p *Names) Get(i int) pref.Name { return p.List[i] }
-
-func (p *Names) Has(s pref.Name) bool { return p.lazyInit().has[s] > 0 }
-
-func (p *Names) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
+func (p *Names) Len() int                            { return len(p.List) }
+func (p *Names) Get(i int) pref.Name                 { return p.List[i] }
+func (p *Names) Has(s pref.Name) bool                { return p.lazyInit().has[s] > 0 }
+func (p *Names) Format(s fmt.State, r rune)          { descfmt.FormatList(s, r, p) }
 func (p *Names) ProtoInternal(pragma.DoNotImplement) {}
-
 func (p *Names) lazyInit() *Names {
 	p.once.Do(func() {
 		if len(p.List) > 0 {
@@ -79,10 +72,8 @@ type EnumRanges struct {
 	sorted [][2]pref.EnumNumber // protected by once
 }
 
-func (p *EnumRanges) Len() int { return len(p.List) }
-
+func (p *EnumRanges) Len() int                     { return len(p.List) }
 func (p *EnumRanges) Get(i int) [2]pref.EnumNumber { return p.List[i] }
-
 func (p *EnumRanges) Has(n pref.EnumNumber) bool {
 	for ls := p.lazyInit().sorted; len(ls) > 0; {
 		i := len(ls) / 2
@@ -97,11 +88,8 @@ func (p *EnumRanges) Has(n pref.EnumNumber) bool {
 	}
 	return false
 }
-
-func (p *EnumRanges) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
+func (p *EnumRanges) Format(s fmt.State, r rune)          { descfmt.FormatList(s, r, p) }
 func (p *EnumRanges) ProtoInternal(pragma.DoNotImplement) {}
-
 func (p *EnumRanges) lazyInit() *EnumRanges {
 	p.once.Do(func() {
 		p.sorted = append(p.sorted, p.List...)
@@ -146,10 +134,8 @@ type FieldRanges struct {
 	sorted [][2]pref.FieldNumber // protected by once
 }
 
-func (p *FieldRanges) Len() int { return len(p.List) }
-
+func (p *FieldRanges) Len() int                      { return len(p.List) }
 func (p *FieldRanges) Get(i int) [2]pref.FieldNumber { return p.List[i] }
-
 func (p *FieldRanges) Has(n pref.FieldNumber) bool {
 	for ls := p.lazyInit().sorted; len(ls) > 0; {
 		i := len(ls) / 2
@@ -164,11 +150,8 @@ func (p *FieldRanges) Has(n pref.FieldNumber) bool {
 	}
 	return false
 }
-
-func (p *FieldRanges) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
+func (p *FieldRanges) Format(s fmt.State, r rune)          { descfmt.FormatList(s, r, p) }
 func (p *FieldRanges) ProtoInternal(pragma.DoNotImplement) {}
-
 func (p *FieldRanges) lazyInit() *FieldRanges {
 	p.once.Do(func() {
 		p.sorted = append(p.sorted, p.List...)
@@ -243,10 +226,8 @@ type FieldNumbers struct {
 	has  map[pref.FieldNumber]struct{} // protected by once
 }
 
-func (p *FieldNumbers) Len() int { return len(p.List) }
-
+func (p *FieldNumbers) Len() int                   { return len(p.List) }
 func (p *FieldNumbers) Get(i int) pref.FieldNumber { return p.List[i] }
-
 func (p *FieldNumbers) Has(n pref.FieldNumber) bool {
 	p.once.Do(func() {
 		if len(p.List) > 0 {
@@ -259,9 +240,7 @@ func (p *FieldNumbers) Has(n pref.FieldNumber) bool {
 	_, ok := p.has[n]
 	return ok
 }
-
-func (p *FieldNumbers) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
+func (p *FieldNumbers) Format(s fmt.State, r rune)          { descfmt.FormatList(s, r, p) }
 func (p *FieldNumbers) ProtoInternal(pragma.DoNotImplement) {}
 
 type OneofFields struct {
@@ -273,21 +252,14 @@ type OneofFields struct {
 	byNum  map[pref.FieldNumber]pref.FieldDescriptor // protected by once
 }
 
-func (p *OneofFields) Len() int { return len(p.List) }
-
-func (p *OneofFields) Get(i int) pref.FieldDescriptor { return p.List[i] }
-
-func (p *OneofFields) ByName(s pref.Name) pref.FieldDescriptor { return p.lazyInit().byName[s] }
-
-func (p *OneofFields) ByJSONName(s string) pref.FieldDescriptor { return p.lazyInit().byJSON[s] }
-
-func (p *OneofFields) ByTextName(s string) pref.FieldDescriptor { return p.lazyInit().byText[s] }
-
+func (p *OneofFields) Len() int                                         { return len(p.List) }
+func (p *OneofFields) Get(i int) pref.FieldDescriptor                   { return p.List[i] }
+func (p *OneofFields) ByName(s pref.Name) pref.FieldDescriptor          { return p.lazyInit().byName[s] }
+func (p *OneofFields) ByJSONName(s string) pref.FieldDescriptor         { return p.lazyInit().byJSON[s] }
+func (p *OneofFields) ByTextName(s string) pref.FieldDescriptor         { return p.lazyInit().byText[s] }
 func (p *OneofFields) ByNumber(n pref.FieldNumber) pref.FieldDescriptor { return p.lazyInit().byNum[n] }
-
-func (p *OneofFields) Format(s fmt.State, r rune) { descfmt.FormatList(s, r, p) }
-
-func (p *OneofFields) ProtoInternal(pragma.DoNotImplement) {}
+func (p *OneofFields) Format(s fmt.State, r rune)                       { descfmt.FormatList(s, r, p) }
+func (p *OneofFields) ProtoInternal(pragma.DoNotImplement)              {}
 
 func (p *OneofFields) lazyInit() *OneofFields {
 	p.once.Do(func() {
@@ -323,21 +295,17 @@ type SourceLocations struct {
 	byPath map[pathKey]int
 }
 
-func (p *SourceLocations) Len() int { return len(p.List) }
-
+func (p *SourceLocations) Len() int                      { return len(p.List) }
 func (p *SourceLocations) Get(i int) pref.SourceLocation { return p.lazyInit().List[i] }
-
 func (p *SourceLocations) byKey(k pathKey) pref.SourceLocation {
 	if i, ok := p.lazyInit().byPath[k]; ok {
 		return p.List[i]
 	}
 	return pref.SourceLocation{}
 }
-
 func (p *SourceLocations) ByPath(path pref.SourcePath) pref.SourceLocation {
 	return p.byKey(newPathKey(path))
 }
-
 func (p *SourceLocations) ByDescriptor(desc pref.Descriptor) pref.SourceLocation {
 	if p.File != nil && desc != nil && p.File != desc.ParentFile() {
 		return pref.SourceLocation{} // mismatching parent files
@@ -436,7 +404,6 @@ func (p *SourceLocations) ByDescriptor(desc pref.Descriptor) pref.SourceLocation
 		}
 	}
 }
-
 func (p *SourceLocations) lazyInit() *SourceLocations {
 	p.once.Do(func() {
 		if len(p.List) > 0 {
@@ -460,7 +427,6 @@ func (p *SourceLocations) lazyInit() *SourceLocations {
 	})
 	return p
 }
-
 func (p *SourceLocations) ProtoInternal(pragma.DoNotImplement) {}
 
 // pathKey is a comparable representation of protoreflect.SourcePath.

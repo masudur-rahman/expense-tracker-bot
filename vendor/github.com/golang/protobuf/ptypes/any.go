@@ -9,9 +9,10 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	anypb "github.com/golang/protobuf/ptypes/any"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+
+	anypb "github.com/golang/protobuf/ptypes/any"
 )
 
 const urlPrefix = "type.googleapis.com/"
@@ -24,7 +25,6 @@ func AnyMessageName(any *anypb.Any) (string, error) {
 	name, err := anyMessageName(any)
 	return string(name), err
 }
-
 func anyMessageName(any *anypb.Any) (protoreflect.FullName, error) {
 	if any == nil {
 		return "", fmt.Errorf("message is nil")
@@ -127,10 +127,9 @@ func Is(any *anypb.Any, m proto.Message) bool {
 // The allocated message is stored in the embedded proto.Message.
 //
 // Example:
-//
-//	var x ptypes.DynamicAny
-//	if err := ptypes.UnmarshalAny(a, &x); err != nil { ... }
-//	fmt.Printf("unmarshaled message: %v", x.Message)
+//   var x ptypes.DynamicAny
+//   if err := ptypes.UnmarshalAny(a, &x); err != nil { ... }
+//   fmt.Printf("unmarshaled message: %v", x.Message)
 //
 // Deprecated: Use the any.UnmarshalNew method instead to unmarshal
 // the any message contents into a new instance of the underlying message.
@@ -142,18 +141,15 @@ func (m DynamicAny) String() string {
 	}
 	return m.Message.String()
 }
-
 func (m DynamicAny) Reset() {
 	if m.Message == nil {
 		return
 	}
 	m.Message.Reset()
 }
-
 func (m DynamicAny) ProtoMessage() {
 	return
 }
-
 func (m DynamicAny) ProtoReflect() protoreflect.Message {
 	if m.Message == nil {
 		return nil
@@ -166,11 +162,9 @@ type dynamicAny struct{ protoreflect.Message }
 func (m dynamicAny) Type() protoreflect.MessageType {
 	return dynamicAnyType{m.Message.Type()}
 }
-
 func (m dynamicAny) New() protoreflect.Message {
 	return dynamicAnyType{m.Message.Type()}.New()
 }
-
 func (m dynamicAny) Interface() protoreflect.ProtoMessage {
 	return DynamicAny{proto.MessageV1(m.Message.Interface())}
 }
@@ -180,7 +174,6 @@ type dynamicAnyType struct{ protoreflect.MessageType }
 func (t dynamicAnyType) New() protoreflect.Message {
 	return dynamicAny{t.MessageType.New()}
 }
-
 func (t dynamicAnyType) Zero() protoreflect.Message {
 	return dynamicAny{t.MessageType.Zero()}
 }

@@ -25,8 +25,9 @@ package http
 import (
 	"fmt"
 
-	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-velocypack"
+
+	"github.com/arangodb/go-driver"
 )
 
 // httpVPackResponseElement implements driver.Response for an entry of an array response.

@@ -239,7 +239,6 @@ func (d decoder) unmarshalAny(m pref.Message) error {
 }
 
 var errEmptyObject = fmt.Errorf(`empty object`)
-
 var errMissingType = fmt.Errorf(`missing "@type" field`)
 
 // findTypeURL returns the token for the "@type" field value from the given

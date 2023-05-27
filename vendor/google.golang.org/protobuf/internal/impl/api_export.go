@@ -86,11 +86,9 @@ type message = interface{}
 // legacyMessageWrapper wraps a v2 message as a v1 message.
 type legacyMessageWrapper struct{ m pref.ProtoMessage }
 
-func (m legacyMessageWrapper) Reset() { proto.Reset(m.m) }
-
+func (m legacyMessageWrapper) Reset()         { proto.Reset(m.m) }
 func (m legacyMessageWrapper) String() string { return Export{}.MessageStringOf(m.m) }
-
-func (m legacyMessageWrapper) ProtoMessage() {}
+func (m legacyMessageWrapper) ProtoMessage()  {}
 
 // ProtoMessageV1Of converts either a v1 or v2 message to a v1 message.
 // It returns nil if m is nil.

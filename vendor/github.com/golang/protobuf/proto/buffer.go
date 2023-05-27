@@ -124,10 +124,8 @@ func (b *Buffer) Unmarshal(m Message) error {
 type unknownFields struct{ XXX_unrecognized protoimpl.UnknownFields }
 
 func (m *unknownFields) String() string { panic("not implemented") }
-
-func (m *unknownFields) Reset() { panic("not implemented") }
-
-func (m *unknownFields) ProtoMessage() { panic("not implemented") }
+func (m *unknownFields) Reset()         { panic("not implemented") }
+func (m *unknownFields) ProtoMessage()  { panic("not implemented") }
 
 // DebugPrint dumps the encoded bytes of b with a header and footer including s
 // to stdout. This is only intended for debugging.

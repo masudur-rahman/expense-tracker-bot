@@ -27,7 +27,6 @@ func (o marshalOptions) Options() proto.MarshalOptions {
 }
 
 func (o marshalOptions) Deterministic() bool { return o.flags&piface.MarshalDeterministic != 0 }
-
 func (o marshalOptions) UseCachedSize() bool { return o.flags&piface.MarshalUseCachedSize != 0 }
 
 // size is protoreflect.Methods.Size.

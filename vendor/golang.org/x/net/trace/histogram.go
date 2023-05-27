@@ -329,7 +329,6 @@ func (h *histogram) html() template.HTML {
 }
 
 var distTmplCache *template.Template
-
 var distTmplOnce sync.Once
 
 func distTmpl() *template.Template {

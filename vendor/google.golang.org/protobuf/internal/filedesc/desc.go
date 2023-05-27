@@ -60,47 +60,29 @@ type (
 )
 
 func (fd *File) ParentFile() pref.FileDescriptor { return fd }
-
-func (fd *File) Parent() pref.Descriptor { return nil }
-
-func (fd *File) Index() int { return 0 }
-
-func (fd *File) Syntax() pref.Syntax { return fd.L1.Syntax }
-
-func (fd *File) Name() pref.Name { return fd.L1.Package.Name() }
-
-func (fd *File) FullName() pref.FullName { return fd.L1.Package }
-
-func (fd *File) IsPlaceholder() bool { return false }
-
+func (fd *File) Parent() pref.Descriptor         { return nil }
+func (fd *File) Index() int                      { return 0 }
+func (fd *File) Syntax() pref.Syntax             { return fd.L1.Syntax }
+func (fd *File) Name() pref.Name                 { return fd.L1.Package.Name() }
+func (fd *File) FullName() pref.FullName         { return fd.L1.Package }
+func (fd *File) IsPlaceholder() bool             { return false }
 func (fd *File) Options() pref.ProtoMessage {
 	if f := fd.lazyInit().Options; f != nil {
 		return f()
 	}
 	return descopts.File
 }
-
-func (fd *File) Path() string { return fd.L1.Path }
-
-func (fd *File) Package() pref.FullName { return fd.L1.Package }
-
-func (fd *File) Imports() pref.FileImports { return &fd.lazyInit().Imports }
-
-func (fd *File) Enums() pref.EnumDescriptors { return &fd.L1.Enums }
-
-func (fd *File) Messages() pref.MessageDescriptors { return &fd.L1.Messages }
-
+func (fd *File) Path() string                          { return fd.L1.Path }
+func (fd *File) Package() pref.FullName                { return fd.L1.Package }
+func (fd *File) Imports() pref.FileImports             { return &fd.lazyInit().Imports }
+func (fd *File) Enums() pref.EnumDescriptors           { return &fd.L1.Enums }
+func (fd *File) Messages() pref.MessageDescriptors     { return &fd.L1.Messages }
 func (fd *File) Extensions() pref.ExtensionDescriptors { return &fd.L1.Extensions }
-
-func (fd *File) Services() pref.ServiceDescriptors { return &fd.L1.Services }
-
+func (fd *File) Services() pref.ServiceDescriptors     { return &fd.L1.Services }
 func (fd *File) SourceLocations() pref.SourceLocations { return &fd.lazyInit().Locations }
-
-func (fd *File) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, fd) }
-
-func (fd *File) ProtoType(pref.FileDescriptor) {}
-
-func (fd *File) ProtoInternal(pragma.DoNotImplement) {}
+func (fd *File) Format(s fmt.State, r rune)            { descfmt.FormatDesc(s, r, fd) }
+func (fd *File) ProtoType(pref.FileDescriptor)         {}
+func (fd *File) ProtoInternal(pragma.DoNotImplement)   {}
 
 func (fd *File) lazyInit() *FileL2 {
 	if atomic.LoadUint32(&fd.once) == 0 {
@@ -159,22 +141,16 @@ func (ed *Enum) Options() pref.ProtoMessage {
 	}
 	return descopts.Enum
 }
-
 func (ed *Enum) Values() pref.EnumValueDescriptors {
 	if ed.L1.eagerValues {
 		return &ed.L2.Values
 	}
 	return &ed.lazyInit().Values
 }
-
-func (ed *Enum) ReservedNames() pref.Names { return &ed.lazyInit().ReservedNames }
-
+func (ed *Enum) ReservedNames() pref.Names       { return &ed.lazyInit().ReservedNames }
 func (ed *Enum) ReservedRanges() pref.EnumRanges { return &ed.lazyInit().ReservedRanges }
-
-func (ed *Enum) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, ed) }
-
-func (ed *Enum) ProtoType(pref.EnumDescriptor) {}
-
+func (ed *Enum) Format(s fmt.State, r rune)      { descfmt.FormatDesc(s, r, ed) }
+func (ed *Enum) ProtoType(pref.EnumDescriptor)   {}
 func (ed *Enum) lazyInit() *EnumL2 {
 	ed.L0.ParentFile.lazyInit() // implicitly initializes L2
 	return ed.L2
@@ -186,11 +162,8 @@ func (ed *EnumValue) Options() pref.ProtoMessage {
 	}
 	return descopts.EnumValue
 }
-
-func (ed *EnumValue) Number() pref.EnumNumber { return ed.L1.Number }
-
-func (ed *EnumValue) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, ed) }
-
+func (ed *EnumValue) Number() pref.EnumNumber            { return ed.L1.Number }
+func (ed *EnumValue) Format(s fmt.State, r rune)         { descfmt.FormatDesc(s, r, ed) }
 func (ed *EnumValue) ProtoType(pref.EnumValueDescriptor) {}
 
 type (
@@ -255,38 +228,24 @@ func (md *Message) Options() pref.ProtoMessage {
 	}
 	return descopts.Message
 }
-
-func (md *Message) IsMapEntry() bool { return md.L1.IsMapEntry }
-
-func (md *Message) Fields() pref.FieldDescriptors { return &md.lazyInit().Fields }
-
-func (md *Message) Oneofs() pref.OneofDescriptors { return &md.lazyInit().Oneofs }
-
-func (md *Message) ReservedNames() pref.Names { return &md.lazyInit().ReservedNames }
-
-func (md *Message) ReservedRanges() pref.FieldRanges { return &md.lazyInit().ReservedRanges }
-
+func (md *Message) IsMapEntry() bool                   { return md.L1.IsMapEntry }
+func (md *Message) Fields() pref.FieldDescriptors      { return &md.lazyInit().Fields }
+func (md *Message) Oneofs() pref.OneofDescriptors      { return &md.lazyInit().Oneofs }
+func (md *Message) ReservedNames() pref.Names          { return &md.lazyInit().ReservedNames }
+func (md *Message) ReservedRanges() pref.FieldRanges   { return &md.lazyInit().ReservedRanges }
 func (md *Message) RequiredNumbers() pref.FieldNumbers { return &md.lazyInit().RequiredNumbers }
-
-func (md *Message) ExtensionRanges() pref.FieldRanges { return &md.lazyInit().ExtensionRanges }
-
+func (md *Message) ExtensionRanges() pref.FieldRanges  { return &md.lazyInit().ExtensionRanges }
 func (md *Message) ExtensionRangeOptions(i int) pref.ProtoMessage {
 	if f := md.lazyInit().ExtensionRangeOptions[i]; f != nil {
 		return f()
 	}
 	return descopts.ExtensionRange
 }
-
-func (md *Message) Enums() pref.EnumDescriptors { return &md.L1.Enums }
-
-func (md *Message) Messages() pref.MessageDescriptors { return &md.L1.Messages }
-
+func (md *Message) Enums() pref.EnumDescriptors           { return &md.L1.Enums }
+func (md *Message) Messages() pref.MessageDescriptors     { return &md.L1.Messages }
 func (md *Message) Extensions() pref.ExtensionDescriptors { return &md.L1.Extensions }
-
-func (md *Message) ProtoType(pref.MessageDescriptor) {}
-
-func (md *Message) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, md) }
-
+func (md *Message) ProtoType(pref.MessageDescriptor)      {}
+func (md *Message) Format(s fmt.State, r rune)            { descfmt.FormatDesc(s, r, md) }
 func (md *Message) lazyInit() *MessageL2 {
 	md.L0.ParentFile.lazyInit() // implicitly initializes L2
 	return md.L2
@@ -307,27 +266,18 @@ func (fd *Field) Options() pref.ProtoMessage {
 	}
 	return descopts.Field
 }
-
-func (fd *Field) Number() pref.FieldNumber { return fd.L1.Number }
-
+func (fd *Field) Number() pref.FieldNumber      { return fd.L1.Number }
 func (fd *Field) Cardinality() pref.Cardinality { return fd.L1.Cardinality }
-
-func (fd *Field) Kind() pref.Kind { return fd.L1.Kind }
-
-func (fd *Field) HasJSONName() bool { return fd.L1.StringName.hasJSON }
-
-func (fd *Field) JSONName() string { return fd.L1.StringName.getJSON(fd) }
-
-func (fd *Field) TextName() string { return fd.L1.StringName.getText(fd) }
-
+func (fd *Field) Kind() pref.Kind               { return fd.L1.Kind }
+func (fd *Field) HasJSONName() bool             { return fd.L1.StringName.hasJSON }
+func (fd *Field) JSONName() string              { return fd.L1.StringName.getJSON(fd) }
+func (fd *Field) TextName() string              { return fd.L1.StringName.getText(fd) }
 func (fd *Field) HasPresence() bool {
 	return fd.L1.Cardinality != pref.Repeated && (fd.L0.ParentFile.L1.Syntax == pref.Proto2 || fd.L1.Message != nil || fd.L1.ContainingOneof != nil)
 }
-
 func (fd *Field) HasOptionalKeyword() bool {
 	return (fd.L0.ParentFile.L1.Syntax == pref.Proto2 && fd.L1.Cardinality == pref.Optional && fd.L1.ContainingOneof == nil) || fd.L1.IsProto3Optional
 }
-
 func (fd *Field) IsPacked() bool {
 	if !fd.L1.HasPacked && fd.L0.ParentFile.L1.Syntax != pref.Proto2 && fd.L1.Cardinality == pref.Repeated {
 		switch fd.L1.Kind {
@@ -338,45 +288,32 @@ func (fd *Field) IsPacked() bool {
 	}
 	return fd.L1.IsPacked
 }
-
 func (fd *Field) IsExtension() bool { return false }
-
-func (fd *Field) IsWeak() bool { return fd.L1.IsWeak }
-
-func (fd *Field) IsList() bool { return fd.Cardinality() == pref.Repeated && !fd.IsMap() }
-
-func (fd *Field) IsMap() bool { return fd.Message() != nil && fd.Message().IsMapEntry() }
-
+func (fd *Field) IsWeak() bool      { return fd.L1.IsWeak }
+func (fd *Field) IsList() bool      { return fd.Cardinality() == pref.Repeated && !fd.IsMap() }
+func (fd *Field) IsMap() bool       { return fd.Message() != nil && fd.Message().IsMapEntry() }
 func (fd *Field) MapKey() pref.FieldDescriptor {
 	if !fd.IsMap() {
 		return nil
 	}
 	return fd.Message().Fields().ByNumber(genid.MapEntry_Key_field_number)
 }
-
 func (fd *Field) MapValue() pref.FieldDescriptor {
 	if !fd.IsMap() {
 		return nil
 	}
 	return fd.Message().Fields().ByNumber(genid.MapEntry_Value_field_number)
 }
-
-func (fd *Field) HasDefault() bool { return fd.L1.Default.has }
-
-func (fd *Field) Default() pref.Value { return fd.L1.Default.get(fd) }
-
+func (fd *Field) HasDefault() bool                           { return fd.L1.Default.has }
+func (fd *Field) Default() pref.Value                        { return fd.L1.Default.get(fd) }
 func (fd *Field) DefaultEnumValue() pref.EnumValueDescriptor { return fd.L1.Default.enum }
-
-func (fd *Field) ContainingOneof() pref.OneofDescriptor { return fd.L1.ContainingOneof }
-
+func (fd *Field) ContainingOneof() pref.OneofDescriptor      { return fd.L1.ContainingOneof }
 func (fd *Field) ContainingMessage() pref.MessageDescriptor {
 	return fd.L0.Parent.(pref.MessageDescriptor)
 }
-
 func (fd *Field) Enum() pref.EnumDescriptor {
 	return fd.L1.Enum
 }
-
 func (fd *Field) Message() pref.MessageDescriptor {
 	if fd.L1.IsWeak {
 		if d, _ := protoregistry.GlobalFiles.FindDescriptorByName(fd.L1.Message.FullName()); d != nil {
@@ -385,9 +322,7 @@ func (fd *Field) Message() pref.MessageDescriptor {
 	}
 	return fd.L1.Message
 }
-
-func (fd *Field) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, fd) }
-
+func (fd *Field) Format(s fmt.State, r rune)     { descfmt.FormatDesc(s, r, fd) }
 func (fd *Field) ProtoType(pref.FieldDescriptor) {}
 
 // EnforceUTF8 is a pseudo-internal API to determine whether to enforce UTF-8
@@ -407,18 +342,14 @@ func (fd *Field) EnforceUTF8() bool {
 func (od *Oneof) IsSynthetic() bool {
 	return od.L0.ParentFile.L1.Syntax == pref.Proto3 && len(od.L1.Fields.List) == 1 && od.L1.Fields.List[0].HasOptionalKeyword()
 }
-
 func (od *Oneof) Options() pref.ProtoMessage {
 	if f := od.L1.Options; f != nil {
 		return f()
 	}
 	return descopts.Oneof
 }
-
-func (od *Oneof) Fields() pref.FieldDescriptors { return &od.L1.Fields }
-
-func (od *Oneof) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, od) }
-
+func (od *Oneof) Fields() pref.FieldDescriptors  { return &od.L1.Fields }
+func (od *Oneof) Format(s fmt.State, r rune)     { descfmt.FormatDesc(s, r, od) }
 func (od *Oneof) ProtoType(pref.OneofDescriptor) {}
 
 type (
@@ -450,59 +381,33 @@ func (xd *Extension) Options() pref.ProtoMessage {
 	}
 	return descopts.Field
 }
-
-func (xd *Extension) Number() pref.FieldNumber { return xd.L1.Number }
-
+func (xd *Extension) Number() pref.FieldNumber      { return xd.L1.Number }
 func (xd *Extension) Cardinality() pref.Cardinality { return xd.L1.Cardinality }
-
-func (xd *Extension) Kind() pref.Kind { return xd.L1.Kind }
-
-func (xd *Extension) HasJSONName() bool { return xd.lazyInit().StringName.hasJSON }
-
-func (xd *Extension) JSONName() string { return xd.lazyInit().StringName.getJSON(xd) }
-
-func (xd *Extension) TextName() string { return xd.lazyInit().StringName.getText(xd) }
-
-func (xd *Extension) HasPresence() bool { return xd.L1.Cardinality != pref.Repeated }
-
+func (xd *Extension) Kind() pref.Kind               { return xd.L1.Kind }
+func (xd *Extension) HasJSONName() bool             { return xd.lazyInit().StringName.hasJSON }
+func (xd *Extension) JSONName() string              { return xd.lazyInit().StringName.getJSON(xd) }
+func (xd *Extension) TextName() string              { return xd.lazyInit().StringName.getText(xd) }
+func (xd *Extension) HasPresence() bool             { return xd.L1.Cardinality != pref.Repeated }
 func (xd *Extension) HasOptionalKeyword() bool {
 	return (xd.L0.ParentFile.L1.Syntax == pref.Proto2 && xd.L1.Cardinality == pref.Optional) || xd.lazyInit().IsProto3Optional
 }
-
-func (xd *Extension) IsPacked() bool { return xd.lazyInit().IsPacked }
-
-func (xd *Extension) IsExtension() bool { return true }
-
-func (xd *Extension) IsWeak() bool { return false }
-
-func (xd *Extension) IsList() bool { return xd.Cardinality() == pref.Repeated }
-
-func (xd *Extension) IsMap() bool { return false }
-
-func (xd *Extension) MapKey() pref.FieldDescriptor { return nil }
-
-func (xd *Extension) MapValue() pref.FieldDescriptor { return nil }
-
-func (xd *Extension) HasDefault() bool { return xd.lazyInit().Default.has }
-
-func (xd *Extension) Default() pref.Value { return xd.lazyInit().Default.get(xd) }
-
+func (xd *Extension) IsPacked() bool                             { return xd.lazyInit().IsPacked }
+func (xd *Extension) IsExtension() bool                          { return true }
+func (xd *Extension) IsWeak() bool                               { return false }
+func (xd *Extension) IsList() bool                               { return xd.Cardinality() == pref.Repeated }
+func (xd *Extension) IsMap() bool                                { return false }
+func (xd *Extension) MapKey() pref.FieldDescriptor               { return nil }
+func (xd *Extension) MapValue() pref.FieldDescriptor             { return nil }
+func (xd *Extension) HasDefault() bool                           { return xd.lazyInit().Default.has }
+func (xd *Extension) Default() pref.Value                        { return xd.lazyInit().Default.get(xd) }
 func (xd *Extension) DefaultEnumValue() pref.EnumValueDescriptor { return xd.lazyInit().Default.enum }
-
-func (xd *Extension) ContainingOneof() pref.OneofDescriptor { return nil }
-
-func (xd *Extension) ContainingMessage() pref.MessageDescriptor { return xd.L1.Extendee }
-
-func (xd *Extension) Enum() pref.EnumDescriptor { return xd.lazyInit().Enum }
-
-func (xd *Extension) Message() pref.MessageDescriptor { return xd.lazyInit().Message }
-
-func (xd *Extension) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, xd) }
-
-func (xd *Extension) ProtoType(pref.FieldDescriptor) {}
-
-func (xd *Extension) ProtoInternal(pragma.DoNotImplement) {}
-
+func (xd *Extension) ContainingOneof() pref.OneofDescriptor      { return nil }
+func (xd *Extension) ContainingMessage() pref.MessageDescriptor  { return xd.L1.Extendee }
+func (xd *Extension) Enum() pref.EnumDescriptor                  { return xd.lazyInit().Enum }
+func (xd *Extension) Message() pref.MessageDescriptor            { return xd.lazyInit().Message }
+func (xd *Extension) Format(s fmt.State, r rune)                 { descfmt.FormatDesc(s, r, xd) }
+func (xd *Extension) ProtoType(pref.FieldDescriptor)             {}
+func (xd *Extension) ProtoInternal(pragma.DoNotImplement)        {}
 func (xd *Extension) lazyInit() *ExtensionL2 {
 	xd.L0.ParentFile.lazyInit() // implicitly initializes L2
 	return xd.L2
@@ -539,15 +444,10 @@ func (sd *Service) Options() pref.ProtoMessage {
 	}
 	return descopts.Service
 }
-
-func (sd *Service) Methods() pref.MethodDescriptors { return &sd.lazyInit().Methods }
-
-func (sd *Service) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, sd) }
-
-func (sd *Service) ProtoType(pref.ServiceDescriptor) {}
-
+func (sd *Service) Methods() pref.MethodDescriptors     { return &sd.lazyInit().Methods }
+func (sd *Service) Format(s fmt.State, r rune)          { descfmt.FormatDesc(s, r, sd) }
+func (sd *Service) ProtoType(pref.ServiceDescriptor)    {}
 func (sd *Service) ProtoInternal(pragma.DoNotImplement) {}
-
 func (sd *Service) lazyInit() *ServiceL2 {
 	sd.L0.ParentFile.lazyInit() // implicitly initializes L2
 	return sd.L2
@@ -559,19 +459,12 @@ func (md *Method) Options() pref.ProtoMessage {
 	}
 	return descopts.Method
 }
-
-func (md *Method) Input() pref.MessageDescriptor { return md.L1.Input }
-
-func (md *Method) Output() pref.MessageDescriptor { return md.L1.Output }
-
-func (md *Method) IsStreamingClient() bool { return md.L1.IsStreamingClient }
-
-func (md *Method) IsStreamingServer() bool { return md.L1.IsStreamingServer }
-
-func (md *Method) Format(s fmt.State, r rune) { descfmt.FormatDesc(s, r, md) }
-
-func (md *Method) ProtoType(pref.MethodDescriptor) {}
-
+func (md *Method) Input() pref.MessageDescriptor       { return md.L1.Input }
+func (md *Method) Output() pref.MessageDescriptor      { return md.L1.Output }
+func (md *Method) IsStreamingClient() bool             { return md.L1.IsStreamingClient }
+func (md *Method) IsStreamingServer() bool             { return md.L1.IsStreamingServer }
+func (md *Method) Format(s fmt.State, r rune)          { descfmt.FormatDesc(s, r, md) }
+func (md *Method) ProtoType(pref.MethodDescriptor)     {}
 func (md *Method) ProtoInternal(pragma.DoNotImplement) {}
 
 // Surrogate files are can be used to create standalone descriptors
@@ -593,25 +486,18 @@ type (
 	}
 )
 
-func (d *Base) Name() pref.Name { return d.L0.FullName.Name() }
-
+func (d *Base) Name() pref.Name         { return d.L0.FullName.Name() }
 func (d *Base) FullName() pref.FullName { return d.L0.FullName }
-
 func (d *Base) ParentFile() pref.FileDescriptor {
 	if d.L0.ParentFile == SurrogateProto2 || d.L0.ParentFile == SurrogateProto3 {
 		return nil // surrogate files are not real parents
 	}
 	return d.L0.ParentFile
 }
-
-func (d *Base) Parent() pref.Descriptor { return d.L0.Parent }
-
-func (d *Base) Index() int { return d.L0.Index }
-
-func (d *Base) Syntax() pref.Syntax { return d.L0.ParentFile.Syntax() }
-
-func (d *Base) IsPlaceholder() bool { return false }
-
+func (d *Base) Parent() pref.Descriptor             { return d.L0.Parent }
+func (d *Base) Index() int                          { return d.L0.Index }
+func (d *Base) Syntax() pref.Syntax                 { return d.L0.ParentFile.Syntax() }
+func (d *Base) IsPlaceholder() bool                 { return false }
 func (d *Base) ProtoInternal(pragma.DoNotImplement) {}
 
 type stringName struct {
@@ -656,7 +542,6 @@ func (s *stringName) lazyInit(fd pref.FieldDescriptor) *stringName {
 }
 
 func (s *stringName) getJSON(fd pref.FieldDescriptor) string { return s.lazyInit(fd).nameJSON }
-
 func (s *stringName) getText(fd pref.FieldDescriptor) string { return s.lazyInit(fd).nameText }
 
 func DefaultValue(v pref.Value, ev pref.EnumValueDescriptor) defaultValue {

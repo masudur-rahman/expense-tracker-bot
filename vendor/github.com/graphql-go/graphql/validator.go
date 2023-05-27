@@ -78,7 +78,6 @@ type HasSelectionSet interface {
 }
 
 var _ HasSelectionSet = (*ast.OperationDefinition)(nil)
-
 var _ HasSelectionSet = (*ast.FragmentDefinition)(nil)
 
 type VariableUsage struct {
@@ -115,7 +114,6 @@ func (ctx *ValidationContext) ReportError(err error) {
 	formattedErr := gqlerrors.FormatError(err)
 	ctx.errors = append(ctx.errors, formattedErr)
 }
-
 func (ctx *ValidationContext) Errors() []gqlerrors.FormattedError {
 	return ctx.errors
 }
@@ -123,11 +121,9 @@ func (ctx *ValidationContext) Errors() []gqlerrors.FormattedError {
 func (ctx *ValidationContext) Schema() *Schema {
 	return ctx.schema
 }
-
 func (ctx *ValidationContext) Document() *ast.Document {
 	return ctx.astDoc
 }
-
 func (ctx *ValidationContext) Fragment(name string) *ast.FragmentDefinition {
 	if len(ctx.fragments) == 0 {
 		if ctx.Document() == nil {
@@ -149,7 +145,6 @@ func (ctx *ValidationContext) Fragment(name string) *ast.FragmentDefinition {
 	f, _ := ctx.fragments[name]
 	return f
 }
-
 func (ctx *ValidationContext) FragmentSpreads(node *ast.SelectionSet) []*ast.FragmentSpread {
 	if spreads, ok := ctx.fragmentSpreads[node]; ok && spreads != nil {
 		return spreads
@@ -224,7 +219,6 @@ func (ctx *ValidationContext) RecursivelyReferencedFragments(operation *ast.Oper
 	ctx.recursivelyReferencedFragments[operation] = fragments
 	return fragments
 }
-
 func (ctx *ValidationContext) VariableUsages(node HasSelectionSet) []*VariableUsage {
 	if usages, ok := ctx.variableUsages[node]; ok && usages != nil {
 		return usages
@@ -258,7 +252,6 @@ func (ctx *ValidationContext) VariableUsages(node HasSelectionSet) []*VariableUs
 	ctx.variableUsages[node] = usages
 	return usages
 }
-
 func (ctx *ValidationContext) RecursiveVariableUsages(operation *ast.OperationDefinition) []*VariableUsage {
 	if usages, ok := ctx.recursiveVariableUsages[operation]; ok && usages != nil {
 		return usages
@@ -274,27 +267,21 @@ func (ctx *ValidationContext) RecursiveVariableUsages(operation *ast.OperationDe
 	ctx.recursiveVariableUsages[operation] = usages
 	return usages
 }
-
 func (ctx *ValidationContext) Type() Output {
 	return ctx.typeInfo.Type()
 }
-
 func (ctx *ValidationContext) ParentType() Composite {
 	return ctx.typeInfo.ParentType()
 }
-
 func (ctx *ValidationContext) InputType() Input {
 	return ctx.typeInfo.InputType()
 }
-
 func (ctx *ValidationContext) FieldDef() *FieldDefinition {
 	return ctx.typeInfo.FieldDef()
 }
-
 func (ctx *ValidationContext) Directive() *Directive {
 	return ctx.typeInfo.Directive()
 }
-
 func (ctx *ValidationContext) Argument() *Argument {
 	return ctx.typeInfo.Argument()
 }

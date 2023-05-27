@@ -97,62 +97,34 @@ func (p pointer) AsIfaceOf(t reflect.Type) interface{} {
 	return p.AsValueOf(t).Interface()
 }
 
-func (p pointer) Bool() *bool { return p.v.Interface().(*bool) }
-
-func (p pointer) BoolPtr() **bool { return p.v.Interface().(**bool) }
-
-func (p pointer) BoolSlice() *[]bool { return p.v.Interface().(*[]bool) }
-
-func (p pointer) Int32() *int32 { return p.v.Interface().(*int32) }
-
-func (p pointer) Int32Ptr() **int32 { return p.v.Interface().(**int32) }
-
-func (p pointer) Int32Slice() *[]int32 { return p.v.Interface().(*[]int32) }
-
-func (p pointer) Int64() *int64 { return p.v.Interface().(*int64) }
-
-func (p pointer) Int64Ptr() **int64 { return p.v.Interface().(**int64) }
-
-func (p pointer) Int64Slice() *[]int64 { return p.v.Interface().(*[]int64) }
-
-func (p pointer) Uint32() *uint32 { return p.v.Interface().(*uint32) }
-
-func (p pointer) Uint32Ptr() **uint32 { return p.v.Interface().(**uint32) }
-
-func (p pointer) Uint32Slice() *[]uint32 { return p.v.Interface().(*[]uint32) }
-
-func (p pointer) Uint64() *uint64 { return p.v.Interface().(*uint64) }
-
-func (p pointer) Uint64Ptr() **uint64 { return p.v.Interface().(**uint64) }
-
-func (p pointer) Uint64Slice() *[]uint64 { return p.v.Interface().(*[]uint64) }
-
-func (p pointer) Float32() *float32 { return p.v.Interface().(*float32) }
-
-func (p pointer) Float32Ptr() **float32 { return p.v.Interface().(**float32) }
-
+func (p pointer) Bool() *bool              { return p.v.Interface().(*bool) }
+func (p pointer) BoolPtr() **bool          { return p.v.Interface().(**bool) }
+func (p pointer) BoolSlice() *[]bool       { return p.v.Interface().(*[]bool) }
+func (p pointer) Int32() *int32            { return p.v.Interface().(*int32) }
+func (p pointer) Int32Ptr() **int32        { return p.v.Interface().(**int32) }
+func (p pointer) Int32Slice() *[]int32     { return p.v.Interface().(*[]int32) }
+func (p pointer) Int64() *int64            { return p.v.Interface().(*int64) }
+func (p pointer) Int64Ptr() **int64        { return p.v.Interface().(**int64) }
+func (p pointer) Int64Slice() *[]int64     { return p.v.Interface().(*[]int64) }
+func (p pointer) Uint32() *uint32          { return p.v.Interface().(*uint32) }
+func (p pointer) Uint32Ptr() **uint32      { return p.v.Interface().(**uint32) }
+func (p pointer) Uint32Slice() *[]uint32   { return p.v.Interface().(*[]uint32) }
+func (p pointer) Uint64() *uint64          { return p.v.Interface().(*uint64) }
+func (p pointer) Uint64Ptr() **uint64      { return p.v.Interface().(**uint64) }
+func (p pointer) Uint64Slice() *[]uint64   { return p.v.Interface().(*[]uint64) }
+func (p pointer) Float32() *float32        { return p.v.Interface().(*float32) }
+func (p pointer) Float32Ptr() **float32    { return p.v.Interface().(**float32) }
 func (p pointer) Float32Slice() *[]float32 { return p.v.Interface().(*[]float32) }
-
-func (p pointer) Float64() *float64 { return p.v.Interface().(*float64) }
-
-func (p pointer) Float64Ptr() **float64 { return p.v.Interface().(**float64) }
-
+func (p pointer) Float64() *float64        { return p.v.Interface().(*float64) }
+func (p pointer) Float64Ptr() **float64    { return p.v.Interface().(**float64) }
 func (p pointer) Float64Slice() *[]float64 { return p.v.Interface().(*[]float64) }
-
-func (p pointer) String() *string { return p.v.Interface().(*string) }
-
-func (p pointer) StringPtr() **string { return p.v.Interface().(**string) }
-
-func (p pointer) StringSlice() *[]string { return p.v.Interface().(*[]string) }
-
-func (p pointer) Bytes() *[]byte { return p.v.Interface().(*[]byte) }
-
-func (p pointer) BytesPtr() **[]byte { return p.v.Interface().(**[]byte) }
-
-func (p pointer) BytesSlice() *[][]byte { return p.v.Interface().(*[][]byte) }
-
-func (p pointer) WeakFields() *weakFields { return (*weakFields)(p.v.Interface().(*WeakFields)) }
-
+func (p pointer) String() *string          { return p.v.Interface().(*string) }
+func (p pointer) StringPtr() **string      { return p.v.Interface().(**string) }
+func (p pointer) StringSlice() *[]string   { return p.v.Interface().(*[]string) }
+func (p pointer) Bytes() *[]byte           { return p.v.Interface().(*[]byte) }
+func (p pointer) BytesPtr() **[]byte       { return p.v.Interface().(**[]byte) }
+func (p pointer) BytesSlice() *[][]byte    { return p.v.Interface().(*[][]byte) }
+func (p pointer) WeakFields() *weakFields  { return (*weakFields)(p.v.Interface().(*WeakFields)) }
 func (p pointer) Extensions() *map[int32]ExtensionField {
 	return p.v.Interface().(*map[int32]ExtensionField)
 }
@@ -187,14 +159,10 @@ func (p pointer) SetPointer(v pointer) {
 	p.v.Elem().Set(v.v)
 }
 
-func (Export) MessageStateOf(p Pointer) *messageState { panic("not supported") }
-
-func (ms *messageState) pointer() pointer { panic("not supported") }
-
-func (ms *messageState) messageInfo() *MessageInfo { panic("not supported") }
-
-func (ms *messageState) LoadMessageInfo() *MessageInfo { panic("not supported") }
-
+func (Export) MessageStateOf(p Pointer) *messageState     { panic("not supported") }
+func (ms *messageState) pointer() pointer                 { panic("not supported") }
+func (ms *messageState) messageInfo() *MessageInfo        { panic("not supported") }
+func (ms *messageState) LoadMessageInfo() *MessageInfo    { panic("not supported") }
 func (ms *messageState) StoreMessageInfo(mi *MessageInfo) { panic("not supported") }
 
 type atomicNilMessage struct {

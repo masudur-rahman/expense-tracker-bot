@@ -594,12 +594,9 @@ type stream struct {
 	reqTrailer http.Header // handler's Request.Trailer
 }
 
-func (sc *serverConn) Framer() *Framer { return sc.framer }
-
+func (sc *serverConn) Framer() *Framer  { return sc.framer }
 func (sc *serverConn) CloseConn() error { return sc.conn.Close() }
-
-func (sc *serverConn) Flush() error { return sc.bw.Flush() }
-
+func (sc *serverConn) Flush() error     { return sc.bw.Flush() }
 func (sc *serverConn) HeaderEncoder() (*hpack.Encoder, *bytes.Buffer) {
 	return sc.hpackEncoder, &sc.headerWriteBuf
 }
@@ -960,9 +957,7 @@ var (
 )
 
 func (sc *serverConn) onSettingsTimer() { sc.sendServeMsg(settingsTimerMsg) }
-
-func (sc *serverConn) onIdleTimer() { sc.sendServeMsg(idleTimerMsg) }
-
+func (sc *serverConn) onIdleTimer()     { sc.sendServeMsg(idleTimerMsg) }
 func (sc *serverConn) onShutdownTimer() { sc.sendServeMsg(shutdownTimerMsg) }
 
 func (sc *serverConn) sendServeMsg(msg interface{}) {

@@ -22,15 +22,10 @@ const (
 )
 
 func syscall_syscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
-
 func syscall_rawsyscall(trap, a1, a2, a3 uintptr) (r1, r2 uintptr, err Errno)
-
 func syscall_syscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
-
 func syscall_rawsyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errno)
-
 func syscall_syscall9(trap, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2 uintptr, err Errno)
-
 func syscall_rawsyscall9(trap, a1, a2, a3, a4, a5, a6, a7, a8, a9 uintptr) (r1, r2 uintptr, err Errno)
 
 func copyStat(stat *Stat_t, statLE *Stat_LE_t) {
@@ -53,9 +48,7 @@ func copyStat(stat *Stat_t, statLE *Stat_LE_t) {
 }
 
 func svcCall(fnptr unsafe.Pointer, argv *unsafe.Pointer, dsa *uint64)
-
 func svcLoad(name *byte) unsafe.Pointer
-
 func svcUnload(name *byte, fnptr unsafe.Pointer) int64
 
 func (d *Dirent) NameString() string {

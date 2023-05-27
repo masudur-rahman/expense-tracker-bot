@@ -106,6 +106,7 @@ func (r *ReplyMarkup) Row(many ...Btn) Row {
 //
 // `Split(3, []Btn{six buttons...}) -> [[1, 2, 3], [4, 5, 6]]`
 // `Split(2, []Btn{six buttons...}) -> [[1, 2],[3, 4],[5, 6]]`
+//
 func (r *ReplyMarkup) Split(max int, btns []Btn) []Row {
 	rows := make([]Row, (max-1+len(btns))/max)
 	for i, b := range btns {
@@ -201,6 +202,7 @@ func (r *ReplyMarkup) WebApp(text string, app *WebApp) Btn {
 //
 // Set either Contact or Location to true in order to request
 // sensitive info, such as user's phone number or current location.
+//
 type ReplyButton struct {
 	Text string `json:"text"`
 

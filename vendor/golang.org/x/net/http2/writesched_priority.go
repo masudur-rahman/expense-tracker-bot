@@ -209,10 +209,8 @@ func (n *priorityNode) walkReadyInOrder(openParent bool, tmp *[]*priorityNode, f
 
 type sortPriorityNodeSiblings []*priorityNode
 
-func (z sortPriorityNodeSiblings) Len() int { return len(z) }
-
+func (z sortPriorityNodeSiblings) Len() int      { return len(z) }
 func (z sortPriorityNodeSiblings) Swap(i, k int) { z[i], z[k] = z[k], z[i] }
-
 func (z sortPriorityNodeSiblings) Less(i, k int) bool {
 	// Prefer the subtree that has sent fewer bytes relative to its weight.
 	// See sections 5.3.2 and 5.3.4.

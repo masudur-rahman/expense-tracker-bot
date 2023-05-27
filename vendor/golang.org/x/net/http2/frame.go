@@ -393,12 +393,9 @@ func (f *Framer) logWrite() {
 	f.debugWriteLoggerf("http2: Framer %p: wrote %v", f, summarizeFrame(fr))
 }
 
-func (f *Framer) writeByte(v byte) { f.wbuf = append(f.wbuf, v) }
-
-func (f *Framer) writeBytes(v []byte) { f.wbuf = append(f.wbuf, v...) }
-
+func (f *Framer) writeByte(v byte)     { f.wbuf = append(f.wbuf, v) }
+func (f *Framer) writeBytes(v []byte)  { f.wbuf = append(f.wbuf, v...) }
 func (f *Framer) writeUint16(v uint16) { f.wbuf = append(f.wbuf, byte(v>>8), byte(v)) }
-
 func (f *Framer) writeUint32(v uint32) {
 	f.wbuf = append(f.wbuf, byte(v>>24), byte(v>>16), byte(v>>8), byte(v))
 }

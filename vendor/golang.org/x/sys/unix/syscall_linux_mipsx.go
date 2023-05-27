@@ -120,7 +120,6 @@ func mmap(addr uintptr, length uintptr, prot int, flags int, fd int, offset int6
 }
 
 const rlimInf32 = ^uint32(0)
-
 const rlimInf64 = ^uint64(0)
 
 type rlimit32 struct {

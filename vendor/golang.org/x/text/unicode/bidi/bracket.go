@@ -60,10 +60,8 @@ func (b *bracketPair) String() string {
 // bracketPairs is a slice of bracketPairs with a sort.Interface implementation.
 type bracketPairs []bracketPair
 
-func (b bracketPairs) Len() int { return len(b) }
-
-func (b bracketPairs) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
-
+func (b bracketPairs) Len() int           { return len(b) }
+func (b bracketPairs) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b bracketPairs) Less(i, j int) bool { return b[i].opener < b[j].opener }
 
 // resolvePairedBrackets runs the paired bracket part of the UBA algorithm.

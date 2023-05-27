@@ -332,7 +332,6 @@ func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int,
 type WaitStatus uint32
 
 func (w WaitStatus) Stopped() bool { return w&0x40 != 0 }
-
 func (w WaitStatus) StopSignal() Signal {
 	if !w.Stopped() {
 		return -1
@@ -341,7 +340,6 @@ func (w WaitStatus) StopSignal() Signal {
 }
 
 func (w WaitStatus) Exited() bool { return w&0xFF == 0 }
-
 func (w WaitStatus) ExitStatus() int {
 	if !w.Exited() {
 		return -1
@@ -350,7 +348,6 @@ func (w WaitStatus) ExitStatus() int {
 }
 
 func (w WaitStatus) Signaled() bool { return w&0x40 == 0 && w&0xFF != 0 }
-
 func (w WaitStatus) Signal() Signal {
 	if !w.Signaled() {
 		return -1

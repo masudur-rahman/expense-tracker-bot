@@ -41,11 +41,10 @@ type MD map[string][]string
 // New creates an MD from a given key-value map.
 //
 // Only the following ASCII characters are allowed in keys:
-//   - digits: 0-9
-//   - uppercase letters: A-Z (normalized to lower)
-//   - lowercase letters: a-z
-//   - special characters: -_.
-//
+//  - digits: 0-9
+//  - uppercase letters: A-Z (normalized to lower)
+//  - lowercase letters: a-z
+//  - special characters: -_.
 // Uppercase letters are automatically converted to lowercase.
 //
 // Keys beginning with "grpc-" are reserved for grpc-internal use only and may
@@ -63,11 +62,10 @@ func New(m map[string]string) MD {
 // Pairs panics if len(kv) is odd.
 //
 // Only the following ASCII characters are allowed in keys:
-//   - digits: 0-9
-//   - uppercase letters: A-Z (normalized to lower)
-//   - lowercase letters: a-z
-//   - special characters: -_.
-//
+//  - digits: 0-9
+//  - uppercase letters: A-Z (normalized to lower)
+//  - lowercase letters: a-z
+//  - special characters: -_.
 // Uppercase letters are automatically converted to lowercase.
 //
 // Keys beginning with "grpc-" are reserved for grpc-internal use only and may
@@ -147,7 +145,6 @@ func Join(mds ...MD) MD {
 }
 
 type mdIncomingKey struct{}
-
 type mdOutgoingKey struct{}
 
 // NewIncomingContext creates a new context with incoming md attached.

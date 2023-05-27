@@ -2233,10 +2233,8 @@ func NewFileHandle(handleType int32, handle []byte) FileHandle {
 	return FileHandle{fh}
 }
 
-func (fh *FileHandle) Size() int { return int(fh.fileHandle.Bytes) }
-
+func (fh *FileHandle) Size() int   { return int(fh.fileHandle.Bytes) }
 func (fh *FileHandle) Type() int32 { return fh.fileHandle.Type }
-
 func (fh *FileHandle) Bytes() []byte {
 	n := fh.Size()
 	if n == 0 {

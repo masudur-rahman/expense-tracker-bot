@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/internal/filedesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
@@ -154,9 +155,9 @@ func (r *resolver) findTarget(k protoreflect.Kind, scope protoreflect.FullName, 
 //
 // Suppose the scope was "fizz.buzz" and the reference was "Foo.Bar",
 // then the following full names are searched:
-//   - fizz.buzz.Foo.Bar
-//   - fizz.Foo.Bar
-//   - Foo.Bar
+//	* fizz.buzz.Foo.Bar
+//	* fizz.Foo.Bar
+//	* Foo.Bar
 func (r *resolver) findDescriptor(scope protoreflect.FullName, ref partialName) (protoreflect.Descriptor, error) {
 	if !ref.IsValid() {
 		return nil, errors.New("invalid name reference: %q", ref)

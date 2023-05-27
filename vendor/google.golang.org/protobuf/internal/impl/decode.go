@@ -18,7 +18,6 @@ import (
 )
 
 var errDecode = errors.New("cannot parse invalid wire-format data")
-
 var errRecursionDepth = errors.New("exceeded maximum recursion depth")
 
 type unmarshalOptions struct {
