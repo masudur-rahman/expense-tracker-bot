@@ -1,0 +1,6 @@
+version: 1
+services:
+    - name: expense-tracker-bot
+      type: web
+      buildCommand: go build
+      startCommand: ./expense-tracker-bot serve
