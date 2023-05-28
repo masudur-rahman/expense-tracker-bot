@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
-	"time"
 
+	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/models/gqtypes"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
@@ -64,17 +64,21 @@ func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Conte
 			return err
 		}
 
-		out := printer.PrintDocuments(expenses)
-		fmt.Printf("\n%v\n", out)
-		buf := bytes.Buffer{}
-		w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
-		fmt.Fprintln(w, "Description\tAmount\tTime")
-		for idx := range expenses {
-			fmt.Fprintf(w, "%s\t%v\t%v\n", expenses[idx].Description, expenses[idx].Amount, expenses[idx].Date.Format(time.RFC822))
-		}
-		if err = w.Flush(); err != nil {
-			return err
-		}
-		return ctx.Send(buf.String())
+		printer.WithExceptColumns([]string{"ID"})
+		defer printer.ClearColumns()
+		printer.PrintDocuments(expenses)
+
+		return ctx.Send(generateTelegramResponse(expenses))
 	}
+}
+
+func generateTelegramResponse(expenses []*models.Expense) string {
+	buf := bytes.Buffer{}
+	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
+	fmt.Fprintln(w, "Time\tAmount\tDescription")
+	for idx := range expenses {
+		fmt.Fprintf(w, "%v\t%v\t%v\n", expenses[idx].Date.Format("Jan 02, 15:04"), expenses[idx].Amount, expenses[idx].Description)
+	}
+	_ = w.Flush()
+	return buf.String()
 }

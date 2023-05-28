@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"time"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -11,6 +12,14 @@ import (
 type Printer interface {
 	PrintDocument(doc interface{}) string
 	PrintDocuments(docs interface{}) string
+
+	WithColumns(columns []string) Printer
+	WithExceptColumns(exceptColumns []string) Printer
+	WithAllColumns() Printer
+	WithStyle(style table.Style) Printer
+	WithStdout(stdout bool) Printer
+
+	ClearColumns()
 }
 
 type Options struct {
@@ -20,6 +29,9 @@ type Options struct {
 
 type printer struct {
 	options Options
+	columns []string
+	xCols   []string
+	allCols bool
 }
 
 func NewPrinter(options Options) Printer {
@@ -31,8 +43,8 @@ func NewPrinter(options Options) Printer {
 func (p *printer) PrintDocument(doc interface{}) string {
 	t := p.newTableWriter()
 
-	hr := generateHeaderRow(doc)
-	dr := generateDataRow(doc)
+	hr := p.generateHeaderRow(doc)
+	dr := p.generateDataRow(doc)
 
 	t.AppendHeader(hr)
 	t.AppendRow(dr)
@@ -49,14 +61,47 @@ func (p *printer) PrintDocuments(docs interface{}) string {
 
 	doc := val.Index(0).Interface()
 
-	hr := generateHeaderRow(doc)
-	drs := generateDataRows(docs)
+	hr := p.generateHeaderRow(doc)
+	drs := p.generateDataRows(docs)
 
 	t.AppendHeader(hr)
 	for _, dr := range drs {
 		t.AppendRow(dr)
 	}
 	return t.Render()
+}
+
+func (p *printer) WithColumns(columns []string) Printer {
+	p.columns = columns
+	p.allCols = false
+	return p
+}
+
+func (p *printer) WithExceptColumns(exceptColumns []string) Printer {
+	p.xCols = exceptColumns
+	p.allCols = false
+	return p
+}
+
+func (p *printer) WithAllColumns() Printer {
+	p.allCols = true
+	return p
+}
+
+func (p *printer) WithStyle(style table.Style) Printer {
+	p.options.Style = style
+	return p
+}
+
+func (p *printer) WithStdout(stdout bool) Printer {
+	p.options.EnableStdout = stdout
+	return p
+}
+
+func (p *printer) ClearColumns() {
+	p.columns = nil
+	p.xCols = nil
+	p.allCols = false
 }
 
 func (p *printer) newTableWriter() table.Writer {
@@ -74,20 +119,41 @@ func (p *printer) getWriter() io.Writer {
 	return nil
 }
 
-func generateHeaderRow(doc interface{}) table.Row {
+func (p *printer) retrieveColumns(val reflect.Value) []string {
+	if p.allCols || len(p.columns) == 0 {
+		return p.retrieveAllColumns(val)
+	}
+	return p.columns
+}
+
+func (p *printer) retrieveAllColumns(val reflect.Value) []string {
+	// Retrieve all field names from the struct type
+	numFields := val.NumField()
+	columns := make([]string, numFields)
+	for idx := 0; idx < numFields; idx++ {
+		columns[idx] = val.Type().Field(idx).Name
+	}
+	return columns
+}
+
+func (p *printer) generateHeaderRow(doc interface{}) table.Row {
 	hr := table.Row{}
 	val := reflect.ValueOf(doc)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
-	for idx := 0; idx < val.NumField(); idx++ {
-		hr = append(hr, val.Type().Field(idx).Name)
+
+	columns := p.retrieveColumns(val)
+	for _, column := range columns {
+		if !containsString(p.xCols, column) {
+			hr = append(hr, column)
+		}
 	}
 
 	return hr
 }
 
-func generateDataRows(docs interface{}) []table.Row {
+func (p *printer) generateDataRows(docs interface{}) []table.Row {
 	drs := []table.Row{}
 
 	val := reflect.ValueOf(docs)
@@ -97,22 +163,47 @@ func generateDataRows(docs interface{}) []table.Row {
 
 	for idx := 0; idx < val.Len(); idx++ {
 		doc := val.Index(idx).Interface()
-		dr := generateDataRow(doc)
+		dr := p.generateDataRow(doc)
 		drs = append(drs, dr)
 	}
 
 	return drs
 }
 
-func generateDataRow(doc interface{}) table.Row {
+func (p *printer) generateDataRow(doc interface{}) table.Row {
 	val := reflect.ValueOf(doc)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
 	dr := table.Row{}
-	for idx := 0; idx < val.NumField(); idx++ {
-		dr = append(dr, val.Field(idx).Interface())
+	columns := p.retrieveColumns(val)
+	for _, column := range columns {
+		if containsString(p.xCols, column) {
+			continue
+		}
+		field := val.FieldByName(column)
+		if field.IsValid() {
+			dr = append(dr, formatValue(field.Interface()))
+		}
 	}
 	return dr
+}
+
+func formatValue(value interface{}) any {
+	if reflect.TypeOf(value) == reflect.TypeOf(time.Time{}) {
+		if t, ok := value.(time.Time); ok {
+			return t.Format("Jan 02, 03:04 AM")
+		}
+	}
+	return value
+}
+
+func containsString(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }
