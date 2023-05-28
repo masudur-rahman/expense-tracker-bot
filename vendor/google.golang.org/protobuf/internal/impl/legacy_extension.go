@@ -142,35 +142,66 @@ type placeholderExtension struct {
 	number pref.FieldNumber
 }
 
-func (x placeholderExtension) ParentFile() pref.FileDescriptor            { return nil }
-func (x placeholderExtension) Parent() pref.Descriptor                    { return nil }
-func (x placeholderExtension) Index() int                                 { return 0 }
-func (x placeholderExtension) Syntax() pref.Syntax                        { return 0 }
-func (x placeholderExtension) Name() pref.Name                            { return x.name.Name() }
-func (x placeholderExtension) FullName() pref.FullName                    { return x.name }
-func (x placeholderExtension) IsPlaceholder() bool                        { return true }
-func (x placeholderExtension) Options() pref.ProtoMessage                 { return descopts.Field }
-func (x placeholderExtension) Number() pref.FieldNumber                   { return x.number }
-func (x placeholderExtension) Cardinality() pref.Cardinality              { return 0 }
-func (x placeholderExtension) Kind() pref.Kind                            { return 0 }
-func (x placeholderExtension) HasJSONName() bool                          { return false }
-func (x placeholderExtension) JSONName() string                           { return "[" + string(x.name) + "]" }
-func (x placeholderExtension) TextName() string                           { return "[" + string(x.name) + "]" }
-func (x placeholderExtension) HasPresence() bool                          { return false }
-func (x placeholderExtension) HasOptionalKeyword() bool                   { return false }
-func (x placeholderExtension) IsExtension() bool                          { return true }
-func (x placeholderExtension) IsWeak() bool                               { return false }
-func (x placeholderExtension) IsPacked() bool                             { return false }
-func (x placeholderExtension) IsList() bool                               { return false }
-func (x placeholderExtension) IsMap() bool                                { return false }
-func (x placeholderExtension) MapKey() pref.FieldDescriptor               { return nil }
-func (x placeholderExtension) MapValue() pref.FieldDescriptor             { return nil }
-func (x placeholderExtension) HasDefault() bool                           { return false }
-func (x placeholderExtension) Default() pref.Value                        { return pref.Value{} }
+func (x placeholderExtension) ParentFile() pref.FileDescriptor { return nil }
+
+func (x placeholderExtension) Parent() pref.Descriptor { return nil }
+
+func (x placeholderExtension) Index() int { return 0 }
+
+func (x placeholderExtension) Syntax() pref.Syntax { return 0 }
+
+func (x placeholderExtension) Name() pref.Name { return x.name.Name() }
+
+func (x placeholderExtension) FullName() pref.FullName { return x.name }
+
+func (x placeholderExtension) IsPlaceholder() bool { return true }
+
+func (x placeholderExtension) Options() pref.ProtoMessage { return descopts.Field }
+
+func (x placeholderExtension) Number() pref.FieldNumber { return x.number }
+
+func (x placeholderExtension) Cardinality() pref.Cardinality { return 0 }
+
+func (x placeholderExtension) Kind() pref.Kind { return 0 }
+
+func (x placeholderExtension) HasJSONName() bool { return false }
+
+func (x placeholderExtension) JSONName() string { return "[" + string(x.name) + "]" }
+
+func (x placeholderExtension) TextName() string { return "[" + string(x.name) + "]" }
+
+func (x placeholderExtension) HasPresence() bool { return false }
+
+func (x placeholderExtension) HasOptionalKeyword() bool { return false }
+
+func (x placeholderExtension) IsExtension() bool { return true }
+
+func (x placeholderExtension) IsWeak() bool { return false }
+
+func (x placeholderExtension) IsPacked() bool { return false }
+
+func (x placeholderExtension) IsList() bool { return false }
+
+func (x placeholderExtension) IsMap() bool { return false }
+
+func (x placeholderExtension) MapKey() pref.FieldDescriptor { return nil }
+
+func (x placeholderExtension) MapValue() pref.FieldDescriptor { return nil }
+
+func (x placeholderExtension) HasDefault() bool { return false }
+
+func (x placeholderExtension) Default() pref.Value { return pref.Value{} }
+
 func (x placeholderExtension) DefaultEnumValue() pref.EnumValueDescriptor { return nil }
-func (x placeholderExtension) ContainingOneof() pref.OneofDescriptor      { return nil }
-func (x placeholderExtension) ContainingMessage() pref.MessageDescriptor  { return nil }
-func (x placeholderExtension) Enum() pref.EnumDescriptor                  { return nil }
-func (x placeholderExtension) Message() pref.MessageDescriptor            { return nil }
-func (x placeholderExtension) ProtoType(pref.FieldDescriptor)             { return }
-func (x placeholderExtension) ProtoInternal(pragma.DoNotImplement)        { return }
+
+func (x placeholderExtension) ContainingOneof() pref.OneofDescriptor { return nil }
+
+func (x placeholderExtension) ContainingMessage() pref.MessageDescriptor { return nil }
+
+func (x placeholderExtension) Enum() pref.EnumDescriptor { return nil }
+
+func (x placeholderExtension) Message() pref.MessageDescriptor { return nil }
+
+func (x placeholderExtension) ProtoType(pref.FieldDescriptor) { return }
+
+func (x placeholderExtension) ProtoInternal(pragma.DoNotImplement) { return }

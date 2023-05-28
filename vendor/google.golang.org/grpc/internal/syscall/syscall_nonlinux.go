@@ -32,6 +32,7 @@ import (
 )
 
 var once sync.Once
+
 var logger = grpclog.Component("core")
 
 func log() {

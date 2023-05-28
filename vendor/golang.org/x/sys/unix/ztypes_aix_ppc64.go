@@ -23,7 +23,9 @@ type (
 )
 
 type off64 int64
+
 type off int64
+
 type Mode_t uint32
 
 type Timespec struct {
@@ -329,6 +331,7 @@ type Flock_t struct {
 type Fsid_t struct {
 	Val [2]uint32
 }
+
 type Fsid64_t struct {
 	Val [2]uint64
 }

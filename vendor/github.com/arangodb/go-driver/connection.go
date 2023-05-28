@@ -149,6 +149,7 @@ func (r *RawObject) UnmarshalJSON(data []byte) error {
 
 // Ensure RawObject implements json.Marshaler & json.Unmarshaler
 var _ json.Marshaler = (*RawObject)(nil)
+
 var _ json.Unmarshaler = (*RawObject)(nil)
 
 // MarshalVPack returns m as the Velocypack encoding of m.
@@ -169,4 +170,5 @@ func (r *RawObject) UnmarshalVPack(data velocypack.Slice) error {
 }
 
 var _ velocypack.Marshaler = (*RawObject)(nil)
+
 var _ velocypack.Unmarshaler = (*RawObject)(nil)

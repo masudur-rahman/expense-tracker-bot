@@ -11,7 +11,6 @@ import (
 // flags instead.
 //
 // Supported options are defined as iota-constants.
-//
 type Option int
 
 const (
@@ -54,7 +53,6 @@ func Placeholder(text string) *SendOptions {
 // Despite its power, SendOptions is rather inconvenient to use all
 // the way through bot logic, so you might want to consider storing
 // and re-using it somewhere or be using Option flags instead.
-//
 type SendOptions struct {
 	// If the message is a reply, original message.
 	ReplyTo *Message

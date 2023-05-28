@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models/gqtypes"
+	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"gopkg.in/telebot.v3"
@@ -24,7 +25,7 @@ func Hello(ctx telebot.Context) error {
 
 func AddNewExpense(svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
-		str := strings.Split(ctx.Text(), " ")
+		str := pkg.SplitString(ctx.Text(), ' ')
 		var err error
 		var amount float64
 		if len(str) < 3 {
@@ -44,6 +45,7 @@ Format: /add <amount> <description>
 			Description: strings.Join(str[2:], " "),
 		}
 
+		pkg.Print(params)
 		if err = svc.Expense.AddExpense(params); err != nil {
 			return err
 		}
@@ -62,6 +64,7 @@ func ListExpenses(svc *all.Services) func(ctx telebot.Context) error {
 			return err
 		}
 
+		pkg.Print(expenses)
 		buf := bytes.Buffer{}
 		w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 		fmt.Fprintln(w, "Description\tAmount\tTime")

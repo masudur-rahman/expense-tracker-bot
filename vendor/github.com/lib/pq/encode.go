@@ -304,7 +304,9 @@ func (c *locationCache) getLocation(offset int) *time.Location {
 }
 
 var infinityTsEnabled = false
+
 var infinityTsNegative time.Time
+
 var infinityTsPositive time.Time
 
 const (

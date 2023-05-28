@@ -14,7 +14,9 @@ type Definition interface {
 
 // Ensure that all definition types implements Definition interface
 var _ Definition = (*OperationDefinition)(nil)
+
 var _ Definition = (*FragmentDefinition)(nil)
+
 var _ Definition = (TypeSystemDefinition)(nil) // experimental non-spec addition.
 
 // Note: subscription is an experimental non-spec addition.

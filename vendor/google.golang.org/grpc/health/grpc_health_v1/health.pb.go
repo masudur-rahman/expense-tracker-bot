@@ -24,11 +24,12 @@
 package grpc_health_v1
 
 import (
+	reflect "reflect"
+	sync "sync"
+
 	proto "github.com/golang/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	reflect "reflect"
-	sync "sync"
 )
 
 const (
@@ -241,12 +242,15 @@ func file_grpc_health_v1_health_proto_rawDescGZIP() []byte {
 }
 
 var file_grpc_health_v1_health_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+
 var file_grpc_health_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+
 var file_grpc_health_v1_health_proto_goTypes = []interface{}{
 	(HealthCheckResponse_ServingStatus)(0), // 0: grpc.health.v1.HealthCheckResponse.ServingStatus
 	(*HealthCheckRequest)(nil),             // 1: grpc.health.v1.HealthCheckRequest
 	(*HealthCheckResponse)(nil),            // 2: grpc.health.v1.HealthCheckResponse
 }
+
 var file_grpc_health_v1_health_proto_depIdxs = []int32{
 	0, // 0: grpc.health.v1.HealthCheckResponse.status:type_name -> grpc.health.v1.HealthCheckResponse.ServingStatus
 	1, // 1: grpc.health.v1.Health.Check:input_type -> grpc.health.v1.HealthCheckRequest
@@ -261,6 +265,7 @@ var file_grpc_health_v1_health_proto_depIdxs = []int32{
 }
 
 func init() { file_grpc_health_v1_health_proto_init() }
+
 func file_grpc_health_v1_health_proto_init() {
 	if File_grpc_health_v1_health_proto != nil {
 		return

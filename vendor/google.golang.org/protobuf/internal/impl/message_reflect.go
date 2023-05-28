@@ -178,6 +178,7 @@ func (mi *MessageInfo) makeExtensionFieldsFunc(t reflect.Type, si structInfo) {
 		}
 	}
 }
+
 func (mi *MessageInfo) makeFieldTypes(si structInfo) {
 	md := mi.Desc
 	fds := md.Fields()
@@ -247,6 +248,7 @@ func (m *extensionMap) Range(f func(pref.FieldDescriptor, pref.Value) bool) {
 		}
 	}
 }
+
 func (m *extensionMap) Has(xt pref.ExtensionType) (ok bool) {
 	if m == nil {
 		return false
@@ -266,9 +268,11 @@ func (m *extensionMap) Has(xt pref.ExtensionType) (ok bool) {
 	}
 	return true
 }
+
 func (m *extensionMap) Clear(xt pref.ExtensionType) {
 	delete(*m, int32(xt.TypeDescriptor().Number()))
 }
+
 func (m *extensionMap) Get(xt pref.ExtensionType) pref.Value {
 	xd := xt.TypeDescriptor()
 	if m != nil {
@@ -278,6 +282,7 @@ func (m *extensionMap) Get(xt pref.ExtensionType) pref.Value {
 	}
 	return xt.Zero()
 }
+
 func (m *extensionMap) Set(xt pref.ExtensionType, v pref.Value) {
 	xd := xt.TypeDescriptor()
 	isValid := true
@@ -302,6 +307,7 @@ func (m *extensionMap) Set(xt pref.ExtensionType, v pref.Value) {
 	x.Set(xt, v)
 	(*m)[int32(xd.Number())] = x
 }
+
 func (m *extensionMap) Mutable(xt pref.ExtensionType) pref.Value {
 	xd := xt.TypeDescriptor()
 	if xd.Kind() != pref.MessageKind && xd.Kind() != pref.GroupKind && !xd.IsList() && !xd.IsMap() {
@@ -319,7 +325,6 @@ func (m *extensionMap) Mutable(xt pref.ExtensionType) pref.Value {
 // concrete message. It provides a way to implement the ProtoReflect method
 // in an allocation-free way without needing to have a shadow Go type generated
 // for every message type. This technique only works using unsafe.
-//
 //
 // Example generated code:
 //
@@ -351,12 +356,11 @@ func (m *extensionMap) Mutable(xt pref.ExtensionType) pref.Value {
 // It has access to the message info as its first field, and a pointer to the
 // MessageState is identical to a pointer to the concrete message value.
 //
-//
 // Requirements:
-//	• The type M must implement protoreflect.ProtoMessage.
-//	• The address of m must not be nil.
-//	• The address of m and the address of m.state must be equal,
-//	even though they are different Go types.
+//   - The type M must implement protoreflect.ProtoMessage.
+//   - The address of m must not be nil.
+//   - The address of m and the address of m.state must be equal,
+//     even though they are different Go types.
 type MessageState struct {
 	pragma.NoUnkeyedLiterals
 	pragma.DoNotCompare
@@ -407,7 +411,8 @@ func (mi *MessageInfo) MessageOf(m interface{}) pref.Message {
 	return &messageReflectWrapper{p, mi}
 }
 
-func (m *messageReflectWrapper) pointer() pointer          { return m.p }
+func (m *messageReflectWrapper) pointer() pointer { return m.p }
+
 func (m *messageReflectWrapper) messageInfo() *MessageInfo { return m.mi }
 
 // Reset implements the v1 proto.Message.Reset method.
@@ -421,9 +426,11 @@ func (m *messageIfaceWrapper) Reset() {
 		rv.Elem().Set(reflect.Zero(rv.Type().Elem()))
 	}
 }
+
 func (m *messageIfaceWrapper) ProtoReflect() pref.Message {
 	return (*messageReflectWrapper)(m)
 }
+
 func (m *messageIfaceWrapper) protoUnwrap() interface{} {
 	return m.p.AsIfaceOf(m.mi.GoReflectType.Elem())
 }

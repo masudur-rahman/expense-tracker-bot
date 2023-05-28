@@ -148,6 +148,7 @@ type stack struct {
 	inSlice bool
 	Prev    *stack
 }
+
 type edit struct {
 	Key   interface{}
 	Value interface{}

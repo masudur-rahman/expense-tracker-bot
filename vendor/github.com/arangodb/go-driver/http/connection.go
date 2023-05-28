@@ -37,11 +37,10 @@ import (
 	"sync"
 	"time"
 
-	velocypack "github.com/arangodb/go-velocypack"
-
 	driver "github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/cluster"
 	"github.com/arangodb/go-driver/util"
+	velocypack "github.com/arangodb/go-velocypack"
 )
 
 const (

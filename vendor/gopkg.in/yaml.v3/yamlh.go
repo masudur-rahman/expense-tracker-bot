@@ -329,9 +329,11 @@ type yaml_event_t struct {
 	style yaml_style_t
 }
 
-func (e *yaml_event_t) scalar_style() yaml_scalar_style_t     { return yaml_scalar_style_t(e.style) }
+func (e *yaml_event_t) scalar_style() yaml_scalar_style_t { return yaml_scalar_style_t(e.style) }
+
 func (e *yaml_event_t) sequence_style() yaml_sequence_style_t { return yaml_sequence_style_t(e.style) }
-func (e *yaml_event_t) mapping_style() yaml_mapping_style_t   { return yaml_mapping_style_t(e.style) }
+
+func (e *yaml_event_t) mapping_style() yaml_mapping_style_t { return yaml_mapping_style_t(e.style) }
 
 // Nodes
 
@@ -438,7 +440,9 @@ type yaml_document_t struct {
 // The number of written bytes should be set to the size_read variable.
 //
 // [in,out]   data        A pointer to an application data specified by
-//                        yaml_parser_set_input().
+//
+//	yaml_parser_set_input().
+//
 // [out]      buffer      The buffer to write the data from the source.
 // [in]       size        The size of the buffer.
 // [out]      size_read   The actual number of bytes read from the source.
@@ -639,7 +643,6 @@ type yaml_parser_t struct {
 }
 
 type yaml_comment_t struct {
-
 	scan_mark  yaml_mark_t // Position where scanning for comments started
 	token_mark yaml_mark_t // Position after which tokens will be associated with this comment
 	start_mark yaml_mark_t // Position of '#' comment mark
@@ -659,13 +662,14 @@ type yaml_comment_t struct {
 // @a buffer to the output.
 //
 // @param[in,out]   data        A pointer to an application data specified by
-//                              yaml_emitter_set_output().
+//
+//	yaml_emitter_set_output().
+//
 // @param[in]       buffer      The buffer with bytes to be written.
 // @param[in]       size        The size of the buffer.
 //
 // @returns On success, the handler should return @c 1.  If the handler failed,
 // the returned value should be @c 0.
-//
 type yaml_write_handler_t func(emitter *yaml_emitter_t, buffer []byte) error
 
 type yaml_emitter_state_t int

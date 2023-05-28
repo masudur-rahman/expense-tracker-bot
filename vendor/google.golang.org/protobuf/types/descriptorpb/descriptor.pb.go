@@ -42,10 +42,11 @@
 package descriptorpb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 type FieldDescriptorProto_Type int32
@@ -3499,7 +3500,9 @@ func file_google_protobuf_descriptor_proto_rawDescGZIP() []byte {
 }
 
 var file_google_protobuf_descriptor_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+
 var file_google_protobuf_descriptor_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+
 var file_google_protobuf_descriptor_proto_goTypes = []interface{}{
 	(FieldDescriptorProto_Type)(0),                // 0: google.protobuf.FieldDescriptorProto.Type
 	(FieldDescriptorProto_Label)(0),               // 1: google.protobuf.FieldDescriptorProto.Label
@@ -3535,6 +3538,7 @@ var file_google_protobuf_descriptor_proto_goTypes = []interface{}{
 	(*SourceCodeInfo_Location)(nil),               // 31: google.protobuf.SourceCodeInfo.Location
 	(*GeneratedCodeInfo_Annotation)(nil),          // 32: google.protobuf.GeneratedCodeInfo.Annotation
 }
+
 var file_google_protobuf_descriptor_proto_depIdxs = []int32{
 	7,  // 0: google.protobuf.FileDescriptorSet.file:type_name -> google.protobuf.FileDescriptorProto
 	8,  // 1: google.protobuf.FileDescriptorProto.message_type:type_name -> google.protobuf.DescriptorProto
@@ -3587,6 +3591,7 @@ var file_google_protobuf_descriptor_proto_depIdxs = []int32{
 }
 
 func init() { file_google_protobuf_descriptor_proto_init() }
+
 func file_google_protobuf_descriptor_proto_init() {
 	if File_google_protobuf_descriptor_proto != nil {
 		return

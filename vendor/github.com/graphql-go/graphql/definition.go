@@ -18,13 +18,21 @@ type Type interface {
 }
 
 var _ Type = (*Scalar)(nil)
+
 var _ Type = (*Object)(nil)
+
 var _ Type = (*Interface)(nil)
+
 var _ Type = (*Union)(nil)
+
 var _ Type = (*Enum)(nil)
+
 var _ Type = (*InputObject)(nil)
+
 var _ Type = (*List)(nil)
+
 var _ Type = (*NonNull)(nil)
+
 var _ Type = (*Argument)(nil)
 
 // Input interface for types that may be used as input types for arguments and directives.
@@ -36,9 +44,13 @@ type Input interface {
 }
 
 var _ Input = (*Scalar)(nil)
+
 var _ Input = (*Enum)(nil)
+
 var _ Input = (*InputObject)(nil)
+
 var _ Input = (*List)(nil)
+
 var _ Input = (*NonNull)(nil)
 
 // IsInputType determines if given type is a GraphQLInputType
@@ -71,6 +83,7 @@ type Leaf interface {
 }
 
 var _ Leaf = (*Scalar)(nil)
+
 var _ Leaf = (*Enum)(nil)
 
 // IsLeafType determines if given type is a leaf value
@@ -92,11 +105,17 @@ type Output interface {
 }
 
 var _ Output = (*Scalar)(nil)
+
 var _ Output = (*Object)(nil)
+
 var _ Output = (*Interface)(nil)
+
 var _ Output = (*Union)(nil)
+
 var _ Output = (*Enum)(nil)
+
 var _ Output = (*List)(nil)
+
 var _ Output = (*NonNull)(nil)
 
 // Composite interface for types that may describe the parent context of a selection set.
@@ -108,7 +127,9 @@ type Composite interface {
 }
 
 var _ Composite = (*Object)(nil)
+
 var _ Composite = (*Interface)(nil)
+
 var _ Composite = (*Union)(nil)
 
 // IsCompositeType determines if given type is a GraphQLComposite type
@@ -127,6 +148,7 @@ type Abstract interface {
 }
 
 var _ Abstract = (*Interface)(nil)
+
 var _ Abstract = (*Union)(nil)
 
 func IsAbstractType(ttype interface{}) bool {
@@ -143,11 +165,17 @@ type Nullable interface {
 }
 
 var _ Nullable = (*Scalar)(nil)
+
 var _ Nullable = (*Object)(nil)
+
 var _ Nullable = (*Interface)(nil)
+
 var _ Nullable = (*Union)(nil)
+
 var _ Nullable = (*Enum)(nil)
+
 var _ Nullable = (*InputObject)(nil)
+
 var _ Nullable = (*List)(nil)
 
 // GetNullable returns the Nullable type of the given GraphQL type
@@ -164,10 +192,15 @@ type Named interface {
 }
 
 var _ Named = (*Scalar)(nil)
+
 var _ Named = (*Object)(nil)
+
 var _ Named = (*Interface)(nil)
+
 var _ Named = (*Union)(nil)
+
 var _ Named = (*Enum)(nil)
+
 var _ Named = (*InputObject)(nil)
 
 // GetNamed returns the Named type of the given GraphQL type
@@ -267,34 +300,41 @@ func NewScalar(config ScalarConfig) *Scalar {
 	st.scalarConfig = config
 	return st
 }
+
 func (st *Scalar) Serialize(value interface{}) interface{} {
 	if st.scalarConfig.Serialize == nil {
 		return value
 	}
 	return st.scalarConfig.Serialize(value)
 }
+
 func (st *Scalar) ParseValue(value interface{}) interface{} {
 	if st.scalarConfig.ParseValue == nil {
 		return value
 	}
 	return st.scalarConfig.ParseValue(value)
 }
+
 func (st *Scalar) ParseLiteral(valueAST ast.Value) interface{} {
 	if st.scalarConfig.ParseLiteral == nil {
 		return nil
 	}
 	return st.scalarConfig.ParseLiteral(valueAST)
 }
+
 func (st *Scalar) Name() string {
 	return st.PrivateName
 }
+
 func (st *Scalar) Description() string {
 	return st.PrivateDescription
 
 }
+
 func (st *Scalar) String() string {
 	return st.PrivateName
 }
+
 func (st *Scalar) Error() error {
 	return st.err
 }
@@ -405,6 +445,7 @@ func (gt *Object) ensureCache() {
 	gt.Fields()
 	gt.Interfaces()
 }
+
 func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
 	if fieldName == "" || fieldConfig == nil {
 		return
@@ -414,15 +455,19 @@ func (gt *Object) AddFieldConfig(fieldName string, fieldConfig *Field) {
 		gt.initialisedFields = false
 	}
 }
+
 func (gt *Object) Name() string {
 	return gt.PrivateName
 }
+
 func (gt *Object) Description() string {
 	return gt.PrivateDescription
 }
+
 func (gt *Object) String() string {
 	return gt.PrivateName
 }
+
 func (gt *Object) Fields() FieldDefinitionMap {
 	if gt.initialisedFields {
 		return gt.fields
@@ -620,6 +665,7 @@ type ArgumentConfig struct {
 }
 
 type FieldDefinitionMap map[string]*FieldDefinition
+
 type FieldDefinition struct {
 	Name              string         `json:"name"`
 	Description       string         `json:"description"`
@@ -647,13 +693,16 @@ type Argument struct {
 func (st *Argument) Name() string {
 	return st.PrivateName
 }
+
 func (st *Argument) Description() string {
 	return st.PrivateDescription
 
 }
+
 func (st *Argument) String() string {
 	return st.PrivateName
 }
+
 func (st *Argument) Error() error {
 	return nil
 }
@@ -683,6 +732,7 @@ type Interface struct {
 	fields            FieldDefinitionMap
 	err               error
 }
+
 type InterfaceConfig struct {
 	Name        string      `json:"name"`
 	Fields      interface{} `json:"fields"`
@@ -932,17 +982,21 @@ type Enum struct {
 
 	err error
 }
+
 type EnumValueConfigMap map[string]*EnumValueConfig
+
 type EnumValueConfig struct {
 	Value             interface{} `json:"value"`
 	DeprecationReason string      `json:"deprecationReason"`
 	Description       string      `json:"description"`
 }
+
 type EnumConfig struct {
 	Name        string             `json:"name"`
 	Values      EnumValueConfigMap `json:"values"`
 	Description string             `json:"description"`
 }
+
 type EnumValueDefinition struct {
 	Name              string      `json:"name"`
 	Value             interface{} `json:"value"`
@@ -966,6 +1020,7 @@ func NewEnum(config EnumConfig) *Enum {
 
 	return gt
 }
+
 func (gt *Enum) defineEnumValues(valueMap EnumValueConfigMap) ([]*EnumValueDefinition, error) {
 	var err error
 	values := []*EnumValueDefinition{}
@@ -1001,9 +1056,11 @@ func (gt *Enum) defineEnumValues(valueMap EnumValueConfigMap) ([]*EnumValueDefin
 	}
 	return values, nil
 }
+
 func (gt *Enum) Values() []*EnumValueDefinition {
 	return gt.values
 }
+
 func (gt *Enum) Serialize(value interface{}) interface{} {
 	v := value
 	rv := reflect.ValueOf(v)
@@ -1017,6 +1074,7 @@ func (gt *Enum) Serialize(value interface{}) interface{} {
 	}
 	return nil
 }
+
 func (gt *Enum) ParseValue(value interface{}) interface{} {
 	var v string
 
@@ -1033,6 +1091,7 @@ func (gt *Enum) ParseValue(value interface{}) interface{} {
 	}
 	return nil
 }
+
 func (gt *Enum) ParseLiteral(valueAST ast.Value) interface{} {
 	if valueAST, ok := valueAST.(*ast.EnumValue); ok {
 		if enumValue, ok := gt.getNameLookup()[valueAST.Value]; ok {
@@ -1041,18 +1100,23 @@ func (gt *Enum) ParseLiteral(valueAST ast.Value) interface{} {
 	}
 	return nil
 }
+
 func (gt *Enum) Name() string {
 	return gt.PrivateName
 }
+
 func (gt *Enum) Description() string {
 	return gt.PrivateDescription
 }
+
 func (gt *Enum) String() string {
 	return gt.PrivateName
 }
+
 func (gt *Enum) Error() error {
 	return gt.err
 }
+
 func (gt *Enum) getValueLookup() map[interface{}]*EnumValueDefinition {
 	if len(gt.valuesLookup) > 0 {
 		return gt.valuesLookup
@@ -1103,11 +1167,13 @@ type InputObject struct {
 	init       bool
 	err        error
 }
+
 type InputObjectFieldConfig struct {
 	Type         Input       `json:"type"`
 	DefaultValue interface{} `json:"defaultValue"`
 	Description  string      `json:"description"`
 }
+
 type InputObjectField struct {
 	PrivateName        string      `json:"name"`
 	Type               Input       `json:"type"`
@@ -1118,19 +1184,25 @@ type InputObjectField struct {
 func (st *InputObjectField) Name() string {
 	return st.PrivateName
 }
+
 func (st *InputObjectField) Description() string {
 	return st.PrivateDescription
 }
+
 func (st *InputObjectField) String() string {
 	return st.PrivateName
 }
+
 func (st *InputObjectField) Error() error {
 	return nil
 }
 
 type InputObjectConfigFieldMap map[string]*InputObjectFieldConfig
+
 type InputObjectFieldMap map[string]*InputObjectField
+
 type InputObjectConfigFieldMapThunk func() InputObjectConfigFieldMap
+
 type InputObjectConfig struct {
 	Name        string      `json:"name"`
 	Fields      interface{} `json:"fields"`
@@ -1211,15 +1283,19 @@ func (gt *InputObject) Fields() InputObjectFieldMap {
 	}
 	return gt.fields
 }
+
 func (gt *InputObject) Name() string {
 	return gt.PrivateName
 }
+
 func (gt *InputObject) Description() string {
 	return gt.PrivateDescription
 }
+
 func (gt *InputObject) String() string {
 	return gt.PrivateName
 }
+
 func (gt *InputObject) Error() error {
 	return gt.err
 }
@@ -1256,18 +1332,22 @@ func NewList(ofType Type) *List {
 	gl.OfType = ofType
 	return gl
 }
+
 func (gl *List) Name() string {
 	return fmt.Sprintf("[%v]", gl.OfType)
 }
+
 func (gl *List) Description() string {
 	return ""
 }
+
 func (gl *List) String() string {
 	if gl.OfType != nil {
 		return gl.Name()
 	}
 	return ""
 }
+
 func (gl *List) Error() error {
 	return gl.err
 }
@@ -1307,18 +1387,22 @@ func NewNonNull(ofType Type) *NonNull {
 	gl.OfType = ofType
 	return gl
 }
+
 func (gl *NonNull) Name() string {
 	return fmt.Sprintf("%v!", gl.OfType)
 }
+
 func (gl *NonNull) Description() string {
 	return ""
 }
+
 func (gl *NonNull) String() string {
 	if gl.OfType != nil {
 		return gl.Name()
 	}
 	return ""
 }
+
 func (gl *NonNull) Error() error {
 	return gl.err
 }

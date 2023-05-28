@@ -62,10 +62,6 @@ func Seek(fd int, offset int64, whence int) (newoffset int64, err error) {
 //sys	Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (n int, err error) = SYS__NEWSELECT
 //sys	setfsgid(gid int) (prev int, err error) = SYS_SETFSGID32
 //sys	setfsuid(uid int) (prev int, err error) = SYS_SETFSUID32
-//sysnb	Setregid(rgid int, egid int) (err error) = SYS_SETREGID32
-//sysnb	Setresgid(rgid int, egid int, sgid int) (err error) = SYS_SETRESGID32
-//sysnb	Setresuid(ruid int, euid int, suid int) (err error) = SYS_SETRESUID32
-//sysnb	Setreuid(ruid int, euid int) (err error) = SYS_SETREUID32
 //sys	Shutdown(fd int, how int) (err error)
 //sys	Splice(rfd int, roff *int64, wfd int, woff *int64, len int, flags int) (n int, err error)
 //sys	Stat(path string, stat *Stat_t) (err error) = SYS_STAT64
@@ -147,6 +143,7 @@ type rlimit32 struct {
 //sysnb	getrlimit(resource int, rlim *rlimit32) (err error) = SYS_UGETRLIMIT
 
 const rlimInf32 = ^uint32(0)
+
 const rlimInf64 = ^uint64(0)
 
 func Getrlimit(resource int, rlim *Rlimit) (err error) {

@@ -30,6 +30,7 @@ type resolveMapItem struct {
 }
 
 var resolveTable = make([]byte, 256)
+
 var resolveMap = make(map[string]resolveMapItem)
 
 func init() {
@@ -81,6 +82,7 @@ const (
 )
 
 var longTags = make(map[string]string)
+
 var shortTags = make(map[string]string)
 
 func init() {

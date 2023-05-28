@@ -44,8 +44,7 @@
 // "google.golang.org/protobuf/encoding/protojson" package
 // ensures that they will be serialized as their JSON equivalent.
 //
-//
-// Conversion to and from a Go interface
+// # Conversion to and from a Go interface
 //
 // The standard Go "encoding/json" package has functionality to serialize
 // arbitrary types to a large degree. The Value.AsInterface, Struct.AsMap, and
@@ -58,8 +57,7 @@
 // forms back as Value, Struct, and ListValue messages, use the NewStruct,
 // NewList, and NewValue constructor functions.
 //
-//
-// Example usage
+// # Example usage
 //
 // Consider the following example JSON object:
 //
@@ -118,24 +116,24 @@
 //		... // handle error
 //	}
 //	... // make use of m as a *structpb.Value
-//
 package structpb
 
 import (
 	base64 "encoding/base64"
-	protojson "google.golang.org/protobuf/encoding/protojson"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	math "math"
 	reflect "reflect"
 	sync "sync"
 	utf8 "unicode/utf8"
+
+	protojson "google.golang.org/protobuf/encoding/protojson"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 // `NullValue` is a singleton enumeration to represent the null value for the
 // `Value` type union.
 //
-//  The JSON representation for `NullValue` is JSON `null`.
+//	The JSON representation for `NullValue` is JSON `null`.
 type NullValue int32
 
 const (
@@ -715,7 +713,9 @@ func file_google_protobuf_struct_proto_rawDescGZIP() []byte {
 }
 
 var file_google_protobuf_struct_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+
 var file_google_protobuf_struct_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+
 var file_google_protobuf_struct_proto_goTypes = []interface{}{
 	(NullValue)(0),    // 0: google.protobuf.NullValue
 	(*Struct)(nil),    // 1: google.protobuf.Struct
@@ -723,6 +723,7 @@ var file_google_protobuf_struct_proto_goTypes = []interface{}{
 	(*ListValue)(nil), // 3: google.protobuf.ListValue
 	nil,               // 4: google.protobuf.Struct.FieldsEntry
 }
+
 var file_google_protobuf_struct_proto_depIdxs = []int32{
 	4, // 0: google.protobuf.Struct.fields:type_name -> google.protobuf.Struct.FieldsEntry
 	0, // 1: google.protobuf.Value.null_value:type_name -> google.protobuf.NullValue
@@ -738,6 +739,7 @@ var file_google_protobuf_struct_proto_depIdxs = []int32{
 }
 
 func init() { file_google_protobuf_struct_proto_init() }
+
 func file_google_protobuf_struct_proto_init() {
 	if File_google_protobuf_struct_proto != nil {
 		return

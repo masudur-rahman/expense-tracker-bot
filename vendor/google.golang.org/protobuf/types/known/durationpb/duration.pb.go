@@ -35,8 +35,7 @@
 //
 // The Duration message represents a signed span of time.
 //
-//
-// Conversion to a Go Duration
+// # Conversion to a Go Duration
 //
 // The AsDuration method can be used to convert a Duration message to a
 // standard Go time.Duration value:
@@ -65,24 +64,23 @@
 // the resulting value to the closest representable value (e.g., math.MaxInt64
 // for positive overflow and math.MinInt64 for negative overflow).
 //
-//
-// Conversion from a Go Duration
+// # Conversion from a Go Duration
 //
 // The durationpb.New function can be used to construct a Duration message
 // from a standard Go time.Duration value:
 //
 //	dur := durationpb.New(d)
 //	... // make use of d as a *durationpb.Duration
-//
 package durationpb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	math "math"
 	reflect "reflect"
 	sync "sync"
 	time "time"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 // A Duration represents a signed, fixed-length span of time represented
@@ -96,43 +94,43 @@ import (
 //
 // Example 1: Compute Duration from two Timestamps in pseudo code.
 //
-//     Timestamp start = ...;
-//     Timestamp end = ...;
-//     Duration duration = ...;
+//	Timestamp start = ...;
+//	Timestamp end = ...;
+//	Duration duration = ...;
 //
-//     duration.seconds = end.seconds - start.seconds;
-//     duration.nanos = end.nanos - start.nanos;
+//	duration.seconds = end.seconds - start.seconds;
+//	duration.nanos = end.nanos - start.nanos;
 //
-//     if (duration.seconds < 0 && duration.nanos > 0) {
-//       duration.seconds += 1;
-//       duration.nanos -= 1000000000;
-//     } else if (duration.seconds > 0 && duration.nanos < 0) {
-//       duration.seconds -= 1;
-//       duration.nanos += 1000000000;
-//     }
+//	if (duration.seconds < 0 && duration.nanos > 0) {
+//	  duration.seconds += 1;
+//	  duration.nanos -= 1000000000;
+//	} else if (duration.seconds > 0 && duration.nanos < 0) {
+//	  duration.seconds -= 1;
+//	  duration.nanos += 1000000000;
+//	}
 //
 // Example 2: Compute Timestamp from Timestamp + Duration in pseudo code.
 //
-//     Timestamp start = ...;
-//     Duration duration = ...;
-//     Timestamp end = ...;
+//	Timestamp start = ...;
+//	Duration duration = ...;
+//	Timestamp end = ...;
 //
-//     end.seconds = start.seconds + duration.seconds;
-//     end.nanos = start.nanos + duration.nanos;
+//	end.seconds = start.seconds + duration.seconds;
+//	end.nanos = start.nanos + duration.nanos;
 //
-//     if (end.nanos < 0) {
-//       end.seconds -= 1;
-//       end.nanos += 1000000000;
-//     } else if (end.nanos >= 1000000000) {
-//       end.seconds += 1;
-//       end.nanos -= 1000000000;
-//     }
+//	if (end.nanos < 0) {
+//	  end.seconds -= 1;
+//	  end.nanos += 1000000000;
+//	} else if (end.nanos >= 1000000000) {
+//	  end.seconds += 1;
+//	  end.nanos -= 1000000000;
+//	}
 //
 // Example 3: Compute Duration from datetime.timedelta in Python.
 //
-//     td = datetime.timedelta(days=3, minutes=10)
-//     duration = Duration()
-//     duration.FromTimedelta(td)
+//	td = datetime.timedelta(days=3, minutes=10)
+//	duration = Duration()
+//	duration.FromTimedelta(td)
 //
 // # JSON Mapping
 //
@@ -143,8 +141,6 @@ import (
 // encoded in JSON format as "3s", while 3 seconds and 1 nanosecond should
 // be expressed in JSON format as "3.000000001s", and 3 seconds and 1
 // microsecond should be expressed in JSON format as "3.000001s".
-//
-//
 type Duration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -328,9 +324,11 @@ func file_google_protobuf_duration_proto_rawDescGZIP() []byte {
 }
 
 var file_google_protobuf_duration_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+
 var file_google_protobuf_duration_proto_goTypes = []interface{}{
 	(*Duration)(nil), // 0: google.protobuf.Duration
 }
+
 var file_google_protobuf_duration_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
@@ -340,6 +338,7 @@ var file_google_protobuf_duration_proto_depIdxs = []int32{
 }
 
 func init() { file_google_protobuf_duration_proto_init() }
+
 func file_google_protobuf_duration_proto_init() {
 	if File_google_protobuf_duration_proto != nil {
 		return

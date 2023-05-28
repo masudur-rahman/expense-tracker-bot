@@ -541,6 +541,7 @@ type conflictReason struct {
 	Name    string
 	Message interface{} // conflictReason || []conflictReason
 }
+
 type conflict struct {
 	Reason      conflictReason
 	FieldsLeft  []ast.Node
@@ -553,6 +554,7 @@ type fieldDefPair struct {
 	Field      *ast.Field
 	FieldDef   *FieldDefinition
 }
+
 type astAndDefCollection map[string][]*fieldDefPair
 
 // cache struct for fields, its order and fragments names
@@ -573,6 +575,7 @@ func newPairSet() *pairSet {
 		data: map[string]map[string]bool{},
 	}
 }
+
 func (pair *pairSet) Has(a string, b string, areMutuallyExclusive bool) bool {
 	first, ok := pair.data[a]
 	if !ok || first == nil {
@@ -590,10 +593,12 @@ func (pair *pairSet) Has(a string, b string, areMutuallyExclusive bool) bool {
 	}
 	return true
 }
+
 func (pair *pairSet) Add(a string, b string, areMutuallyExclusive bool) {
 	pair.data = pairSetAdd(pair.data, a, b, areMutuallyExclusive)
 	pair.data = pairSetAdd(pair.data, b, a, areMutuallyExclusive)
 }
+
 func pairSetAdd(data map[string]map[string]bool, a, b string, areMutuallyExclusive bool) map[string]map[string]bool {
 	set, ok := data[a]
 	if !ok || set == nil {

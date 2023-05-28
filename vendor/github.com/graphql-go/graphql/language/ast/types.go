@@ -12,7 +12,9 @@ type Type interface {
 
 // Ensure that all value types implements Value interface
 var _ Type = (*Named)(nil)
+
 var _ Type = (*List)(nil)
+
 var _ Type = (*NonNull)(nil)
 
 // Named implements Node, Type

@@ -434,7 +434,8 @@ func (sew stickyErrWriter) Write(p []byte) (n int, err error) {
 type noCachedConnError struct{}
 
 func (noCachedConnError) IsHTTP2NoCachedConnError() {}
-func (noCachedConnError) Error() string             { return "http2: no cached connection was available" }
+
+func (noCachedConnError) Error() string { return "http2: no cached connection was available" }
 
 // isNoCachedConnError reports whether err is of type noCachedConnError
 // or its equivalent renamed type in net/http2's h2_bundle.go. Both types
@@ -2907,12 +2908,14 @@ var noBody io.ReadCloser = noBodyReader{}
 
 type noBodyReader struct{}
 
-func (noBodyReader) Close() error             { return nil }
+func (noBodyReader) Close() error { return nil }
+
 func (noBodyReader) Read([]byte) (int, error) { return 0, io.EOF }
 
 type missingBody struct{}
 
-func (missingBody) Close() error             { return nil }
+func (missingBody) Close() error { return nil }
+
 func (missingBody) Read([]byte) (int, error) { return 0, io.ErrUnexpectedEOF }
 
 func strSliceContains(ss []string, s string) bool {
@@ -2926,7 +2929,8 @@ func strSliceContains(ss []string, s string) bool {
 
 type erringRoundTripper struct{ err error }
 
-func (rt erringRoundTripper) RoundTripErr() error                             { return rt.err }
+func (rt erringRoundTripper) RoundTripErr() error { return rt.err }
+
 func (rt erringRoundTripper) RoundTrip(*http.Request) (*http.Response, error) { return nil, rt.err }
 
 // gzipReader wraps a response body so it can lazily

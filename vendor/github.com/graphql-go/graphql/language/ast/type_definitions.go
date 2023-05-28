@@ -19,10 +19,15 @@ type TypeDefinition interface {
 }
 
 var _ TypeDefinition = (*ScalarDefinition)(nil)
+
 var _ TypeDefinition = (*ObjectDefinition)(nil)
+
 var _ TypeDefinition = (*InterfaceDefinition)(nil)
+
 var _ TypeDefinition = (*UnionDefinition)(nil)
+
 var _ TypeDefinition = (*EnumDefinition)(nil)
+
 var _ TypeDefinition = (*InputObjectDefinition)(nil)
 
 type TypeSystemDefinition interface {
@@ -34,8 +39,11 @@ type TypeSystemDefinition interface {
 }
 
 var _ TypeSystemDefinition = (*SchemaDefinition)(nil)
+
 var _ TypeSystemDefinition = (TypeDefinition)(nil)
+
 var _ TypeSystemDefinition = (*TypeExtensionDefinition)(nil)
+
 var _ TypeSystemDefinition = (*DirectiveDefinition)(nil)
 
 // SchemaDefinition implements Node, Definition

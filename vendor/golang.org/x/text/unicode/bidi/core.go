@@ -275,8 +275,10 @@ type directionalStatusStack struct {
 	isolateStatusStack  [maxDepth + 1]bool
 }
 
-func (s *directionalStatusStack) empty()     { s.stackCounter = 0 }
-func (s *directionalStatusStack) pop()       { s.stackCounter-- }
+func (s *directionalStatusStack) empty() { s.stackCounter = 0 }
+
+func (s *directionalStatusStack) pop() { s.stackCounter-- }
+
 func (s *directionalStatusStack) depth() int { return s.stackCounter }
 
 func (s *directionalStatusStack) push(level level, overrideStatus Class, isolateStatus bool) {

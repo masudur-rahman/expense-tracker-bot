@@ -214,6 +214,7 @@ type stringWriter interface {
 type gate chan struct{}
 
 func (g gate) Done() { g <- struct{}{} }
+
 func (g gate) Wait() { <-g }
 
 // A closeWaiter is like a sync.WaitGroup but only goes 1 to 0 (open to closed).
@@ -319,8 +320,10 @@ type httpError struct {
 	timeout bool
 }
 
-func (e *httpError) Error() string   { return e.msg }
-func (e *httpError) Timeout() bool   { return e.timeout }
+func (e *httpError) Error() string { return e.msg }
+
+func (e *httpError) Timeout() bool { return e.timeout }
+
 func (e *httpError) Temporary() bool { return true }
 
 var errTimeout error = &httpError{msg: "http2: timeout awaiting response headers", timeout: true}
@@ -335,8 +338,10 @@ type sorter struct {
 	v []string // owned by sorter
 }
 
-func (s *sorter) Len() int           { return len(s.v) }
-func (s *sorter) Swap(i, j int)      { s.v[i], s.v[j] = s.v[j], s.v[i] }
+func (s *sorter) Len() int { return len(s.v) }
+
+func (s *sorter) Swap(i, j int) { s.v[i], s.v[j] = s.v[j], s.v[i] }
+
 func (s *sorter) Less(i, j int) bool { return s.v[i] < s.v[j] }
 
 // Keys returns the sorted keys of h.

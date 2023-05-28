@@ -294,7 +294,8 @@ const (
 	indexedNever
 )
 
-func (v indexType) indexed() bool   { return v == indexedTrue }
+func (v indexType) indexed() bool { return v == indexedTrue }
+
 func (v indexType) sensitive() bool { return v == indexedNever }
 
 // returns errNeedMore if there isn't enough data available.

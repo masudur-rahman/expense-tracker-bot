@@ -31,6 +31,7 @@ import (
 )
 
 var errBalancerClosed = errors.New("gracefulSwitchBalancer is closed")
+
 var _ balancer.Balancer = (*Balancer)(nil)
 
 // NewBalancer returns a graceful switch Balancer.

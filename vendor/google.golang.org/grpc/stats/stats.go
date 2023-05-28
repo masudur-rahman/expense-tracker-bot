@@ -237,6 +237,7 @@ func (s *ConnEnd) IsClient() bool { return s.Client }
 func (s *ConnEnd) isConnStats() {}
 
 type incomingTagsKey struct{}
+
 type outgoingTagsKey struct{}
 
 // SetTags attaches stats tagging data to the context, which will be sent in
@@ -279,6 +280,7 @@ func OutgoingTags(ctx context.Context) []byte {
 }
 
 type incomingTraceKey struct{}
+
 type outgoingTraceKey struct{}
 
 // SetTrace attaches stats tagging data to the context, which will be sent in

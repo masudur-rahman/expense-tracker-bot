@@ -47,4 +47,5 @@ func (m *RawSlice) UnmarshalVPack(data Slice) error {
 }
 
 var _ Marshaler = (*RawSlice)(nil)
+
 var _ Unmarshaler = (*RawSlice)(nil)

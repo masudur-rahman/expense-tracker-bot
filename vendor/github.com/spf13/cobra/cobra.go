@@ -40,6 +40,7 @@ var templateFuncs = template.FuncMap{
 }
 
 var initializers []func()
+
 var finalizers []func()
 
 const (

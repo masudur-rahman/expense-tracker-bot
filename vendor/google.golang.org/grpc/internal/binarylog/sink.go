@@ -50,7 +50,8 @@ type Sink interface {
 type noopSink struct{}
 
 func (ns *noopSink) Write(*pb.GrpcLogEntry) error { return nil }
-func (ns *noopSink) Close() error                 { return nil }
+
+func (ns *noopSink) Close() error { return nil }
 
 // newWriterSink creates a binary log sink with the given writer.
 //
