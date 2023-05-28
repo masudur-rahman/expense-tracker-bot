@@ -23,7 +23,7 @@ func Hello(ctx telebot.Context) error {
 	return ctx.Send(fmt.Sprintf("Hello %v!", ctx.Sender().Username))
 }
 
-func AddNewExpense(svc *all.Services) func(ctx telebot.Context) error {
+func AddNewExpense(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		str := pkg.SplitString(ctx.Text(), ' ')
 		var err error
@@ -45,7 +45,7 @@ Format: /add <amount> <description>
 			Description: strings.Join(str[2:], " "),
 		}
 
-		pkg.Print(params)
+		printer.PrintDocument(params)
 		if err = svc.Expense.AddExpense(params); err != nil {
 			return err
 		}
@@ -57,14 +57,15 @@ New Expense entry added.
 	}
 }
 
-func ListExpenses(svc *all.Services) func(ctx telebot.Context) error {
+func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		expenses, err := svc.Expense.ListExpenses()
 		if err != nil {
 			return err
 		}
 
-		pkg.Print(expenses)
+		out := printer.PrintDocuments(expenses)
+		fmt.Printf("\n%v\n", out)
 		buf := bytes.Buffer{}
 		w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 		fmt.Fprintln(w, "Description\tAmount\tTime")
