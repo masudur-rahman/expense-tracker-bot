@@ -162,13 +162,14 @@ func (c *ChatMemberUpdate) Time() time.Time {
 //
 // Example:
 //
-//	group := tele.ChatID(-100756389456)
-//	b.Send(group, "Hello!")
+//		group := tele.ChatID(-100756389456)
+//		b.Send(group, "Hello!")
 //
-//	type Config struct {
-//		AdminGroup tele.ChatID `json:"admin_group"`
-//	}
-//	b.Send(conf.AdminGroup, "Hello!")
+//		type Config struct {
+//			AdminGroup tele.ChatID `json:"admin_group"`
+//		}
+//		b.Send(conf.AdminGroup, "Hello!")
+//
 type ChatID int64
 
 // Recipient returns chat ID (see Recipient interface).

@@ -141,7 +141,6 @@ type FileDescriptor interface {
 
 	isFileDescriptor
 }
-
 type isFileDescriptor interface{ ProtoType(FileDescriptor) }
 
 // FileImports is a list of file imports.
@@ -230,7 +229,6 @@ type MessageDescriptor interface {
 
 	isMessageDescriptor
 }
-
 type isMessageDescriptor interface{ ProtoType(MessageDescriptor) }
 
 // MessageType encapsulates a MessageDescriptor with a concrete Go implementation.
@@ -390,7 +388,6 @@ type FieldDescriptor interface {
 
 	isFieldDescriptor
 }
-
 type isFieldDescriptor interface{ ProtoType(FieldDescriptor) }
 
 // FieldDescriptors is a list of field declarations.
@@ -430,7 +427,6 @@ type OneofDescriptor interface {
 
 	isOneofDescriptor
 }
-
 type isOneofDescriptor interface{ ProtoType(OneofDescriptor) }
 
 // OneofDescriptors is a list of oneof declarations.
@@ -550,7 +546,6 @@ type EnumDescriptor interface {
 
 	isEnumDescriptor
 }
-
 type isEnumDescriptor interface{ ProtoType(EnumDescriptor) }
 
 // EnumType encapsulates an EnumDescriptor with a concrete Go implementation.
@@ -593,7 +588,6 @@ type EnumValueDescriptor interface {
 
 	isEnumValueDescriptor
 }
-
 type isEnumValueDescriptor interface{ ProtoType(EnumValueDescriptor) }
 
 // EnumValueDescriptors is a list of enum value declarations.
@@ -625,7 +619,6 @@ type ServiceDescriptor interface {
 
 	isServiceDescriptor
 }
-
 type isServiceDescriptor interface{ ProtoType(ServiceDescriptor) }
 
 // ServiceDescriptors is a list of service declarations.
@@ -657,7 +650,6 @@ type MethodDescriptor interface {
 
 	isMethodDescriptor
 }
-
 type isMethodDescriptor interface{ ProtoType(MethodDescriptor) }
 
 // MethodDescriptors is a list of method declarations.

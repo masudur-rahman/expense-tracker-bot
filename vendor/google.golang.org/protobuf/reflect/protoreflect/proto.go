@@ -92,11 +92,22 @@
 //
 // • A MessageType describes a concrete Go message type.
 // It has a MessageDescriptor and can construct a Message instance.
+// Just as how Go's reflect.Type is a reflective description of a Go type,
+// a MessageType is a reflective description of a Go type for a protobuf message.
 //
 // • A MessageDescriptor describes an abstract protobuf message type.
+// It has no understanding of Go types. In order to construct a MessageType
+// from just a MessageDescriptor, you can consider looking up the message type
+// in the global registry using protoregistry.GlobalTypes.FindMessageByName
+// or constructing a dynamic MessageType using dynamicpb.NewMessageType.
 //
-// • A Message is a concrete message instance. Generated messages implement
-// ProtoMessage, which can convert to/from a Message.
+// • A Message is a reflective view over a concrete message instance.
+// Generated messages implement ProtoMessage, which can convert to a Message.
+// Just as how Go's reflect.Value is a reflective view over a Go value,
+// a Message is a reflective view over a concrete protobuf message instance.
+// Using Go reflection as an analogy, the ProtoReflect method is similar to
+// calling reflect.ValueOf, and the Message.Interface method is similar to
+// calling reflect.Value.Interface.
 //
 //	      ┌── TypeDescriptor() ──┐    ┌───── Descriptor() ─────┐
 //	      │                      V    │                        V
@@ -461,11 +472,9 @@ func consumeIdent(s string) (i int) {
 	}
 	return i
 }
-
 func isLetter(c byte) bool {
 	return c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')
 }
-
 func isLetterDigit(c byte) bool {
 	return isLetter(c) || ('0' <= c && c <= '9')
 }

@@ -64,7 +64,6 @@ func (ti *TypeInfo) InputType() Input {
 	}
 	return nil
 }
-
 func (ti *TypeInfo) FieldDef() *FieldDefinition {
 	if len(ti.fieldDefStack) > 0 {
 		return ti.fieldDefStack[len(ti.fieldDefStack)-1]
@@ -188,7 +187,6 @@ func (ti *TypeInfo) Enter(node ast.Node) {
 		ti.inputTypeStack = append(ti.inputTypeStack, fieldType)
 	}
 }
-
 func (ti *TypeInfo) Leave(node ast.Node) {
 	kind := node.GetKind()
 	switch kind {

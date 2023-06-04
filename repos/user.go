@@ -3,11 +3,10 @@ package repos
 import "github.com/masudur-rahman/expense-tracker-bot/models"
 
 type UserRepository interface {
-	FindByID(id string) (*models.User, error)
-	FindByName(username string) (*models.User, error)
-	FindByEmail(email string) (*models.User, error)
-	FindUsers(filter models.User) ([]*models.User, error)
-	Create(user *models.User) error
-	Update(user *models.User) error
-	Delete(id string) error
+	GetUserByID(id string) (*models.User, error)
+	GetUserByName(username string) (*models.User, error)
+	ListUsers() ([]*models.User, error)
+	AddNewUser(user *models.User) error
+	UpdateUserBalance(username string, amount float64) error
+	DeleteUser(username string) error
 }

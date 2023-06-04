@@ -31,7 +31,6 @@ func printCharCode(code rune) string {
 	// Otherwise print the escaped form. e.g. `"\\u0007"`
 	return fmt.Sprintf(`\u%04X`, code)
 }
-
 func printLine(str string) string {
 	strSlice := []string{}
 	for _, runeValue := range str {
@@ -39,7 +38,6 @@ func printLine(str string) string {
 	}
 	return fmt.Sprintf(`%s`, strings.Join(strSlice, ""))
 }
-
 func highlightSourceAtLocation(s *source.Source, l location.SourceLocation) string {
 	line := l.Line
 	prevLineNum := fmt.Sprintf("%d", (line - 1))

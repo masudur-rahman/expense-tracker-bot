@@ -23,6 +23,42 @@ func Hello(ctx telebot.Context) error {
 	return ctx.Send(fmt.Sprintf("Hello %v!", ctx.Sender().Username))
 }
 
+func Test(ctx telebot.Context) error {
+	return ctx.Send("Choose one: ", &telebot.SendOptions{
+		ReplyTo: ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: [][]telebot.InlineButton{
+				{
+					telebot.InlineButton{Text: "Hello"},
+					telebot.InlineButton{Text: "Bye"},
+				},
+			},
+			ReplyKeyboard: [][]telebot.ReplyButton{
+				{
+					telebot.ReplyButton{Text: "Option 1"},
+					telebot.ReplyButton{Text: "Option 2"},
+				},
+				{
+					telebot.ReplyButton{Text: "Option 3"},
+					telebot.ReplyButton{Text: "Cancel"},
+				},
+			},
+			ForceReply:      true,
+			ResizeKeyboard:  true,
+			OneTimeKeyboard: true,
+			RemoveKeyboard:  true,
+			Selective:       false,
+			Placeholder:     "",
+		},
+		DisableWebPagePreview: false,
+		DisableNotification:   false,
+		ParseMode:             "",
+		Entities:              nil,
+		AllowWithoutReply:     false,
+		Protected:             false,
+	})
+}
+
 func AddNewExpense(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		str := pkg.SplitString(ctx.Text(), ' ')

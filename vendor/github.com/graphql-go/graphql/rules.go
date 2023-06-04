@@ -45,7 +45,6 @@ var SpecifiedRules = []ValidationRuleFn{
 type ValidationRuleInstance struct {
 	VisitorOpts *visitor.VisitorOptions
 }
-
 type ValidationRuleFn func(context *ValidationContext) *ValidationRuleInstance
 
 func newValidationError(message string, nodes []ast.Node) *gqlerrors.Error {
@@ -164,7 +163,6 @@ func DefaultValuesOfCorrectTypeRule(context *ValidationContext) *ValidationRuleI
 		VisitorOpts: visitorOpts,
 	}
 }
-
 func quoteStrings(slice []string) []string {
 	quoted := []string{}
 	for _, s := range slice {
@@ -192,7 +190,6 @@ func quotedOrList(slice []string) string {
 	}
 	return quoted[0]
 }
-
 func UndefinedFieldMessage(fieldName string, ttypeName string, suggestedTypeNames []string, suggestedFieldNames []string) string {
 	message := fmt.Sprintf(`Cannot query field "%v" on type "%v".`, fieldName, ttypeName)
 	if len(suggestedTypeNames) > 0 {
@@ -350,17 +347,14 @@ type suggestedInterface struct {
 	name  string
 	count int
 }
-
 type suggestedInterfaceSortedSlice []*suggestedInterface
 
 func (s suggestedInterfaceSortedSlice) Len() int {
 	return len(s)
 }
-
 func (s suggestedInterfaceSortedSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
-
 func (s suggestedInterfaceSortedSlice) Less(i, j int) bool {
 	if s[i].count == s[j].count {
 		return s[i].name < s[j].name
@@ -1824,11 +1818,9 @@ type suggestionListResult struct {
 func (s suggestionListResult) Len() int {
 	return len(s.Options)
 }
-
 func (s suggestionListResult) Swap(i, j int) {
 	s.Options[i], s.Options[j] = s.Options[j], s.Options[i]
 }
-
 func (s suggestionListResult) Less(i, j int) bool {
 	return s.Distances[i] < s.Distances[j]
 }

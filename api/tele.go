@@ -27,6 +27,7 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 
 	bot.Handle("/", handlers.Welcome)
 	bot.Handle("/hello", handlers.Hello)
+	bot.Handle("/test", handlers.Test)
 	bot.Handle("/add", handlers.AddNewExpense(printer, svc))
 	bot.Handle("/list", handlers.ListExpenses(printer, svc))
 

@@ -1,29 +1,27 @@
 package user
 
 import (
-	"fmt"
-	"net/http"
+	"time"
 
-	"github.com/masudur-rahman/expense-tracker-bot/infra/database/nosql"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
-	"github.com/rs/xid"
+	isql "github.com/masudur-rahman/database/sql"
 )
 
-type NoSQLUserRepository struct {
-	db     nosql.Database
+type SQLUserRepository struct {
+	db     isql.Database
 	logger logr.Logger
 }
 
-func NewNoSQLUserRepository(db nosql.Database, logger logr.Logger) *NoSQLUserRepository {
-	return &NoSQLUserRepository{
-		db:     db.Collection("user"),
+func NewSQLUserRepository(db isql.Database, logger logr.Logger) *SQLUserRepository {
+	return &SQLUserRepository{
+		db:     db.Table("user"),
 		logger: logger,
 	}
 }
 
-func (u *NoSQLUserRepository) FindByID(id string) (*models.User, error) {
+func (u *SQLUserRepository) GetUserByID(id string) (*models.User, error) {
 	u.logger.Infow("finding user by id", "id", id)
 	var user models.User
 	found, err := u.db.ID(id).FindOne(&user)
@@ -36,10 +34,10 @@ func (u *NoSQLUserRepository) FindByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-func (u *NoSQLUserRepository) FindByName(username string) (*models.User, error) {
+func (u *SQLUserRepository) GetUserByName(username string) (*models.User, error) {
 	u.logger.Infow("finding user by name", "name", username)
 	filter := models.User{
-		Username: username,
+		Name: username,
 	}
 	var user models.User
 	found, err := u.db.FindOne(&user, filter)
@@ -52,53 +50,32 @@ func (u *NoSQLUserRepository) FindByName(username string) (*models.User, error) 
 	return &user, nil
 }
 
-func (u *NoSQLUserRepository) FindByEmail(email string) (*models.User, error) {
-	u.logger.Infow("finding user by email", "email", email)
-	filter := models.User{
-		Email: email,
-	}
-	var user models.User
-	found, err := u.db.FindOne(&user, filter)
-	if err != nil {
-		return nil, err
-	}
-	if !found {
-		return nil, models.ErrUserNotFound{Email: email}
-	}
-	return &user, nil
-}
-
-func (u *NoSQLUserRepository) FindUsers(filter models.User) ([]*models.User, error) {
-	u.logger.Infow("finding users by filter", "filter", fmt.Sprintf("%+v", filter))
-	users := make([]*models.User, 0)
-	err := u.db.FindMany(&users, filter)
-	return users, err
-}
-
-func (u *NoSQLUserRepository) Create(user *models.User) error {
-	u.logger.Infow("creating user")
-	if user.ID == "" {
-		user.ID = xid.New().String()
-	}
-	user.XKey = user.ID
-	id, err := u.db.InsertOne(user)
-	u.logger.Infow("user created", "id", id)
-	return err
-}
-
-func (u *NoSQLUserRepository) Update(user *models.User) error {
+func (u *SQLUserRepository) UpdateUserBalance(username string, txnAmount float64) error {
 	u.logger.Infow("updating user")
-	if user.ID == "" {
-		return models.StatusError{
-			Status:  http.StatusBadRequest,
-			Message: "user id missing",
-		}
+	user, err := u.GetUserByName(username)
+	if err != nil {
+		return err
 	}
+
+	user.Balance += txnAmount
+	user.LastTxnTimestamp = time.Now().Unix()
 
 	return u.db.ID(user.ID).UpdateOne(user)
 }
 
-func (u *NoSQLUserRepository) Delete(id string) error {
-	u.logger.Infow("deleting user by id", "id", id)
-	return u.db.ID(id).DeleteOne()
+func (u *SQLUserRepository) AddNewUser(user *models.User) error {
+	_, err := u.db.InsertOne(user)
+	return err
+}
+
+func (u *SQLUserRepository) ListUsers() ([]*models.User, error) {
+	u.logger.Infow("listing users")
+	users := make([]*models.User, 0)
+	err := u.db.FindMany(&users, models.User{})
+	return users, err
+}
+
+func (u *SQLUserRepository) DeleteUser(username string) error {
+	u.logger.Infow("deleting user", "name", username)
+	return u.db.DeleteOne(models.User{Name: username})
 }

@@ -20,10 +20,11 @@ import (
 	"log"
 
 	"github.com/masudur-rahman/expense-tracker-bot/api"
-	"github.com/masudur-rahman/expense-tracker-bot/infra/database/sql"
-	"github.com/masudur-rahman/expense-tracker-bot/infra/database/sql/supabase"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
+
+	"github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/database/sql/supabase"
 
 	"github.com/spf13/cobra"
 )

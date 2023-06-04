@@ -118,6 +118,17 @@ func (err ErrPetAdoptionNotFound) Error() string {
 	}.Error()
 }
 
+type ErrAccountNotFound struct {
+	AccID string
+}
+
+func (err ErrAccountNotFound) Error() string {
+	return StatusError{
+		Status:  http.StatusNotFound,
+		Message: fmt.Sprintf("account not found for id: %v", err.AccID),
+	}.Error()
+}
+
 func IsErrNotFound(err error) bool {
 	switch err.(type) {
 	case ErrUserNotFound:
@@ -127,6 +138,8 @@ func IsErrNotFound(err error) bool {
 	case ErrPetNotFound:
 		return true
 	case ErrPetAdoptionNotFound:
+		return true
+	case ErrAccountNotFound:
 		return true
 	default:
 		return false

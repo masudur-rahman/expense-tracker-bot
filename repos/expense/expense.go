@@ -1,9 +1,10 @@
 package expense
 
 import (
-	isql "github.com/masudur-rahman/expense-tracker-bot/infra/database/sql"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+
+	isql "github.com/masudur-rahman/database/sql"
 
 	"github.com/rs/xid"
 )

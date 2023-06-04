@@ -120,14 +120,13 @@ package structpb
 
 import (
 	base64 "encoding/base64"
+	protojson "google.golang.org/protobuf/encoding/protojson"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	math "math"
 	reflect "reflect"
 	sync "sync"
 	utf8 "unicode/utf8"
-
-	protojson "google.golang.org/protobuf/encoding/protojson"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 // `NullValue` is a singleton enumeration to represent the null value for the
@@ -216,8 +215,9 @@ func NewStruct(v map[string]interface{}) (*Struct, error) {
 // AsMap converts x to a general-purpose Go map.
 // The map values are converted by calling Value.AsInterface.
 func (x *Struct) AsMap() map[string]interface{} {
-	vs := make(map[string]interface{})
-	for k, v := range x.GetFields() {
+	f := x.GetFields()
+	vs := make(map[string]interface{}, len(f))
+	for k, v := range f {
 		vs[k] = v.AsInterface()
 	}
 	return vs
@@ -272,8 +272,8 @@ func (x *Struct) GetFields() map[string]*Value {
 
 // `Value` represents a dynamically typed value which can be either
 // null, a number, a string, a boolean, a recursive struct value, or a
-// list of values. A producer of value is expected to set one of that
-// variants, absence of any variant indicates an error.
+// list of values. A producer of value is expected to set one of these
+// variants. Absence of any variant indicates an error.
 //
 // The JSON representation for `Value` is JSON value.
 type Value struct {
@@ -284,6 +284,7 @@ type Value struct {
 	// The kind of value.
 	//
 	// Types that are assignable to Kind:
+	//
 	//	*Value_NullValue
 	//	*Value_NumberValue
 	//	*Value_StringValue
@@ -594,8 +595,9 @@ func NewList(v []interface{}) (*ListValue, error) {
 // AsSlice converts x to a general-purpose Go slice.
 // The slice elements are converted by calling Value.AsInterface.
 func (x *ListValue) AsSlice() []interface{} {
-	vs := make([]interface{}, len(x.GetValues()))
-	for i, v := range x.GetValues() {
+	vals := x.GetValues()
+	vs := make([]interface{}, len(vals))
+	for i, v := range vals {
 		vs[i] = v.AsInterface()
 	}
 	return vs
@@ -713,9 +715,7 @@ func file_google_protobuf_struct_proto_rawDescGZIP() []byte {
 }
 
 var file_google_protobuf_struct_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-
 var file_google_protobuf_struct_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-
 var file_google_protobuf_struct_proto_goTypes = []interface{}{
 	(NullValue)(0),    // 0: google.protobuf.NullValue
 	(*Struct)(nil),    // 1: google.protobuf.Struct
@@ -723,7 +723,6 @@ var file_google_protobuf_struct_proto_goTypes = []interface{}{
 	(*ListValue)(nil), // 3: google.protobuf.ListValue
 	nil,               // 4: google.protobuf.Struct.FieldsEntry
 }
-
 var file_google_protobuf_struct_proto_depIdxs = []int32{
 	4, // 0: google.protobuf.Struct.fields:type_name -> google.protobuf.Struct.FieldsEntry
 	0, // 1: google.protobuf.Value.null_value:type_name -> google.protobuf.NullValue
@@ -739,7 +738,6 @@ var file_google_protobuf_struct_proto_depIdxs = []int32{
 }
 
 func init() { file_google_protobuf_struct_proto_init() }
-
 func file_google_protobuf_struct_proto_init() {
 	if File_google_protobuf_struct_proto != nil {
 		return

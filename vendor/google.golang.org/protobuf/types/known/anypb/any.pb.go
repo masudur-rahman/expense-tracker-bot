@@ -115,14 +115,13 @@
 package anypb
 
 import (
-	reflect "reflect"
-	strings "strings"
-	sync "sync"
-
 	proto "google.golang.org/protobuf/proto"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoregistry "google.golang.org/protobuf/reflect/protoregistry"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	strings "strings"
+	sync "sync"
 )
 
 // `Any` contains an arbitrary serialized protocol buffer message along with a
@@ -143,35 +142,39 @@ import (
 //
 // Example 2: Pack and unpack a message in Java.
 //
-//	   Foo foo = ...;
-//	   Any any = Any.pack(foo);
-//	   ...
-//	   if (any.is(Foo.class)) {
-//	     foo = any.unpack(Foo.class);
-//	   }
+//	Foo foo = ...;
+//	Any any = Any.pack(foo);
+//	...
+//	if (any.is(Foo.class)) {
+//	  foo = any.unpack(Foo.class);
+//	}
+//	// or ...
+//	if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+//	  foo = any.unpack(Foo.getDefaultInstance());
+//	}
 //
-//	Example 3: Pack and unpack a message in Python.
+// Example 3: Pack and unpack a message in Python.
 //
-//	   foo = Foo(...)
-//	   any = Any()
-//	   any.Pack(foo)
-//	   ...
-//	   if any.Is(Foo.DESCRIPTOR):
-//	     any.Unpack(foo)
-//	     ...
+//	foo = Foo(...)
+//	any = Any()
+//	any.Pack(foo)
+//	...
+//	if any.Is(Foo.DESCRIPTOR):
+//	  any.Unpack(foo)
+//	  ...
 //
-//	Example 4: Pack and unpack a message in Go
+// Example 4: Pack and unpack a message in Go
 //
-//	    foo := &pb.Foo{...}
-//	    any, err := anypb.New(foo)
-//	    if err != nil {
-//	      ...
-//	    }
-//	    ...
-//	    foo := &pb.Foo{}
-//	    if err := any.UnmarshalTo(foo); err != nil {
-//	      ...
-//	    }
+//	foo := &pb.Foo{...}
+//	any, err := anypb.New(foo)
+//	if err != nil {
+//	  ...
+//	}
+//	...
+//	foo := &pb.Foo{}
+//	if err := any.UnmarshalTo(foo); err != nil {
+//	  ...
+//	}
 //
 // The pack methods provided by protobuf library will by default use
 // 'type.googleapis.com/full.type.name' as the type URL and the unpack
@@ -179,8 +182,8 @@ import (
 // in the type URL, for example "foo.bar.com/x/y.z" will yield type
 // name "y.z".
 //
-// JSON
-// ====
+// # JSON
+//
 // The JSON representation of an `Any` value uses the regular
 // representation of the deserialized, embedded message, with an
 // additional field `@type` which contains the type URL. Example:
@@ -223,14 +226,14 @@ type Any struct {
 	// scheme `http`, `https`, or no scheme, one can optionally set up a type
 	// server that maps type URLs to message definitions as follows:
 	//
-	// * If no scheme is provided, `https` is assumed.
-	// * An HTTP GET on the URL must yield a [google.protobuf.Type][]
-	//   value in binary format, or produce an error.
-	// * Applications are allowed to cache lookup results based on the
-	//   URL, or have them precompiled into a binary to avoid any
-	//   lookup. Therefore, binary compatibility needs to be preserved
-	//   on changes to types. (Use versioned type names to manage
-	//   breaking changes.)
+	//   - If no scheme is provided, `https` is assumed.
+	//   - An HTTP GET on the URL must yield a [google.protobuf.Type][]
+	//     value in binary format, or produce an error.
+	//   - Applications are allowed to cache lookup results based on the
+	//     URL, or have them precompiled into a binary to avoid any
+	//     lookup. Therefore, binary compatibility needs to be preserved
+	//     on changes to types. (Use versioned type names to manage
+	//     breaking changes.)
 	//
 	// Note: this functionality is not currently available in the official
 	// protobuf release, and it is not used for type URLs beginning with
@@ -238,7 +241,6 @@ type Any struct {
 	//
 	// Schemes other than `http`, `https` (or the empty scheme) might be
 	// used with implementation specific semantics.
-	//
 	TypeUrl string `protobuf:"bytes,1,opt,name=type_url,json=typeUrl,proto3" json:"type_url,omitempty"`
 	// Must be a valid serialized protocol buffer of the above specified type.
 	Value []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
@@ -442,11 +444,9 @@ func file_google_protobuf_any_proto_rawDescGZIP() []byte {
 }
 
 var file_google_protobuf_any_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-
 var file_google_protobuf_any_proto_goTypes = []interface{}{
 	(*Any)(nil), // 0: google.protobuf.Any
 }
-
 var file_google_protobuf_any_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
@@ -456,7 +456,6 @@ var file_google_protobuf_any_proto_depIdxs = []int32{
 }
 
 func init() { file_google_protobuf_any_proto_init() }
-
 func file_google_protobuf_any_proto_init() {
 	if File_google_protobuf_any_proto != nil {
 		return
