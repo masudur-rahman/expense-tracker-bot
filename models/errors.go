@@ -129,6 +129,17 @@ func (err ErrAccountNotFound) Error() string {
 	}.Error()
 }
 
+type ErrAccountAlreadyExist struct {
+	AccID string
+}
+
+func (err ErrAccountAlreadyExist) Error() string {
+	return StatusError{
+		Status:  http.StatusConflict,
+		Message: fmt.Sprintf("account already exist with id: %v", err.AccID),
+	}.Error()
+}
+
 func IsErrNotFound(err error) bool {
 	switch err.(type) {
 	case ErrUserNotFound:

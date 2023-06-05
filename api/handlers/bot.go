@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -16,7 +17,10 @@ import (
 )
 
 func Welcome(ctx telebot.Context) error {
-	return ctx.Send("Welcome to Expense Tracker !")
+	return ctx.Send(`Welcome to Expense Tracker !
+Available options are:
+/new <type> <unique-name> <Account Name>
+`)
 }
 
 func Hello(ctx telebot.Context) error {
@@ -59,6 +63,30 @@ func Test(ctx telebot.Context) error {
 	})
 }
 
+func AddAccount(svc *all.Services) func(ctx telebot.Context) error {
+	return func(ctx telebot.Context) error {
+		// <type (Cash or Bank)> <unique-short-name> <Account Name>
+		aci := pkg.SplitString(ctx.Text(), ' ')
+		if len(aci) != 4 {
+			return ctx.Send(`
+Syntax unknown.
+Format /new <type> <unique-name> <Account Name>
+`)
+		}
+		acc := &models.Account{
+			ID:   aci[2],
+			Type: models.AccountType(aci[1]),
+			Name: aci[3],
+		}
+		if err := svc.Account.CreateAccount(acc); err != nil {
+			log.Println(err)
+			return ctx.Send(err.Error())
+		}
+
+		return ctx.Send("New Account Added !")
+	}
+}
+
 func AddNewExpense(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		str := pkg.SplitString(ctx.Text(), ' ')
@@ -82,9 +110,9 @@ Format: /add <amount> <description>
 		}
 
 		printer.PrintDocument(params)
-		if err = svc.Expense.AddExpense(params); err != nil {
-			return err
-		}
+		//if err = svc.Expense.AddExpense(params); err != nil {
+		//	return err
+		//}
 
 		return ctx.Send(fmt.Sprintf(`
 New Expense entry added.
@@ -93,20 +121,20 @@ New Expense entry added.
 	}
 }
 
-func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		expenses, err := svc.Expense.ListExpenses()
-		if err != nil {
-			return err
-		}
-
-		printer.WithExceptColumns([]string{"ID"})
-		defer printer.ClearColumns()
-		printer.PrintDocuments(expenses)
-
-		return ctx.Send(generateTelegramResponse(expenses))
-	}
-}
+//func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
+//	return func(ctx telebot.Context) error {
+//		expenses, err := svc.Expense.ListExpenses()
+//		if err != nil {
+//			return err
+//		}
+//
+//		printer.WithExceptColumns([]string{"ID"})
+//		defer printer.ClearColumns()
+//		printer.PrintDocuments(expenses)
+//
+//		return ctx.Send(generateTelegramResponse(expenses))
+//	}
+//}
 
 func generateTelegramResponse(expenses []*models.Expense) string {
 	buf := bytes.Buffer{}

@@ -7,6 +7,7 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
 	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/go-oneliners"
 )
 
 type SQLAccountsRepository struct {
@@ -50,7 +51,15 @@ func (a *SQLAccountsRepository) ListAccountsByType(typ models.AccountType) ([]mo
 
 func (a *SQLAccountsRepository) AddNewAccount(account *models.Account) error {
 	a.logger.Infow("add new account", "name", account.Name)
-	_, err := a.db.InsertOne(account)
+	oneliners.PrettyJson(account, "Account")
+	_, err := a.GetAccountByID(account.ID)
+	if err == nil {
+		return models.ErrAccountAlreadyExist{AccID: account.ID}
+	} else if !models.IsErrNotFound(err) {
+		return err
+	}
+
+	_, err = a.db.InsertOne(account)
 	return err
 }
 

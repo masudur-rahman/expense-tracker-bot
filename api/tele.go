@@ -5,10 +5,8 @@ import (
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/api/handlers"
-	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
-	"github.com/jedib0t/go-pretty/v6/table"
 	"gopkg.in/telebot.v3"
 )
 
@@ -18,7 +16,7 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	printer := pkg.NewPrinter(pkg.Options{Style: table.StyleLight, EnableStdout: true})
+	//printer := pkg.NewPrinter(pkg.Options{Style: table.StyleLight, EnableStdout: true})
 
 	bot, err := telebot.NewBot(settings)
 	if err != nil {
@@ -28,8 +26,9 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/", handlers.Welcome)
 	bot.Handle("/hello", handlers.Hello)
 	bot.Handle("/test", handlers.Test)
-	bot.Handle("/add", handlers.AddNewExpense(printer, svc))
-	bot.Handle("/list", handlers.ListExpenses(printer, svc))
+	bot.Handle("/new", handlers.AddAccount(svc))
+	//bot.Handle("/add", handlers.AddNewExpense(printer, svc))
+	//bot.Handle("/list", handlers.ListExpenses(printer, svc))
 
 	return bot, err
 }

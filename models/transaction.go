@@ -95,8 +95,8 @@ var finSubs = []TxnSubcategory{
 }
 
 var miscSubs = []TxnSubcategory{
-	{SubCatID: "misc-give", Name: "Giveaway", CatID: "misc"},
 	{SubCatID: "misc-init", Name: "Initial Amount", CatID: "misc"},
+	{SubCatID: "misc-give", Name: "Giveaway", CatID: "misc"},
 	{SubCatID: "misc-misc", Name: "Misc", CatID: "misc"},
 }
 
