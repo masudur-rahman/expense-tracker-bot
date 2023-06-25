@@ -38,7 +38,7 @@ func (a *SQLAccountsRepository) GetAccountByID(accID string) (*models.Account, e
 func (a *SQLAccountsRepository) ListAccounts() ([]models.Account, error) {
 	a.logger.Infow("list accounts")
 	accs := make([]models.Account, 0)
-	err := a.db.FindMany(&accs, models.Account{})
+	err := a.db.FindMany(&accs)
 	return accs, err
 }
 

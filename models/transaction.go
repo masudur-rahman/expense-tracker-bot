@@ -9,103 +9,103 @@ const (
 )
 
 type Transaction struct {
-	ID            int64
+	ID            int64 `db:"id,pk autoincr"`
 	Amount        float64
 	SubcategoryID string
 	Type          TransactionType
 	SrcID         string
 	DstID         string
-	User          string
+	UserID        string
 	Timestamp     int64
 	Remarks       string
 }
 
 type TxnCategory struct {
-	CatID string
-	Name  string
+	ID   string `db:",pk"`
+	Name string
 }
 
 type TxnSubcategory struct {
-	SubCatID string
-	Name     string
-	CatID    string
+	ID    string `db:",pk"`
+	Name  string
+	CatID string
 }
 
-var categories = []TxnCategory{
-	{CatID: "food", Name: "Food"},
-	{CatID: "house", Name: "Housing"},
-	{CatID: "ent", Name: "Entertainment"},
-	{CatID: "pc", Name: "Personal Care"},
-	{CatID: "trv", Name: "Travel"},
-	{CatID: "fin", Name: "Financial"},
-	{CatID: "misc", Name: "Miscellaneous"},
+var TxnCategories = []TxnCategory{
+	{ID: "food", Name: "Food"},
+	{ID: "house", Name: "Housing"},
+	{ID: "ent", Name: "Entertainment"},
+	{ID: "pc", Name: "Personal Care"},
+	{ID: "trv", Name: "Travel"},
+	{ID: "fin", Name: "Financial"},
+	{ID: "misc", Name: "Miscellaneous"},
 }
 
-var subcategories []TxnSubcategory
+var TxnSubcategories []TxnSubcategory
 
 var foodSubs = []TxnSubcategory{
-	{SubCatID: "food-rest", Name: "Restaurants", CatID: "food"},
-	{SubCatID: "food-groc", Name: "Groceries", CatID: "food"},
-	{SubCatID: "food-take", Name: "Takeout", CatID: "food"},
-	{SubCatID: "food-snack", Name: "Snacks", CatID: "food"},
-	{SubCatID: "food-fruit", Name: "Fruits", CatID: "food"},
+	{ID: "food-rest", Name: "Restaurants", CatID: "food"},
+	{ID: "food-groc", Name: "Groceries", CatID: "food"},
+	{ID: "food-take", Name: "Takeout", CatID: "food"},
+	{ID: "food-snack", Name: "Snacks", CatID: "food"},
+	{ID: "food-fruit", Name: "Fruits", CatID: "food"},
 }
 
 var houseSubs = []TxnSubcategory{
-	{SubCatID: "house-rent", Name: "Rent", CatID: "house"},
-	{SubCatID: "house-util", Name: "Utilities", CatID: "house"},
-	{SubCatID: "house-furn", Name: "Furniture", CatID: "house"},
-	{SubCatID: "house-elec", Name: "Electronics", CatID: "house"},
-	{SubCatID: "house-real", Name: "Real State", CatID: "house"},
+	{ID: "house-rent", Name: "Rent", CatID: "house"},
+	{ID: "house-util", Name: "Utilities", CatID: "house"},
+	{ID: "house-furn", Name: "Furniture", CatID: "house"},
+	{ID: "house-elec", Name: "Electronics", CatID: "house"},
+	{ID: "house-real", Name: "Real State", CatID: "house"},
 }
 
 var entSubs = []TxnSubcategory{
-	{SubCatID: "ent-movie", Name: "Movies", CatID: "ent"},
-	{SubCatID: "ent-sub", Name: "Subscription", CatID: "ent"},
-	{SubCatID: "ent-rec", Name: "Recreation", CatID: "ent"},
-	{SubCatID: "ent-books", Name: "Books", CatID: "ent"},
+	{ID: "ent-movie", Name: "Movies", CatID: "ent"},
+	{ID: "ent-sub", Name: "Subscription", CatID: "ent"},
+	{ID: "ent-rec", Name: "Recreation", CatID: "ent"},
+	{ID: "ent-books", Name: "Books", CatID: "ent"},
 }
 
 var pcSubs = []TxnSubcategory{
-	{SubCatID: "pc-salon", Name: "Salon", CatID: "pc"},
-	{SubCatID: "pc-toilet", Name: "Toiletries", CatID: "pc"},
-	{SubCatID: "pc-gym", Name: "Gym", CatID: "pc"},
-	{SubCatID: "pc-cloth", Name: "Clothing", CatID: "pc"},
-	{SubCatID: "pc-health", Name: "Health", CatID: "pc"},
+	{ID: "pc-salon", Name: "Salon", CatID: "pc"},
+	{ID: "pc-toilet", Name: "Toiletries", CatID: "pc"},
+	{ID: "pc-gym", Name: "Gym", CatID: "pc"},
+	{ID: "pc-cloth", Name: "Clothing", CatID: "pc"},
+	{ID: "pc-health", Name: "Health", CatID: "pc"},
 }
 
 var trvSubs = []TxnSubcategory{
-	{SubCatID: "trv-accom", Name: "Accommodation", CatID: "trv"},
-	{SubCatID: "trv-dine", Name: "Dining", CatID: "trv"},
-	{SubCatID: "trv-sight", Name: "Sightseeing", CatID: "trv"},
-	{SubCatID: "trv-trans", Name: "Transportation", CatID: "trv"},
-	{SubCatID: "trv-gift", Name: "Gifts", CatID: "trv"},
+	{ID: "trv-accom", Name: "Accommodation", CatID: "trv"},
+	{ID: "trv-dine", Name: "Dining", CatID: "trv"},
+	{ID: "trv-sight", Name: "Sightseeing", CatID: "trv"},
+	{ID: "trv-trans", Name: "Transportation", CatID: "trv"},
+	{ID: "trv-gift", Name: "Gifts", CatID: "trv"},
 }
 
 var finSubs = []TxnSubcategory{
-	{SubCatID: "fin-sal", Name: "Salary", CatID: "fin"},
-	{SubCatID: "fin-deposit", Name: "Deposit", CatID: "fin"},
-	{SubCatID: "fin-with", Name: "Withdraw", CatID: "fin"},
-	{SubCatID: "fin-dps", Name: "DPS", CatID: "fin"},
-	{SubCatID: "fin-ccpay", Name: "Credit Card Payment", CatID: "fin"},
-	{SubCatID: "fin-bank", Name: "Bank Transfer", CatID: "fin"},
-	{SubCatID: "fin-loan", Name: "Loan", CatID: "fin"},
-	{SubCatID: "fin-borrow", Name: "Borrow", CatID: "fin"},
-	{SubCatID: "fin-tax", Name: "Tax", CatID: "fin"},
+	{ID: "fin-sal", Name: "Salary", CatID: "fin"},
+	{ID: "fin-deposit", Name: "Deposit", CatID: "fin"},
+	{ID: "fin-with", Name: "Withdraw", CatID: "fin"},
+	{ID: "fin-dps", Name: "DPS", CatID: "fin"},
+	{ID: "fin-ccpay", Name: "Credit Card Payment", CatID: "fin"},
+	{ID: "fin-bank", Name: "Bank Transfer", CatID: "fin"},
+	{ID: "fin-loan", Name: "Loan", CatID: "fin"},
+	{ID: "fin-borrow", Name: "Borrow", CatID: "fin"},
+	{ID: "fin-tax", Name: "Tax", CatID: "fin"},
 }
 
 var miscSubs = []TxnSubcategory{
-	{SubCatID: "misc-init", Name: "Initial Amount", CatID: "misc"},
-	{SubCatID: "misc-give", Name: "Giveaway", CatID: "misc"},
-	{SubCatID: "misc-misc", Name: "Misc", CatID: "misc"},
+	{ID: "misc-init", Name: "Initial Amount", CatID: "misc"},
+	{ID: "misc-give", Name: "Giveaway", CatID: "misc"},
+	{ID: "misc-misc", Name: "Misc", CatID: "misc"},
 }
 
 func init() {
-	subcategories = append(subcategories, foodSubs...)
-	subcategories = append(subcategories, houseSubs...)
-	subcategories = append(subcategories, entSubs...)
-	subcategories = append(subcategories, pcSubs...)
-	subcategories = append(subcategories, trvSubs...)
-	subcategories = append(subcategories, finSubs...)
-	subcategories = append(subcategories, miscSubs...)
+	TxnSubcategories = append(TxnSubcategories, foodSubs...)
+	TxnSubcategories = append(TxnSubcategories, houseSubs...)
+	TxnSubcategories = append(TxnSubcategories, entSubs...)
+	TxnSubcategories = append(TxnSubcategories, pcSubs...)
+	TxnSubcategories = append(TxnSubcategories, trvSubs...)
+	TxnSubcategories = append(TxnSubcategories, finSubs...)
+	TxnSubcategories = append(TxnSubcategories, miscSubs...)
 }

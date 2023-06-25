@@ -22,8 +22,10 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/api"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
+	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
+	"github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/database/sql/postgres"
 	"github.com/masudur-rahman/database/sql/postgres/lib"
 
@@ -81,6 +83,30 @@ func getServicesForPostgres(ctx context.Context) *all.Services {
 	}
 
 	db := postgres.NewPostgres(ctx, conn)
+	err = db.Sync(models.User{}, models.Account{}, models.Transaction{}, models.TxnCategory{}, models.TxnSubcategory{}, models.Event{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	//if err = initiateTxnCategories(db); err != nil {
+	//	log.Fatalln(err)
+	//}
+
 	logger := logr.DefaultLogger
 	return all.GetSQLServices(db, logger)
+}
+
+func initiateTxnCategories(db sql.Database) error {
+	for _, cat := range models.TxnCategories {
+		if _, err := db.Table("txn_category").InsertOne(cat); err != nil {
+			return err
+		}
+	}
+
+	for _, subcat := range models.TxnSubcategories {
+		if _, err := db.Table("txn_subcategory").InsertOne(subcat); err != nil {
+			return err
+		}
+	}
+	return nil
 }

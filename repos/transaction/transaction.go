@@ -1,6 +1,8 @@
 package transaction
 
 import (
+	"fmt"
+
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
@@ -33,8 +35,10 @@ func (t *SQLTransactionRepository) ListTransactions(filter models.Transaction) (
 }
 
 func (t *SQLTransactionRepository) ListTransactionsByCategory(catID string) ([]models.Transaction, error) {
-	//TODO implement me
-	panic("implement me")
+	t.logger.Infow("list transactions by category")
+	txns := make([]models.Transaction, 0)
+	err := t.db.Where(fmt.Sprintf("sub_category_id LIKE %s%%", catID)).FindMany(&txns)
+	return txns, err
 }
 
 func (t *SQLTransactionRepository) ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error) {

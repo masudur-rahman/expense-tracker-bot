@@ -8,7 +8,7 @@ const (
 )
 
 type Account struct {
-	ID               string
+	ID               string `db:"id,pk"`
 	Type             AccountType
 	Name             string
 	Balance          float64
@@ -17,7 +17,7 @@ type Account struct {
 }
 
 type Event struct {
-	ID        int64
+	ID        int64 `db:"id,pk autoincr"`
 	Message   string
 	Timestamp int64
 }

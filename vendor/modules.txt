@@ -40,7 +40,7 @@ github.com/jedib0t/go-pretty/v6/text
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/masudur-rahman/database v0.0.0-20230624190744-de43ba590003
+# github.com/masudur-rahman/database v0.0.0-20230625203948-1fe8c020e0c1
 ## explicit; go 1.20
 github.com/masudur-rahman/database/pkg
 github.com/masudur-rahman/database/sql

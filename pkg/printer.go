@@ -13,7 +13,7 @@ type Printer interface {
 	PrintDocument(doc interface{}) string
 	PrintDocuments(docs interface{}) string
 
-	WithColumns(columns []string) Printer
+	WithColumns(columns ...string) Printer
 	WithExceptColumns(exceptColumns []string) Printer
 	WithAllColumns() Printer
 	WithStyle(style table.Style) Printer
@@ -71,7 +71,7 @@ func (p *printer) PrintDocuments(docs interface{}) string {
 	return t.Render()
 }
 
-func (p *printer) WithColumns(columns []string) Printer {
+func (p *printer) WithColumns(columns ...string) Printer {
 	p.columns = columns
 	p.allCols = false
 	return p

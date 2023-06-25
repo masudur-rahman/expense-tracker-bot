@@ -1,9 +1,9 @@
 package models
 
 type User struct {
-	ID               string
+	ID               string `db:"id,pk"`
 	Name             string
-	Email            string
+	Email            string `db:"email,uq"`
 	ContactInfo      string
 	Balance          float64
 	LastTxnTimestamp int64

@@ -55,7 +55,7 @@ func (ts *txnService) ListTransactionsByDestinationID(dstID string) ([]models.Tr
 
 func (ts *txnService) ListTransactionsByUser(username string) ([]models.Transaction, error) {
 	filter := models.Transaction{
-		User: username,
+		UserID: username,
 	}
 	return ts.txnRepo.ListTransactions(filter)
 }

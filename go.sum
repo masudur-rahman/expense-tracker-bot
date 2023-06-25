@@ -285,8 +285,8 @@ github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgx
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/magiconair/properties v1.8.6/go.mod h1:y3VJvCyxH9uVvJTWEGAELF3aiYNyPKd5NZ3oSwXrF60=
-github.com/masudur-rahman/database v0.0.0-20230624190744-de43ba590003 h1:6zt31DFhY9uhJBPvgDX+7NryZ0+oiWLgZWII7gJeSOM=
-github.com/masudur-rahman/database v0.0.0-20230624190744-de43ba590003/go.mod h1:MOL4gILJ8WdMant/S+tl4bFEdbaRiZ8Hfbd4apjb4u4=
+github.com/masudur-rahman/database v0.0.0-20230625203948-1fe8c020e0c1 h1:Zyx9WdWj3CGjI8+b5RYy3cmfYb1dBf0LsLM28dn+nLk=
+github.com/masudur-rahman/database v0.0.0-20230625203948-1fe8c020e0c1/go.mod h1:MOL4gILJ8WdMant/S+tl4bFEdbaRiZ8Hfbd4apjb4u4=
 github.com/masudur-rahman/go-oneliners v1.0.0 h1:77T+jsdp0TGEWp//OAk6XkzwO/uAmyasjZJfdYFfdnw=
 github.com/masudur-rahman/go-oneliners v1.0.0/go.mod h1:5i+VnhZ/R+APsPpo1lZyw19oiO90zXYvKYMLSrFyKec=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
