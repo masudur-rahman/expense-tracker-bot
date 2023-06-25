@@ -24,8 +24,8 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
-	"github.com/masudur-rahman/database/sql"
-	"github.com/masudur-rahman/database/sql/supabase"
+	"github.com/masudur-rahman/database/sql/postgres"
+	"github.com/masudur-rahman/database/sql/postgres/lib"
 
 	"github.com/spf13/cobra"
 )
@@ -41,7 +41,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := getServicesForSupabase(cmd.Context())
+		svc := getServicesForPostgres(cmd.Context())
 		bot, err := api.TeleBotRoutes(svc)
 		if err != nil {
 			panic(err)
@@ -56,11 +56,31 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 }
 
-func getServicesForSupabase(ctx context.Context) *all.Services {
-	supClient := supabase.InitializeSupabase(ctx)
+//func getServicesForSupabase(ctx context.Context) *all.Services {
+//	supClient := supabase.InitializeSupabase(ctx)
+//
+//	var db sql.Database
+//	db = supabase.NewSupabase(ctx, supClient)
+//	logger := logr.DefaultLogger
+//	return all.GetSQLServices(db, logger)
+//}
 
-	var db sql.Database
-	db = supabase.NewSupabase(ctx, supClient)
+func getServicesForPostgres(ctx context.Context) *all.Services {
+	cfg := lib.PostgresConfig{
+		Name:     "expense",
+		Host:     "localhost",
+		Port:     "5432",
+		User:     "postgres",
+		Password: "postgres",
+		SSLMode:  "disable",
+	}
+
+	conn, err := lib.GetPostgresConnection(cfg)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	db := postgres.NewPostgres(ctx, conn)
 	logger := logr.DefaultLogger
 	return all.GetSQLServices(db, logger)
 }
