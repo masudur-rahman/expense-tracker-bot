@@ -19,7 +19,7 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	printer := pkg.NewPrinter(pkg.Options{Style: table.StyleLight, EnableStdout: true})
+	printer := pkg.NewPrinter(pkg.Options{Style: table.StyleColoredBright, EnableStdout: true})
 
 	bot, err := telebot.NewBot(settings)
 	if err != nil {
@@ -29,13 +29,10 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/", handlers.Welcome)
 	bot.Handle("/hello", handlers.Hello)
 	bot.Handle("/test", handlers.Test)
-	bot.Handle(telebot.OnCallback, func(ctx telebot.Context) error {
-		fmt.Println(ctx.Callback().Data)
-		return ctx.EditOrSend("Hello there..!")
-	})
+	bot.Handle(telebot.OnCallback, handlers.Callback(svc))
 
 	bot.Handle(telebot.OnText, func(ctx telebot.Context) error {
-		fmt.Println(ctx.Text())
+		fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
 		return ctx.Send("Removing keyboard", &telebot.SendOptions{
 			ReplyTo:     ctx.Message(),
 			ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
@@ -48,6 +45,11 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 
 	bot.Handle("/txn", handlers.AddNewTransactions(svc))
 	bot.Handle("/list", handlers.ListTransactions(printer, svc))
+
+	bot.Handle("/cat", handlers.ListTransactionCategories(svc))
+	bot.Handle("/subcat", handlers.ListTransactionSubcategories(svc))
+
+	bot.Handle("/newtxn", handlers.NewTransaction(svc))
 
 	//bot.Handle("/add", handlers.AddNewExpense(printer, svc))
 	//bot.Handle("/list", handlers.ListExpenses(printer, svc))

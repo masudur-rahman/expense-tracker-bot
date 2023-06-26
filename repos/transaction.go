@@ -7,4 +7,8 @@ type TransactionRepository interface {
 	ListTransactionsByCategory(catID string) ([]models.Transaction, error)
 	ListTransactions(filter models.Transaction) ([]models.Transaction, error)
 	ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error)
+
+	ListTxnCategories() ([]models.TxnCategory, error)
+	ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error)
+	UpdateTxnCategories() error
 }

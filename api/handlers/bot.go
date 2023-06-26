@@ -14,6 +14,7 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
+	"github.com/jedib0t/go-pretty/v6/table"
 	"gopkg.in/telebot.v3"
 )
 
@@ -166,11 +167,14 @@ func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.C
 			return err
 		}
 
+		//printer.WithRenderType(pkg.RenderTypeMarkdown)
+		printer.WithStyle(table.StyleLight)
 		printer.WithExceptColumns([]string{"ID"})
 		defer printer.ClearColumns()
 		printer.PrintDocuments(txns)
 
-		return ctx.Send(generateTransactionTelegramResponse(txns))
+		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type", "Remarks"))
+		//return ctx.Send(generateTransactionTelegramResponse(txns))
 	}
 }
 

@@ -59,3 +59,15 @@ func (ts *txnService) ListTransactionsByUser(username string) ([]models.Transact
 	}
 	return ts.txnRepo.ListTransactions(filter)
 }
+
+func (ts *txnService) ListTxnCategories() ([]models.TxnCategory, error) {
+	return ts.txnRepo.ListTxnCategories()
+}
+
+func (ts *txnService) ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error) {
+	return ts.txnRepo.ListTxnSubcategories(catID)
+}
+
+func (ts *txnService) UpdateTxnCategories() error {
+	return ts.txnRepo.UpdateTxnCategories()
+}

@@ -45,3 +45,43 @@ func (t *SQLTransactionRepository) ListTransactionsByTime(startTime, endTime int
 	//TODO implement me
 	panic("implement me")
 }
+
+func (t *SQLTransactionRepository) ListTxnCategories() ([]models.TxnCategory, error) {
+	t.logger.Infow("list transaction category")
+	cats := make([]models.TxnCategory, 0)
+	err := t.db.Table("txn_category").FindMany(&cats)
+	return cats, err
+}
+
+func (t *SQLTransactionRepository) ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error) {
+	t.logger.Infow("list transaction category")
+	subcats := make([]models.TxnSubcategory, 0)
+	err := t.db.Table("txn_subcategory").FindMany(&subcats, models.TxnSubcategory{CatID: catID})
+	return subcats, err
+}
+
+func (t *SQLTransactionRepository) UpdateTxnCategories() error {
+	for _, cat := range models.TxnCategories {
+		if has, err := t.db.Table("txn_category").ID(cat.ID).FindOne(&models.TxnCategory{}); err != nil {
+			return err
+		} else if has {
+			continue
+		}
+
+		if _, err := t.db.Table("txn_category").InsertOne(cat); err != nil {
+			return err
+		}
+	}
+
+	for _, subcat := range models.TxnSubcategories {
+		if has, err := t.db.Table("txn_subcategory").ID(subcat.ID).FindOne(&models.TxnSubcategory{}); err != nil {
+			return err
+		} else if has {
+			continue
+		}
+		if _, err := t.db.Table("txn_subcategory").InsertOne(subcat); err != nil {
+			return err
+		}
+	}
+	return nil
+}

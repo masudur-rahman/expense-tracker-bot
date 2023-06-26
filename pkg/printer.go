@@ -18,13 +18,24 @@ type Printer interface {
 	WithAllColumns() Printer
 	WithStyle(style table.Style) Printer
 	WithStdout(stdout bool) Printer
+	WithRenderType(typ RenderType) Printer
 
 	ClearColumns()
 }
 
+type RenderType string
+
+const (
+	RenderTypeDefault  RenderType = "default"
+	RenderTypeCSV      RenderType = "csv"
+	RenderTypeHTML     RenderType = "html"
+	RenderTypeMarkdown RenderType = "markdown"
+)
+
 type Options struct {
 	Style        table.Style
 	EnableStdout bool
+	RenderType   RenderType
 }
 
 type printer struct {
@@ -48,7 +59,8 @@ func (p *printer) PrintDocument(doc interface{}) string {
 
 	t.AppendHeader(hr)
 	t.AppendRow(dr)
-	return t.Render()
+
+	return p.render(t)
 }
 
 func (p *printer) PrintDocuments(docs interface{}) string {
@@ -68,7 +80,8 @@ func (p *printer) PrintDocuments(docs interface{}) string {
 	for _, dr := range drs {
 		t.AppendRow(dr)
 	}
-	return t.Render()
+
+	return p.render(t)
 }
 
 func (p *printer) WithColumns(columns ...string) Printer {
@@ -95,6 +108,11 @@ func (p *printer) WithStyle(style table.Style) Printer {
 
 func (p *printer) WithStdout(stdout bool) Printer {
 	p.options.EnableStdout = stdout
+	return p
+}
+
+func (p *printer) WithRenderType(typ RenderType) Printer {
+	p.options.RenderType = typ
 	return p
 }
 
@@ -188,6 +206,19 @@ func (p *printer) generateDataRow(doc interface{}) table.Row {
 		}
 	}
 	return dr
+}
+
+func (p *printer) render(t table.Writer) string {
+	switch p.options.RenderType {
+	case RenderTypeHTML:
+		return t.RenderHTML()
+	case RenderTypeCSV:
+		return t.RenderCSV()
+	case RenderTypeMarkdown:
+		return t.RenderMarkdown()
+	default:
+		return t.Render()
+	}
 }
 
 func formatValue(value interface{}) any {

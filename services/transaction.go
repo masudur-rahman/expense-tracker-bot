@@ -11,4 +11,8 @@ type TransactionService interface {
 	ListTransactionsBySourceID(srcID string) ([]models.Transaction, error)
 	ListTransactionsByDestinationID(dstID string) ([]models.Transaction, error)
 	ListTransactionsByUser(username string) ([]models.Transaction, error)
+
+	ListTxnCategories() ([]models.TxnCategory, error)
+	ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error)
+	UpdateTxnCategories() error
 }
