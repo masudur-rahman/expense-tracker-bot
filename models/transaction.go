@@ -92,6 +92,7 @@ var finSubs = []TxnSubcategory{
 	{ID: "fin-loan", Name: "Loan", CatID: "fin"},
 	{ID: "fin-borrow", Name: "Borrow", CatID: "fin"},
 	{ID: "fin-tax", Name: "Tax", CatID: "fin"},
+	{ID: "fin-charge", Name: "Charges", CatID: "fin"},
 }
 
 var miscSubs = []TxnSubcategory{

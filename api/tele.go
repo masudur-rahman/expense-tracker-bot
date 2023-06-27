@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -30,15 +29,9 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/hello", handlers.Hello)
 	bot.Handle("/test", handlers.Test)
 	bot.Handle(telebot.OnCallback, handlers.Callback(svc))
+	bot.Handle("/reply", handlers.Reply())
 
-	bot.Handle(telebot.OnText, func(ctx telebot.Context) error {
-		fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
-		return ctx.Send("Removing keyboard", &telebot.SendOptions{
-			ReplyTo:     ctx.Message(),
-			ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
-		})
-		//return ctx.Reply("You chose " + ctx.Text())
-	})
+	bot.Handle(telebot.OnText, handlers.TextCallback(svc))
 
 	bot.Handle("/new", handlers.AddAccount(svc))
 	bot.Handle("/accounts", handlers.ListAccounts(printer, svc))
