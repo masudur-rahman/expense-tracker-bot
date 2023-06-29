@@ -88,10 +88,10 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 				if loanOrBorrowTypeTransaction(callbackOpts) {
 					return sendTransactionUserQuery(ctx, svc, callbackOpts)
 				} else {
-					return sendTransactionRemarksQeury(ctx, svc, callbackOpts)
+					return sendTransactionRemarksQuery(ctx, svc, callbackOpts)
 				}
 			case StepUser:
-				return sendTransactionRemarksQeury(ctx, svc, callbackOpts)
+				return sendTransactionRemarksQuery(ctx, svc, callbackOpts)
 			case StepRemarks:
 				storeTransaction(callbackOpts.Transaction)
 			}
