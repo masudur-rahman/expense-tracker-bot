@@ -67,201 +67,33 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 			txn := callbackOpts.Transaction
 			switch callbackOpts.Transaction.NextStep {
 			case StepTxnType:
-				callbackOpts.Transaction.NextStep = StepAmount
-
-				amounts := []float64{50, 100, 500}
-				inlineButtons := make([]telebot.InlineButton, 0, 3)
-				for _, amount := range amounts {
-					callbackOpts.Transaction.Amount = amount
-					btn, err := generateInlineButton(callbackOpts, fmt.Sprintf("%v", amount))
-					if err != nil {
-						return ctx.Send("Unexpected server error occurred!")
-					}
-
-					inlineButtons = append(inlineButtons, btn)
-				}
-
-				msg, err := ctx.Bot().Reply(ctx.Message(), "Hello there!", &telebot.SendOptions{
-					ReplyTo: ctx.Message(),
-					ReplyMarkup: &telebot.ReplyMarkup{
-						InlineKeyboard: generateInlineKeyboard(inlineButtons),
-						ForceReply:     true,
-					},
-				})
-				if err != nil {
-					return err
-				}
-
-				callbackData[msg.ID] = callbackOpts
-				return nil
-
+				return sendTransactionAmountTypeQuery(ctx, svc, callbackOpts)
 			case StepAmount:
-				var isSrc bool
 				if txn.Type == models.IncomeTransaction {
-					callbackOpts.Transaction.NextStep = StepDstID
+					return sendTransactionDstTypeQuery(ctx, svc, callbackOpts)
 				} else {
-					callbackOpts.Transaction.NextStep = StepSrcID
-					isSrc = true
+					return sendTransactionSrcTypeQuery(ctx, svc, callbackOpts)
 				}
-				inlineButtons, err := generateSrcDstTypeInlineButton(svc, callbackOpts, isSrc)
-				if err != nil {
-					return ctx.Send("Unexpected server error occurred!")
-				}
-
-				return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-					ReplyTo: ctx.Message(),
-					ReplyMarkup: &telebot.ReplyMarkup{
-						InlineKeyboard: generateInlineKeyboard(inlineButtons),
-						ForceReply:     true,
-					},
-				})
 			case StepSrcID:
 				if txn.Type == models.TransferTransaction {
-					callbackOpts.Transaction.NextStep = StepDstID
-					inlineButtons, err := generateSrcDstTypeInlineButton(svc, callbackOpts, false)
-					if err != nil {
-						return ctx.Send("Unexpected server error occurred!")
-					}
-
-					return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-						ReplyTo: ctx.Message(),
-						ReplyMarkup: &telebot.ReplyMarkup{
-							InlineKeyboard: generateInlineKeyboard(inlineButtons),
-							ForceReply:     true,
-						},
-					})
+					return sendTransactionDstTypeQuery(ctx, svc, callbackOpts)
 				} else {
-					callbackOpts.Transaction.NextStep = StepCategory
-					cats, err := svc.Txn.ListTxnCategories()
-					if err != nil {
-						return err
-					}
-
-					inlineButtons := make([]telebot.InlineButton, 0, len(cats))
-					for _, cat := range cats {
-						callbackOpts.Transaction.CategoryID = cat.ID
-						btn, err := generateInlineButton(callbackOpts, cat.Name)
-						if err != nil {
-							return err
-						}
-						inlineButtons = append(inlineButtons, btn)
-					}
-
-					return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-						ReplyTo: ctx.Message(),
-						ReplyMarkup: &telebot.ReplyMarkup{
-							InlineKeyboard: generateInlineKeyboard(inlineButtons),
-							ForceReply:     true,
-						},
-					})
+					return sendTransactionCategoryQuery(ctx, svc, callbackOpts)
 				}
 			case StepDstID:
-				callbackOpts.Transaction.NextStep = StepCategory
-				cats, err := svc.Txn.ListTxnCategories()
-				if err != nil {
-					return err
-				}
-
-				inlineButtons := make([]telebot.InlineButton, 0, len(cats))
-				for _, cat := range cats {
-					callbackOpts.Transaction.CategoryID = cat.ID
-					btn, err := generateInlineButton(callbackOpts, cat.Name)
-					if err != nil {
-						return err
-					}
-					inlineButtons = append(inlineButtons, btn)
-				}
-
-				return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-					ReplyTo: ctx.Message(),
-					ReplyMarkup: &telebot.ReplyMarkup{
-						InlineKeyboard: generateInlineKeyboard(inlineButtons),
-						ForceReply:     true,
-					},
-				})
+				return sendTransactionCategoryQuery(ctx, svc, callbackOpts)
 			case StepCategory:
-				callbackOpts.Transaction.NextStep = StepSubcategory
-				subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Transaction.CategoryID)
-				if err != nil {
-					return err
-				}
-
-				inlineButtons := make([]telebot.InlineButton, 0, len(subcats))
-				for _, subcat := range subcats {
-					callbackOpts.Transaction.SubcategoryID = subcat.ID
-					btn, err := generateInlineButton(callbackOpts, subcat.Name)
-					if err != nil {
-						return err
-					}
-					inlineButtons = append(inlineButtons, btn)
-				}
-
-				return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-					ReplyTo: ctx.Message(),
-					ReplyMarkup: &telebot.ReplyMarkup{
-						InlineKeyboard: generateInlineKeyboard(inlineButtons),
-						ForceReply:     true,
-					},
-				})
+				return sendTransactionSubcategoryQuery(ctx, svc, callbackOpts)
 			case StepSubcategory:
-				if callbackOpts.Transaction.SubcategoryID == "fin-loan" ||
-					callbackOpts.Transaction.SubcategoryID == "fin-borrow" {
-					callbackOpts.Transaction.NextStep = StepUser
-					users, err := svc.User.ListUsers()
-					if err != nil {
-						return err
-					}
-
-					inlineButtons := make([]telebot.InlineButton, 0, len(users))
-					for _, user := range users {
-						callbackOpts.Transaction.UserID = user.ID
-						btn, err := generateInlineButton(callbackOpts, user.Name)
-						if err != nil {
-							return err
-						}
-						inlineButtons = append(inlineButtons, btn)
-					}
-
-					return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-						ReplyTo: ctx.Message(),
-						ReplyMarkup: &telebot.ReplyMarkup{
-							InlineKeyboard: generateInlineKeyboard(inlineButtons),
-							ForceReply:     true,
-						},
-					})
+				if loanOrBorrowTypeTransaction(callbackOpts) {
+					return sendTransactionUserQuery(ctx, svc, callbackOpts)
 				} else {
-					callbackOpts.Transaction.NextStep = StepRemarks
-					btn, err := generateInlineButton(callbackOpts, "Done")
-					if err != nil {
-						return err
-					}
-					inlineButtons := []telebot.InlineButton{btn}
-
-					return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-						ReplyTo: ctx.Message(),
-						ReplyMarkup: &telebot.ReplyMarkup{
-							InlineKeyboard: generateInlineKeyboard(inlineButtons),
-							ForceReply:     true,
-						},
-					})
+					return sendTransactionRemarksQeury(ctx, svc, callbackOpts)
 				}
 			case StepUser:
-				callbackOpts.Transaction.NextStep = StepRemarks
-				btn, err := generateInlineButton(callbackOpts, "Done")
-				if err != nil {
-					return err
-				}
-				inlineButtons := []telebot.InlineButton{btn}
-
-				return ctx.Send(ctx.Message(), "Hello there!", &telebot.SendOptions{
-					ReplyTo: ctx.Message(),
-					ReplyMarkup: &telebot.ReplyMarkup{
-						InlineKeyboard: generateInlineKeyboard(inlineButtons),
-						ForceReply:     true,
-					},
-				})
+				return sendTransactionRemarksQeury(ctx, svc, callbackOpts)
 			case StepRemarks:
-				storeTransaction()
+				storeTransaction(callbackOpts.Transaction)
 			}
 		default:
 		}
@@ -276,63 +108,7 @@ func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	return callbackOpts, err
 }
 
-func generateSrcDstTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions, src bool) ([]telebot.InlineButton, error) {
-	acs, err := svc.Account.ListAccounts()
-	if err != nil {
-		return nil, err
-	}
-
-	inlineButtons := make([]telebot.InlineButton, 0, len(acs))
-
-	var srcOrDst *string
-	if src {
-		srcOrDst = &callbackOpts.Transaction.SrcID
-	} else {
-		srcOrDst = &callbackOpts.Transaction.DstID
-	}
-
-	for _, ac := range acs {
-		*srcOrDst = ac.ID
-		btn, err := generateInlineButton(callbackOpts, ac.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		inlineButtons = append(inlineButtons, btn)
-	}
-
-	return inlineButtons, nil
-}
-
-func generateInlineButton(doc any, btnText string) (telebot.InlineButton, error) {
-	jsonData, err := json.Marshal(doc)
-	if err != nil {
-		return telebot.InlineButton{}, err
-	}
-	inlnBtn := telebot.InlineButton{
-		Text: btnText,
-		Data: string(jsonData),
-	}
-	return inlnBtn, nil
-}
-
-func generateInlineKeyboard(inlineButtons []telebot.InlineButton) [][]telebot.InlineButton {
-	var keyboard [][]telebot.InlineButton
-	var tmpInlnBtns []telebot.InlineButton
-	for _, btn := range inlineButtons {
-		tmpInlnBtns = append(tmpInlnBtns, btn)
-		if len(tmpInlnBtns) == 3 {
-			keyboard = append(keyboard, tmpInlnBtns)
-			tmpInlnBtns = nil
-		}
-	}
-	if len(tmpInlnBtns) > 0 {
-		keyboard = append(keyboard, tmpInlnBtns)
-	}
-	return keyboard
-}
-
-func storeTransaction() {
+func storeTransaction(txn TransactionCallbackOptions) {
 
 }
 
