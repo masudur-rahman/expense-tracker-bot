@@ -30,7 +30,7 @@ func GetSQLServices(db isql.Database, logger logr.Logger) *Services {
 
 	accSvc := accsvc.NewAccountService(accRepo)
 	userSvc := usersvc.NewUserService(userRepo)
-	txnSvc := txnsvc.NewTxnService(txnRepo)
+	txnSvc := txnsvc.NewTxnService(accRepo, userRepo, txnRepo, eventRepo)
 	eventSvc := eventsvc.NewEventService(eventRepo)
 
 	return &Services{

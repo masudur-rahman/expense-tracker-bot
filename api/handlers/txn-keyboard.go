@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"gopkg.in/telebot.v3"
@@ -121,14 +121,15 @@ func generateTransactionRemarksTypeInlineButton(svc *all.Services, callbackOpts 
 }
 
 func generateInlineButton(obj any, btnText string) (telebot.InlineButton, error) {
-	jsonData, err := json.Marshal(obj)
+	data, err := pkg.EncodeToBase64(obj)
 	if err != nil {
 		return telebot.InlineButton{}, err
 	}
 	inlnBtn := telebot.InlineButton{
 		Text: btnText,
-		Data: string(jsonData),
+		Data: data,
 	}
+
 	return inlnBtn, nil
 }
 
@@ -145,5 +146,6 @@ func generateInlineKeyboard(inlineButtons []telebot.InlineButton) [][]telebot.In
 	if len(tmpInlnBtns) > 0 {
 		keyboard = append(keyboard, tmpInlnBtns)
 	}
+
 	return keyboard
 }

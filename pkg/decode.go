@@ -1,7 +1,10 @@
 package pkg
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"strings"
 
 	"github.com/graphql-go/graphql"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -61,4 +64,19 @@ func ParseProtoAnyInto(src *anypb.Any, dst any) error {
 	}
 
 	return ParseInto(mp, dst)
+}
+
+func EncodeToBase64(v interface{}) (string, error) {
+	var buf bytes.Buffer
+	encoder := base64.NewEncoder(base64.StdEncoding, &buf)
+	err := json.NewEncoder(encoder).Encode(v)
+	if err != nil {
+		return "", err
+	}
+	defer encoder.Close()
+	return buf.String(), nil
+}
+
+func DecodeFromBase64(v interface{}, enc string) error {
+	return json.NewDecoder(base64.NewDecoder(base64.StdEncoding, strings.NewReader(enc))).Decode(v)
 }

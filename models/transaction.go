@@ -6,6 +6,9 @@ const (
 	ExpenseTransaction  TransactionType = "Expense"
 	IncomeTransaction   TransactionType = "Income"
 	TransferTransaction TransactionType = "Transfer"
+
+	LoanSubcategoryID   string = "fin-loan"
+	BorrowSubcategoryID string = "fin-borrow"
 )
 
 type Transaction struct {

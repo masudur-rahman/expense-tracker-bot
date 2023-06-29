@@ -28,7 +28,7 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/", handlers.Welcome)
 	bot.Handle("/hello", handlers.Hello)
 	bot.Handle("/test", handlers.Test)
-	bot.Handle(telebot.OnCallback, handlers.Callback(svc))
+	bot.Handle(telebot.OnCallback, handlers.TransactionCallback(svc))
 	bot.Handle("/reply", handlers.Reply())
 
 	bot.Handle(telebot.OnText, handlers.TextCallback(svc))

@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"gopkg.in/telebot.v3"
 )
 
 func loanOrBorrowTypeTransaction(callbackOpts CallbackOptions) bool {
-	return callbackOpts.Transaction.SubcategoryID == "fin-loan" ||
-		callbackOpts.Transaction.SubcategoryID == "fin-borrow"
+	return callbackOpts.Transaction.SubcategoryID == models.LoanSubcategoryID ||
+		callbackOpts.Transaction.SubcategoryID == models.BorrowSubcategoryID
 }
 
 func sendTransactionAmountTypeQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
@@ -40,7 +41,7 @@ func sendTransactionSrcTypeQuery(ctx telebot.Context, svc *all.Services, callbac
 		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send(ctx.Message(), "Select Source Account!", &telebot.SendOptions{
+	return ctx.Send("Select Source Account!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -56,7 +57,7 @@ func sendTransactionDstTypeQuery(ctx telebot.Context, svc *all.Services, callbac
 		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send(ctx.Message(), "Select Destination Account!", &telebot.SendOptions{
+	return ctx.Send("Select Destination Account!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -72,7 +73,7 @@ func sendTransactionCategoryQuery(ctx telebot.Context, svc *all.Services, callba
 		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send(ctx.Message(), "Select Transaction category!", &telebot.SendOptions{
+	return ctx.Send("Select Transaction category!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -88,7 +89,7 @@ func sendTransactionSubcategoryQuery(ctx telebot.Context, svc *all.Services, cal
 		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send(ctx.Message(), "Select Transaction subcategory!", &telebot.SendOptions{
+	return ctx.Send("Select Transaction subcategory!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -104,7 +105,7 @@ func sendTransactionUserQuery(ctx telebot.Context, svc *all.Services, callbackOp
 		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send(ctx.Message(), "Select the user associated with the Loan/Borrow!", &telebot.SendOptions{
+	return ctx.Send("Select the user associated with the Loan/Borrow!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -133,4 +134,16 @@ func sendTransactionRemarksQuery(ctx telebot.Context, svc *all.Services, callbac
 
 	callbackData[msg.ID] = callbackOpts
 	return nil
+}
+
+func processTransaction(svc *all.Services, txn TransactionCallbackOptions) error {
+	return svc.Txn.AddTransaction(models.Transaction{
+		Amount:        txn.Amount,
+		SubcategoryID: txn.SubcategoryID,
+		Type:          txn.Type,
+		SrcID:         txn.SrcID,
+		DstID:         txn.DstID,
+		UserID:        txn.UserID,
+		Remarks:       txn.Remarks,
+	})
 }

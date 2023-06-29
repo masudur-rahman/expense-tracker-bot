@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
@@ -68,23 +67,6 @@ func ListTransactionSubcategories(svc *all.Services) func(ctx telebot.Context) e
 					return keyboard
 				}(),
 				ResizeKeyboard: true,
-			},
-		})
-	}
-}
-
-func NewTransaction(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		return ctx.Send("Type of Transaction: ", &telebot.SendOptions{
-			ReplyTo: ctx.Message(),
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: [][]telebot.InlineButton{
-					{
-						telebot.InlineButton{Text: string(models.ExpenseTransaction), Data: string(models.ExpenseTransaction)},
-						telebot.InlineButton{Text: string(models.IncomeTransaction), Data: string(models.IncomeTransaction)},
-						telebot.InlineButton{Text: string(models.TransferTransaction), Data: string(models.TransferTransaction)},
-					},
-				},
 			},
 		})
 	}

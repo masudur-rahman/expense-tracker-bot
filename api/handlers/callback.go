@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"gopkg.in/telebot.v3"
@@ -54,6 +54,36 @@ var messageData = make(map[int]string)
 
 var callbackData = make(map[int]CallbackOptions) // map[messageID]CallbackOptions
 
+func NewTransaction(svc *all.Services) func(ctx telebot.Context) error {
+	return func(ctx telebot.Context) error {
+		callbackOpts := CallbackOptions{
+			Type: TransactionTypeCallback,
+			Transaction: TransactionCallbackOptions{
+				NextStep: StepTxnType,
+			},
+		}
+		types := []models.TransactionType{models.ExpenseTransaction, models.IncomeTransaction, models.TransferTransaction}
+		inlineButtons := make([]telebot.InlineButton, 0, 3)
+		for _, typ := range types {
+			callbackOpts.Transaction.Type = typ
+			btn, err := generateInlineButton(callbackOpts, string(typ))
+			if err != nil {
+				return ctx.Send(err.Error())
+			}
+
+			inlineButtons = append(inlineButtons, btn)
+		}
+
+		return ctx.Send("Select Type of the Transaction:", &telebot.SendOptions{
+			ReplyTo: ctx.Message(),
+			ReplyMarkup: &telebot.ReplyMarkup{
+				InlineKeyboard: generateInlineKeyboard(inlineButtons),
+				ForceReply:     true,
+			},
+		})
+	}
+}
+
 func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		callbackOpts, err := parseCallbackOptions(ctx)
@@ -93,7 +123,11 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 			case StepUser:
 				return sendTransactionRemarksQuery(ctx, svc, callbackOpts)
 			case StepRemarks:
-				storeTransaction(callbackOpts.Transaction)
+				err = processTransaction(svc, callbackOpts.Transaction)
+				if err != nil {
+					return ctx.Send("Transaction added successfully!")
+				}
+				return ctx.Send(err.Error())
 			}
 		default:
 		}
@@ -104,12 +138,8 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 
 func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	var callbackOpts CallbackOptions
-	err := json.Unmarshal([]byte(ctx.Callback().Data), &callbackOpts)
+	err := pkg.DecodeFromBase64(&callbackOpts, ctx.Callback().Data)
 	return callbackOpts, err
-}
-
-func storeTransaction(txn TransactionCallbackOptions) {
-
 }
 
 func Callback(svc *all.Services) func(ctx telebot.Context) error {

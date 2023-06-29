@@ -1,19 +1,60 @@
 package transaction
 
 import (
+	"fmt"
+
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
 )
 
 type txnService struct {
-	txnRepo repos.TransactionRepository
+	acRepo    repos.AccountsRepository
+	userRepo  repos.UserRepository
+	txnRepo   repos.TransactionRepository
+	eventRepo repos.EventRepository
 }
 
-func NewTxnService(txnRepo repos.TransactionRepository) *txnService {
-	return &txnService{txnRepo: txnRepo}
+func NewTxnService(acRepo repos.AccountsRepository, userRepo repos.UserRepository, txnRepo repos.TransactionRepository, evRepo repos.EventRepository) *txnService {
+	return &txnService{
+		acRepo:    acRepo,
+		userRepo:  userRepo,
+		txnRepo:   txnRepo,
+		eventRepo: evRepo,
+	}
 }
 
 func (ts *txnService) AddTransaction(txn models.Transaction) error {
+	switch txn.Type {
+	case models.ExpenseTransaction:
+		if txn.SubcategoryID == models.LoanSubcategoryID {
+			if err := ts.userRepo.UpdateUserBalance(txn.UserID, txn.Amount); err != nil {
+				return err
+			}
+		} else if txn.SubcategoryID == models.BorrowSubcategoryID {
+			return fmt.Errorf("borrow type expense should be under Income type")
+		}
+		if err := ts.acRepo.UpdateAccountBalance(txn.SrcID, -txn.Amount); err != nil {
+			return err
+		}
+	case models.IncomeTransaction:
+		if txn.SubcategoryID == models.BorrowSubcategoryID {
+			if err := ts.userRepo.UpdateUserBalance(txn.UserID, -txn.Amount); err != nil {
+				return err
+			}
+		} else if txn.SubcategoryID == models.LoanSubcategoryID {
+			return fmt.Errorf("loan type expense should be under Expense type")
+		}
+		if err := ts.acRepo.UpdateAccountBalance(txn.DstID, txn.Amount); err != nil {
+			return err
+		}
+	case models.TransferTransaction:
+		if err := ts.acRepo.UpdateAccountBalance(txn.SrcID, -txn.Amount); err != nil {
+			return err
+		}
+		if err := ts.acRepo.UpdateAccountBalance(txn.DstID, txn.Amount); err != nil {
+			return err
+		}
+	}
 	return ts.txnRepo.AddTransaction(txn)
 }
 
