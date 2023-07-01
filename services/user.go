@@ -7,8 +7,8 @@ import (
 type UserService interface {
 	GetUserByID(id string) (*models.User, error)
 	GetUserByName(username string) (*models.User, error)
-	ListUsers() ([]*models.User, error)
+	ListUsers() ([]models.User, error)
 	CreateUser(user *models.User) error
-	UpdateUserBalance(username string, amount float64) error
-	DeleteUser(username string) error
+	UpdateUserBalance(id string, amount float64) error
+	DeleteUser(id string) error
 }

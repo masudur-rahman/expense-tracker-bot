@@ -65,6 +65,34 @@ func Test(ctx telebot.Context) error {
 	})
 }
 
+func NewUser(svc *all.Services) func(ctx telebot.Context) error {
+	return func(ctx telebot.Context) error {
+		// /newuser <id> <name> <email>
+		ui := pkg.SplitString(ctx.Text(), ' ')
+		if len(ui) < 3 {
+			return ctx.Send(`
+Syntax unknown.
+Format /newuser <id> <name> <email>
+`)
+		}
+		if err := svc.User.CreateUser(&models.User{
+			ID:   ui[1],
+			Name: ui[2],
+			Email: func() string {
+				if len(ui) >= 4 {
+					return ui[3]
+				}
+				return ""
+			}(),
+		}); err != nil {
+			log.Println(err)
+			return ctx.Send(err.Error())
+		}
+
+		return ctx.Send("New User added!")
+	}
+}
+
 func AddAccount(svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		// <type (Cash or Bank)> <unique-short-name> <Account Name>
@@ -173,7 +201,7 @@ func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.C
 		defer printer.ClearColumns()
 		printer.PrintDocuments(txns)
 
-		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type", "Remarks"))
+		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
 		//return ctx.Send(generateTransactionTelegramResponse(txns))
 	}
 }

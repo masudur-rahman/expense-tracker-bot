@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
-	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
+
+	"github.com/masudur-rahman/go-oneliners"
 
 	"gopkg.in/telebot.v3"
 )
@@ -66,11 +67,7 @@ func NewTransaction(svc *all.Services) func(ctx telebot.Context) error {
 		inlineButtons := make([]telebot.InlineButton, 0, 3)
 		for _, typ := range types {
 			callbackOpts.Transaction.Type = typ
-			btn, err := generateInlineButton(callbackOpts, string(typ))
-			if err != nil {
-				return ctx.Send(err.Error())
-			}
-
+			btn := generateInlineButton(callbackOpts, string(typ))
 			inlineButtons = append(inlineButtons, btn)
 		}
 
@@ -88,8 +85,10 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
 		callbackOpts, err := parseCallbackOptions(ctx)
 		if err != nil {
-			return ctx.Send("Callback data parse error!")
+			return ctx.Send("Invalid data or data expired!")
 		}
+
+		oneliners.PrettyJson(callbackOpts, "Callback Options")
 
 		switch callbackOpts.Type {
 		case TransactionTypeCallback:
@@ -125,9 +124,9 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 			case StepRemarks:
 				err = processTransaction(svc, callbackOpts.Transaction)
 				if err != nil {
-					return ctx.Send("Transaction added successfully!")
+					return ctx.Send(err.Error())
 				}
-				return ctx.Send(err.Error())
+				return ctx.Send("Transaction added successfully!")
 			}
 		default:
 		}
@@ -138,7 +137,7 @@ func TransactionCallback(svc *all.Services) func(ctx telebot.Context) error {
 
 func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	var callbackOpts CallbackOptions
-	err := pkg.DecodeFromBase64(&callbackOpts, ctx.Callback().Data)
+	err := fetchInlineButtonDataFromCache(ctx.Callback().Data, &callbackOpts)
 	return callbackOpts, err
 }
 

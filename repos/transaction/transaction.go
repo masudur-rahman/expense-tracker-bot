@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
@@ -23,6 +24,7 @@ func NewSQLTransactionRepository(db isql.Database, logger logr.Logger) *SQLTrans
 
 func (t *SQLTransactionRepository) AddTransaction(txn models.Transaction) error {
 	t.logger.Infow("inserting new transaction")
+	txn.Timestamp = time.Now().Unix()
 	_, err := t.db.InsertOne(txn)
 	return err
 }

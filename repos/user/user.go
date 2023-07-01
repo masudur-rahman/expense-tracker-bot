@@ -50,9 +50,9 @@ func (u *SQLUserRepository) GetUserByName(username string) (*models.User, error)
 	return &user, nil
 }
 
-func (u *SQLUserRepository) UpdateUserBalance(username string, txnAmount float64) error {
+func (u *SQLUserRepository) UpdateUserBalance(id string, txnAmount float64) error {
 	u.logger.Infow("updating user")
-	user, err := u.GetUserByName(username)
+	user, err := u.GetUserByID(id)
 	if err != nil {
 		return err
 	}
@@ -68,14 +68,14 @@ func (u *SQLUserRepository) AddNewUser(user *models.User) error {
 	return err
 }
 
-func (u *SQLUserRepository) ListUsers() ([]*models.User, error) {
+func (u *SQLUserRepository) ListUsers() ([]models.User, error) {
 	u.logger.Infow("listing users")
-	users := make([]*models.User, 0)
+	users := make([]models.User, 0)
 	err := u.db.FindMany(&users, models.User{})
 	return users, err
 }
 
-func (u *SQLUserRepository) DeleteUser(username string) error {
-	u.logger.Infow("deleting user", "name", username)
-	return u.db.DeleteOne(models.User{Name: username})
+func (u *SQLUserRepository) DeleteUser(id string) error {
+	u.logger.Infow("deleting user", "id", id)
+	return u.db.DeleteOne(models.User{ID: id})
 }

@@ -43,6 +43,7 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/subcat", handlers.ListTransactionSubcategories(svc))
 
 	bot.Handle("/newtxn", handlers.NewTransaction(svc))
+	bot.Handle("/newuser", handlers.NewUser(svc))
 
 	//bot.Handle("/add", handlers.AddNewExpense(printer, svc))
 	//bot.Handle("/list", handlers.ListExpenses(printer, svc))

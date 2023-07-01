@@ -43,7 +43,7 @@ github.com/jung-kurt/gofpdf
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/masudur-rahman/database v0.0.0-20230625203948-1fe8c020e0c1
+# github.com/masudur-rahman/database v0.0.0-20230701062153-265bfd767c65
 ## explicit; go 1.20
 github.com/masudur-rahman/database/pkg
 github.com/masudur-rahman/database/sql
@@ -62,6 +62,9 @@ github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.13
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
+# github.com/patrickmn/go-cache v2.1.0+incompatible
+## explicit
+github.com/patrickmn/go-cache
 # github.com/rivo/uniseg v0.2.0
 ## explicit; go 1.12
 github.com/rivo/uniseg

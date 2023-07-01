@@ -26,7 +26,7 @@ func (u *userService) GetUserByName(username string) (*models.User, error) {
 	return u.userRepo.GetUserByName(username)
 }
 
-func (u *userService) ListUsers() ([]*models.User, error) {
+func (u *userService) ListUsers() ([]models.User, error) {
 	return u.userRepo.ListUsers()
 }
 
@@ -34,10 +34,10 @@ func (u *userService) CreateUser(user *models.User) error {
 	return u.userRepo.AddNewUser(user)
 }
 
-func (u *userService) UpdateUserBalance(username string, amount float64) error {
-	return u.userRepo.UpdateUserBalance(username, amount)
+func (u *userService) UpdateUserBalance(id string, amount float64) error {
+	return u.userRepo.UpdateUserBalance(id, amount)
 }
 
-func (u *userService) DeleteUser(username string) error {
-	return u.userRepo.DeleteUser(username)
+func (u *userService) DeleteUser(id string) error {
+	return u.userRepo.DeleteUser(id)
 }

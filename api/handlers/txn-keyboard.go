@@ -2,23 +2,28 @@ package handlers
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
-	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
+	"github.com/patrickmn/go-cache"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
+
+var c *cache.Cache
+
+func init() {
+	c = cache.New(6*time.Hour, 24*time.Hour)
+}
 
 func generateAmountTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
 	amounts := []float64{50, 100, 500}
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, amount := range amounts {
 		callbackOpts.Transaction.Amount = amount
-		btn, err := generateInlineButton(callbackOpts, fmt.Sprintf("%v", amount))
-		if err != nil {
-			return nil, err
-		}
-
+		btn := generateInlineButton(callbackOpts, fmt.Sprintf("%v", amount))
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -42,11 +47,7 @@ func generateSrcDstTypeInlineButton(svc *all.Services, callbackOpts CallbackOpti
 
 	for _, ac := range acs {
 		*srcOrDst = ac.ID
-		btn, err := generateInlineButton(callbackOpts, ac.Name)
-		if err != nil {
-			return nil, err
-		}
-
+		btn := generateInlineButton(callbackOpts, ac.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -62,10 +63,7 @@ func generateTransactionCategoryTypeInlineButton(svc *all.Services, callbackOpts
 	inlineButtons := make([]telebot.InlineButton, 0, len(cats))
 	for _, cat := range cats {
 		callbackOpts.Transaction.CategoryID = cat.ID
-		btn, err := generateInlineButton(callbackOpts, cat.Name)
-		if err != nil {
-			return nil, err
-		}
+		btn := generateInlineButton(callbackOpts, cat.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -81,10 +79,7 @@ func generateTransactionSubcategoryTypeInlineButton(svc *all.Services, callbackO
 	inlineButtons := make([]telebot.InlineButton, 0, len(subcats))
 	for _, subcat := range subcats {
 		callbackOpts.Transaction.SubcategoryID = subcat.ID
-		btn, err := generateInlineButton(callbackOpts, subcat.Name)
-		if err != nil {
-			return nil, err
-		}
+		btn := generateInlineButton(callbackOpts, subcat.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -100,10 +95,7 @@ func generateTransactionUserTypeInlineButton(svc *all.Services, callbackOpts Cal
 	inlineButtons := make([]telebot.InlineButton, 0, len(users))
 	for _, user := range users {
 		callbackOpts.Transaction.UserID = user.ID
-		btn, err := generateInlineButton(callbackOpts, user.Name)
-		if err != nil {
-			return nil, err
-		}
+		btn := generateInlineButton(callbackOpts, user.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -111,26 +103,34 @@ func generateTransactionUserTypeInlineButton(svc *all.Services, callbackOpts Cal
 }
 
 func generateTransactionRemarksTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
-	btn, err := generateInlineButton(callbackOpts, "Done")
-	if err != nil {
-		return nil, err
-	}
+	btn := generateInlineButton(callbackOpts, "Done")
 	inlineButtons := []telebot.InlineButton{btn}
 
 	return inlineButtons, nil
 }
 
-func generateInlineButton(obj any, btnText string) (telebot.InlineButton, error) {
-	data, err := pkg.EncodeToBase64(obj)
-	if err != nil {
-		return telebot.InlineButton{}, err
-	}
-	inlnBtn := telebot.InlineButton{
-		Text: btnText,
-		Data: data,
+func storeInlineButtonDataIntoCache(obj any) string {
+	id := xid.New().String()
+	c.Set(id, obj, 0)
+	return id
+}
+
+func fetchInlineButtonDataFromCache(data string, obj any) error {
+	dd, ok := c.Get(data)
+	if !ok {
+		return fmt.Errorf("no data found")
 	}
 
-	return inlnBtn, nil
+	reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(dd))
+	c.Delete(data)
+	return nil
+}
+
+func generateInlineButton(obj any, btnText string) telebot.InlineButton {
+	return telebot.InlineButton{
+		Text: btnText,
+		Data: storeInlineButtonDataIntoCache(obj),
+	}
 }
 
 func generateInlineKeyboard(inlineButtons []telebot.InlineButton) [][]telebot.InlineButton {
