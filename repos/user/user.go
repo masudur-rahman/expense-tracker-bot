@@ -60,7 +60,7 @@ func (u *SQLUserRepository) UpdateUserBalance(id string, txnAmount float64) erro
 	user.Balance += txnAmount
 	user.LastTxnTimestamp = time.Now().Unix()
 
-	return u.db.ID(user.ID).UpdateOne(user)
+	return u.db.ID(user.ID).MustCols("balance").UpdateOne(user)
 }
 
 func (u *SQLUserRepository) AddNewUser(user *models.User) error {

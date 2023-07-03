@@ -6,7 +6,7 @@ require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/masudur-rahman/database v0.0.0-20230703181730-ae20487bd96d
+	github.com/masudur-rahman/database v0.0.0-20230703184053-498bf64f16ed
 	github.com/masudur-rahman/go-oneliners v1.0.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rs/xid v1.5.0

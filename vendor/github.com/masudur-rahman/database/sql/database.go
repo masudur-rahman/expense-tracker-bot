@@ -12,6 +12,7 @@ type Database interface {
 	Where(string, ...any) Database
 	Columns(...string) Database
 	AllCols() Database
+	MustCols(...string) Database
 
 	FindOne(document any, filter ...any) (bool, error)
 	FindMany(documents any, filter ...any) error
