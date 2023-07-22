@@ -43,7 +43,7 @@ github.com/jung-kurt/gofpdf
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/masudur-rahman/database v0.0.0-20230703184053-498bf64f16ed
+# github.com/masudur-rahman/database v0.0.0-20230712191307-c3b5f6c5cd9b
 ## explicit; go 1.20
 github.com/masudur-rahman/database/pkg
 github.com/masudur-rahman/database/sql

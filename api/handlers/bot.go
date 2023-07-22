@@ -4,65 +4,37 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
-	"github.com/masudur-rahman/expense-tracker-bot/models/gqtypes"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/spf13/pflag"
 	"gopkg.in/telebot.v3"
 )
 
 func Welcome(ctx telebot.Context) error {
-	return ctx.Send(`Welcome to Expense Tracker !
+	return ctx.Send(fmt.Sprintf(`Hello %v %v!
+Welcome to Expense Tracker !
 Available options are:
 /new <type> <unique-name> <Account Name>
-`)
+/newuser <id> <name> <email>
+`, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
-func Hello(ctx telebot.Context) error {
-	return ctx.Send(fmt.Sprintf("Hello %v!", ctx.Sender().Username))
-}
+func ListUsers(svc *all.Services) func(ctx telebot.Context) error {
+	return func(ctx telebot.Context) error {
+		users, err := svc.User.ListUsers()
+		if err != nil {
+			return ctx.Send(err.Error())
+		}
 
-func Test(ctx telebot.Context) error {
-	return ctx.Send("Choose one: ", &telebot.SendOptions{
-		ReplyTo: ctx.Message(),
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
-				{
-					telebot.InlineButton{Text: "Hello", Data: "Hello"},
-					telebot.InlineButton{Text: "Bye", Data: "Bye"},
-				},
-			},
-			//ReplyKeyboard: [][]telebot.ReplyButton{
-			//	{
-			//		telebot.ReplyButton{Text: "Option 1"},
-			//		telebot.ReplyButton{Text: "Option 2"},
-			//	},
-			//	{
-			//		telebot.ReplyButton{Text: "Option 3"},
-			//		telebot.ReplyButton{Text: "Cancel"},
-			//	},
-			//},
-			//ForceReply:      false,
-			//ResizeKeyboard:  true,
-			//OneTimeKeyboard: true,
-			//RemoveKeyboard:  true,
-			//Selective:       false,
-			//Placeholder:     "",
-		},
-		//DisableWebPagePreview: false,
-		//DisableNotification:   false,
-		//ParseMode:             "",
-		//Entities:              nil,
-		//AllowWithoutReply:     false,
-		//Protected:             false,
-	})
+		return ctx.Send(pkg.FormatDocuments(users, "ID", "Name", "Balance"))
+	}
 }
 
 func NewUser(svc *all.Services) func(ctx telebot.Context) error {
@@ -124,9 +96,6 @@ func ListAccounts(printer pkg.Printer, svc *all.Services) func(ctx telebot.Conte
 			return err
 		}
 
-		//printer.WithColumns("ID", "Type", "Name", "Balance")
-		//defer printer.ClearColumns()
-		//return ctx.Send(printer.PrintDocuments(accounts))
 		return ctx.Send(printAccounts(accounts))
 	}
 }
@@ -155,31 +124,67 @@ If users will be able to select options from the UI, it's ideal to design the in
 By structuring the input sequence in this way, users can easily navigate through the available options and make their selections. It enhances the user experience by presenting a guided interface that reduces the chance of errors or confusion during the input process.
 */
 
+type TransactionOptions struct {
+	Type     string
+	Amount   float64
+	SubCatID string
+	SrcID    string
+	DstID    string
+	UserID   string
+	Remarks  string
+}
+
+func parseTransactionFlags(txnString string) (TransactionOptions, error) {
+	var txnOpts TransactionOptions
+
+	set := pflag.NewFlagSet("transaction", pflag.ContinueOnError)
+	set.StringVarP(&txnOpts.Type, "type", "t", string(models.ExpenseTransaction), "Type of the transaction")
+	//set.Float64VarP(&txnOpts.Amount, "amount", "a", 0, "Transaction amount")
+	set.StringVarP(&txnOpts.SubCatID, "subcat", "s", "misc-misc", "Subcategory for the transaction")
+	set.StringVarP(&txnOpts.SrcID, "src", "f", "cash", "Source account for the transaction")
+	set.StringVarP(&txnOpts.DstID, "dst", "d", "", "Destination account for the transaction")
+	set.StringVarP(&txnOpts.UserID, "user", "u", "", "User associated with the loan/borrow")
+	set.StringVarP(&txnOpts.Remarks, "remarks", "r", "", "Remarks for the transaction")
+
+	args := strings.Split(txnString, " ")
+	err := set.Parse(args)
+	if err != nil {
+		return TransactionOptions{}, err
+	}
+
+	if len(set.Args()) > 0 {
+		_, err = fmt.Sscanf(set.Args()[0], "%f", &txnOpts.Amount)
+	}
+
+	return txnOpts, err
+}
+
+/*
+/txn <amount> -t=<type> -s=<subcat> -f=<src> -d=<dst> -u=<user> -r=<remarks>
+*/
+
 func AddNewTransactions(svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
-		// normal expense type
-		// <type> <subcat> <amount> <src> <remarks>
-		txnOpts := pkg.SplitString(ctx.Text(), ' ')
-		if len(txnOpts) < 4 {
-			return ctx.Send("Syntax unknown")
+		flags := strings.SplitN(ctx.Text(), " ", 2)
+		if len(flags) != 2 {
+			return ctx.Send("no argument provided for the transaction")
 		}
 
-		amount, err := strconv.ParseFloat(txnOpts[3], 64)
+		txnOpts, err := parseTransactionFlags(flags[1])
 		if err != nil {
-			return ctx.Send("Parsing amount failed")
+			return ctx.Send(err.Error())
 		}
-		var remarks string
-		if len(txnOpts) > 5 {
-			remarks = txnOpts[5]
-		}
-		err = svc.Txn.AddTransaction(models.Transaction{
-			Amount:        amount,
-			SubcategoryID: txnOpts[2],
-			Type:          models.TransactionType(txnOpts[1]),
-			SrcID:         txnOpts[4],
+		params := models.Transaction{
+			Amount:        txnOpts.Amount,
+			SubcategoryID: txnOpts.SubCatID,
+			Type:          models.TransactionType(txnOpts.Type),
+			SrcID:         txnOpts.SrcID,
+			DstID:         txnOpts.DstID,
+			UserID:        txnOpts.UserID,
 			Timestamp:     time.Now().Unix(),
-			Remarks:       remarks,
-		})
+			Remarks:       txnOpts.Remarks,
+		}
+		err = svc.Txn.AddTransaction(params)
 		if err != nil {
 			return ctx.Send(err.Error())
 		}
@@ -190,7 +195,10 @@ func AddNewTransactions(svc *all.Services) func(ctx telebot.Context) error {
 
 func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
-		txns, err := svc.Txn.ListTransactionsByType(models.ExpenseTransaction)
+		now := time.Now()
+		txns, err := svc.Txn.ListTransactionsByTime(time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix(), now.Unix())
+		//txns, err := svc.Txn.ListTransactions()
+		//txns, err := svc.Txn.ListTransactionsByType(models.ExpenseTransaction)
 		if err != nil {
 			return err
 		}
@@ -204,76 +212,4 @@ func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.C
 		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
 		//return ctx.Send(generateTransactionTelegramResponse(txns))
 	}
-}
-
-func generateTransactionTelegramResponse(txns []models.Transaction) string {
-	buf := bytes.Buffer{}
-	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
-	fmt.Fprintln(w, "Time\tAmount\tType\tDescription")
-	for idx := range txns {
-		txn := txns[idx]
-		fmt.Fprintf(w, "%v\t%v\t%v\t%v\n", time.Unix(txn.Timestamp, 0).Format("Jan 02, 15:04"), txn.Amount, txn.Type, txn.Remarks)
-	}
-	_ = w.Flush()
-	return buf.String()
-}
-
-func AddNewExpense(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		str := pkg.SplitString(ctx.Text(), ' ')
-		var err error
-		var amount float64
-		if len(str) < 3 {
-			return ctx.Send(`
-Syntax unknown.
-Format: /add <amount> <description>
-`)
-		} else if amount, err = strconv.ParseFloat(str[1], 64); err != nil {
-			return ctx.Send(`
-Syntax unknown.
-Format: /add <amount> <description>
-`)
-		}
-
-		params := gqtypes.Expense{
-			Amount:      amount,
-			Description: strings.Join(str[2:], " "),
-		}
-
-		printer.PrintDocument(params)
-		//if err = svc.Expense.AddExpense(params); err != nil {
-		//	return err
-		//}
-
-		return ctx.Send(fmt.Sprintf(`
-New Expense entry added.
-%s: %v Taka
-`, params.Description, amount))
-	}
-}
-
-//func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-//	return func(ctx telebot.Context) error {
-//		expenses, err := svc.Expense.ListExpenses()
-//		if err != nil {
-//			return err
-//		}
-//
-//		printer.WithExceptColumns([]string{"ID"})
-//		defer printer.ClearColumns()
-//		printer.PrintDocuments(expenses)
-//
-//		return ctx.Send(generateTelegramResponse(expenses))
-//	}
-//}
-
-func generateTelegramResponse(expenses []*models.Expense) string {
-	buf := bytes.Buffer{}
-	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
-	fmt.Fprintln(w, "Time\tAmount\tDescription")
-	for idx := range expenses {
-		fmt.Fprintf(w, "%v\t%v\t%v\n", expenses[idx].Date.Format("Jan 02, 15:04"), expenses[idx].Amount, expenses[idx].Description)
-	}
-	_ = w.Flush()
-	return buf.String()
 }

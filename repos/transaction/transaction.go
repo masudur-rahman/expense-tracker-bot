@@ -44,8 +44,10 @@ func (t *SQLTransactionRepository) ListTransactionsByCategory(catID string) ([]m
 }
 
 func (t *SQLTransactionRepository) ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error) {
-	//TODO implement me
-	panic("implement me")
+	t.logger.Infow("list transactions by time")
+	txns := make([]models.Transaction, 0)
+	err := t.db.Where(fmt.Sprintf("timestamp >= ? AND timestamp <= ?"), startTime, endTime).FindMany(&txns)
+	return txns, err
 }
 
 func (t *SQLTransactionRepository) ListTxnCategories() ([]models.TxnCategory, error) {

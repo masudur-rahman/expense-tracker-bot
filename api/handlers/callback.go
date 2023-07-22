@@ -186,33 +186,3 @@ func TextCallback(svc *all.Services) func(ctx telebot.Context) error {
 		})
 	}
 }
-
-func Reply() func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		msg, err := ctx.Bot().Reply(ctx.Message(), "Hello there!", &telebot.SendOptions{
-			ReplyTo: ctx.Message(),
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: [][]telebot.InlineButton{
-					{
-						telebot.InlineButton{
-							Text: "Option 1",
-							Data: "Option 1",
-						},
-					},
-				},
-				ForceReply:     true,
-				ResizeKeyboard: true,
-				Placeholder:    "What, Why, How to do it ?",
-			},
-			ParseMode: "",
-			Entities:  nil,
-			Protected: false,
-		})
-		if err != nil {
-			return err
-		}
-
-		messageData[msg.ID] = "Okay, now I've got it..."
-		return nil
-	}
-}

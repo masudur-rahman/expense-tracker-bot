@@ -18,6 +18,7 @@ type Statement struct {
 	mustColMap map[string]bool
 	where      string
 	args       []any
+	argCounter int
 	showSQL    bool
 }
 
@@ -45,9 +46,13 @@ func (stmt Statement) In(col string, values ...any) Statement {
 }
 
 func (stmt Statement) Where(cond string, args ...any) Statement {
+	for range args {
+		stmt.argCounter++
+		cond = strings.Replace(cond, "?", fmt.Sprintf("$%d", stmt.argCounter), 1)
+	}
 	stmt.where = stmt.AddWhereClause(cond)
 	if len(args) > 0 {
-		stmt.args = append(stmt.args, args)
+		stmt.args = append(stmt.args, args...)
 	}
 	return stmt
 }
@@ -88,6 +93,11 @@ func (stmt Statement) AllCols() Statement {
 
 func (stmt Statement) MustCols(cols ...string) Statement {
 	stmt.mustCols = cols
+	return stmt
+}
+
+func (stmt Statement) ShowSQL(showSQL bool) Statement {
+	stmt.showSQL = showSQL
 	return stmt
 }
 

@@ -26,11 +26,8 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	}
 
 	bot.Handle("/", handlers.Welcome)
-	bot.Handle("/hello", handlers.Hello)
-	bot.Handle("/test", handlers.Test)
-	bot.Handle(telebot.OnCallback, handlers.TransactionCallback(svc))
-	bot.Handle("/reply", handlers.Reply())
 
+	bot.Handle(telebot.OnCallback, handlers.TransactionCallback(svc))
 	bot.Handle(telebot.OnText, handlers.TextCallback(svc))
 
 	bot.Handle("/new", handlers.AddAccount(svc))
@@ -43,10 +40,9 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 	bot.Handle("/subcat", handlers.ListTransactionSubcategories(svc))
 
 	bot.Handle("/newtxn", handlers.NewTransaction(svc))
-	bot.Handle("/newuser", handlers.NewUser(svc))
 
-	//bot.Handle("/add", handlers.AddNewExpense(printer, svc))
-	//bot.Handle("/list", handlers.ListExpenses(printer, svc))
+	bot.Handle("/nuser", handlers.NewUser(svc))
+	bot.Handle("/user", handlers.ListUsers(svc))
 
 	return bot, err
 }

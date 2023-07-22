@@ -65,6 +65,10 @@ func (ts *txnService) ListTransactionsByType(txnType models.TransactionType) ([]
 	return ts.txnRepo.ListTransactions(filter)
 }
 
+func (ts *txnService) ListTransactions() ([]models.Transaction, error) {
+	return ts.txnRepo.ListTransactions(models.Transaction{})
+}
+
 func (ts *txnService) ListTransactionsByCategory(catID string) ([]models.Transaction, error) {
 	return ts.txnRepo.ListTransactionsByCategory(catID)
 }

@@ -13,6 +13,7 @@ type Database interface {
 	Columns(...string) Database
 	AllCols() Database
 	MustCols(...string) Database
+	ShowSQL(showSQL bool) Database
 
 	FindOne(document any, filter ...any) (bool, error)
 	FindMany(documents any, filter ...any) error

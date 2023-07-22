@@ -53,6 +53,11 @@ func (pg Postgres) MustCols(cols ...string) isql.Database {
 	return pg
 }
 
+func (pg Postgres) ShowSQL(showSQL bool) isql.Database {
+	pg.statement = pg.statement.ShowSQL(showSQL)
+	return pg
+}
+
 func (pg Postgres) FindOne(document any, filter ...any) (bool, error) {
 	pg.statement = pg.statement.GenerateWhereClause(filter...)
 

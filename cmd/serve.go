@@ -81,7 +81,7 @@ func getServicesForPostgres(ctx context.Context) *all.Services {
 		log.Fatalln(err)
 	}
 
-	db := postgres.NewPostgres(ctx, conn)
+	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
 	err = db.Sync(models.User{}, models.Account{}, models.Transaction{}, models.TxnCategory{}, models.TxnSubcategory{}, models.Event{})
 	if err != nil {
 		log.Fatalln(err)
