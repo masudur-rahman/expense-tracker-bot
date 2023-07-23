@@ -80,8 +80,8 @@ func (ts *txnService) ListTransactionsBySubcategory(subcatID string) ([]models.T
 	return ts.txnRepo.ListTransactions(filter)
 }
 
-func (ts *txnService) ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error) {
-	return ts.txnRepo.ListTransactionsByTime(startTime, endTime)
+func (ts *txnService) ListTransactionsByTime(txnType models.TransactionType, startTime, endTime int64) ([]models.Transaction, error) {
+	return ts.txnRepo.ListTransactionsByTime(txnType, startTime, endTime)
 }
 
 func (ts *txnService) ListTransactionsBySourceID(srcID string) ([]models.Transaction, error) {
@@ -105,8 +105,16 @@ func (ts *txnService) ListTransactionsByUser(username string) ([]models.Transact
 	return ts.txnRepo.ListTransactions(filter)
 }
 
+func (ts *txnService) GetTxnCategoryName(catID string) (string, error) {
+	return ts.txnRepo.GetTxnCategoryName(catID)
+}
+
 func (ts *txnService) ListTxnCategories() ([]models.TxnCategory, error) {
 	return ts.txnRepo.ListTxnCategories()
+}
+
+func (ts *txnService) GetTxnSubcategoryName(subcatID string) (string, error) {
+	return ts.txnRepo.GetTxnSubcategoryName(subcatID)
 }
 
 func (ts *txnService) ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error) {

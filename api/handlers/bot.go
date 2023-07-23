@@ -195,10 +195,7 @@ func AddNewTransactions(svc *all.Services) func(ctx telebot.Context) error {
 
 func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
 	return func(ctx telebot.Context) error {
-		now := time.Now()
-		txns, err := svc.Txn.ListTransactionsByTime(time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix(), now.Unix())
-		//txns, err := svc.Txn.ListTransactions()
-		//txns, err := svc.Txn.ListTransactionsByType(models.ExpenseTransaction)
+		txns, err := svc.Txn.ListTransactions()
 		if err != nil {
 			return err
 		}
@@ -210,6 +207,22 @@ func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.C
 		printer.PrintDocuments(txns)
 
 		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
-		//return ctx.Send(generateTransactionTelegramResponse(txns))
+	}
+}
+
+func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
+	return func(ctx telebot.Context) error {
+		txns, err := svc.Txn.ListTransactionsByTime(models.ExpenseTransaction, pkg.StartOfMonth().Unix(), time.Now().Unix())
+		if err != nil {
+			return err
+		}
+
+		//printer.WithRenderType(pkg.RenderTypeMarkdown)
+		printer.WithStyle(table.StyleLight)
+		printer.WithExceptColumns([]string{"ID"})
+		defer printer.ClearColumns()
+		printer.PrintDocuments(txns)
+
+		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
 	}
 }

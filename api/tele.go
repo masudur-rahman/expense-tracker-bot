@@ -27,18 +27,24 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 
 	bot.Handle("/", handlers.Welcome)
 
-	bot.Handle(telebot.OnCallback, handlers.TransactionCallback(svc))
-	bot.Handle(telebot.OnText, handlers.TextCallback(svc))
+	bot.Handle(telebot.OnCallback, handlers.Callback(svc))
+	bot.Handle(telebot.OnText, handlers.TransactionTextCallback(svc))
 
 	bot.Handle("/new", handlers.AddAccount(svc))
-	bot.Handle("/accounts", handlers.ListAccounts(printer, svc))
+	bot.Handle("/balance", handlers.ListAccounts(printer, svc))
 
+	// New transaction with flags
 	bot.Handle("/txn", handlers.AddNewTransactions(svc))
 	bot.Handle("/list", handlers.ListTransactions(printer, svc))
+	bot.Handle("/expense", handlers.ListExpenses(printer, svc))
+
+	bot.Handle("/summary-full", handlers.TransactionSummaryCallback(svc))
+	bot.Handle("/summary", handlers.TransactionSummary(printer, svc))
 
 	bot.Handle("/cat", handlers.ListTransactionCategories(svc))
 	bot.Handle("/subcat", handlers.ListTransactionSubcategories(svc))
 
+	// New transaction with callback
 	bot.Handle("/newtxn", handlers.NewTransaction(svc))
 
 	bot.Handle("/nuser", handlers.NewUser(svc))

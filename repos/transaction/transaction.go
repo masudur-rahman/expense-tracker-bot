@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,11 +44,23 @@ func (t *SQLTransactionRepository) ListTransactionsByCategory(catID string) ([]m
 	return txns, err
 }
 
-func (t *SQLTransactionRepository) ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error) {
+func (t *SQLTransactionRepository) ListTransactionsByTime(txnType models.TransactionType, startTime, endTime int64) ([]models.Transaction, error) {
 	t.logger.Infow("list transactions by time")
 	txns := make([]models.Transaction, 0)
-	err := t.db.Where(fmt.Sprintf("timestamp >= ? AND timestamp <= ?"), startTime, endTime).FindMany(&txns)
+	err := t.db.Where(fmt.Sprintf("timestamp >= ? AND timestamp <= ?"), startTime, endTime).FindMany(&txns, models.Transaction{Type: txnType})
 	return txns, err
+}
+
+func (ts *SQLTransactionRepository) GetTxnCategoryName(catID string) (string, error) {
+	cat := models.TxnCategory{}
+	has, err := ts.db.Table("txn_category").ID(catID).FindOne(&cat)
+	if err != nil {
+		return "", err
+	} else if !has {
+		return "", errors.New("not found")
+	}
+
+	return cat.Name, nil
 }
 
 func (t *SQLTransactionRepository) ListTxnCategories() ([]models.TxnCategory, error) {
@@ -55,6 +68,18 @@ func (t *SQLTransactionRepository) ListTxnCategories() ([]models.TxnCategory, er
 	cats := make([]models.TxnCategory, 0)
 	err := t.db.Table("txn_category").FindMany(&cats)
 	return cats, err
+}
+
+func (ts *SQLTransactionRepository) GetTxnSubcategoryName(subcatID string) (string, error) {
+	subcat := models.TxnSubcategory{}
+	has, err := ts.db.Table("txn_subcategory").ID(subcatID).FindOne(&subcat)
+	if err != nil {
+		return "", err
+	} else if !has {
+		return "", errors.New("not found")
+	}
+
+	return subcat.Name, nil
 }
 
 func (t *SQLTransactionRepository) ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error) {

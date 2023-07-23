@@ -6,9 +6,11 @@ type TransactionRepository interface {
 	AddTransaction(txn models.Transaction) error
 	ListTransactionsByCategory(catID string) ([]models.Transaction, error)
 	ListTransactions(filter models.Transaction) ([]models.Transaction, error)
-	ListTransactionsByTime(startTime, endTime int64) ([]models.Transaction, error)
+	ListTransactionsByTime(txnType models.TransactionType, startTime, endTime int64) ([]models.Transaction, error)
 
+	GetTxnCategoryName(catID string) (string, error)
 	ListTxnCategories() ([]models.TxnCategory, error)
+	GetTxnSubcategoryName(subcatID string) (string, error)
 	ListTxnSubcategories(catID string) ([]models.TxnSubcategory, error)
 	UpdateTxnCategories() error
 }
