@@ -19,6 +19,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
@@ -77,6 +78,27 @@ func getServicesForPostgres(ctx context.Context) error {
 		User:     "postgres",
 		Password: "postgres",
 		SSLMode:  "disable",
+	}
+
+	user, ok := os.LookupEnv("POSTGRES_USER")
+	if ok {
+		cfg.User = user
+	}
+	pass, ok := os.LookupEnv("POSTGRES_PASSWORD")
+	if ok {
+		cfg.Password = pass
+	}
+	name, ok := os.LookupEnv("POSTGRES_DB")
+	if ok {
+		cfg.Name = name
+	}
+	host, ok := os.LookupEnv("POSTGRES_HOST")
+	if ok {
+		cfg.Host = host
+	}
+	port, ok := os.LookupEnv("POSTGRES_PORT")
+	if ok {
+		cfg.Port = port
 	}
 
 	conn, err := lib.GetPostgresConnection(cfg)
