@@ -20,6 +20,8 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 		return nil, err
 	}
 
+	bot.Use(masudur_rahman())
+
 	bot.Handle("/", handlers.Welcome)
 
 	bot.Handle(telebot.OnCallback, handlers.Callback)
@@ -47,4 +49,16 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 	bot.Handle("/user", handlers.ListUsers)
 
 	return bot, err
+}
+
+func masudur_rahman() telebot.MiddlewareFunc {
+	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
+		return func(ctx telebot.Context) error {
+			if ctx.Sender().Username != "masudur_rahman" {
+				return ctx.Send("Only allowed user is `masudur_rahman`")
+			}
+
+			return next(ctx)
+		}
+	}
 }
