@@ -100,6 +100,10 @@ func getServicesForPostgres(ctx context.Context) error {
 	if ok {
 		cfg.Port = port
 	}
+	ssl, ok := os.LookupEnv("POSTGRES_SSL_MODE")
+	if ok {
+		cfg.SSLMode = ssl
+	}
 
 	conn, err := lib.GetPostgresConnection(cfg)
 	if err != nil {
