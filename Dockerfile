@@ -9,5 +9,7 @@ RUN go build -o expense-tracker
 #USER nobody:nobody
 USER 65535:65535
 
+EXPOSE 8080
+
 ENTRYPOINT ["./expense-tracker"]
 CMD ["serve"]

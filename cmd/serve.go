@@ -19,6 +19,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/masudur-rahman/database/sql"
@@ -44,9 +45,12 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		go startHealthz()
+
 		if err := getServicesForPostgres(cmd.Context()); err != nil {
 			log.Fatalln(err)
 		}
+
 		bot, err := api.TeleBotRoutes()
 		if err != nil {
 			log.Fatalln(err)
@@ -59,6 +63,16 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+}
+
+func startHealthz() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+		writer.Write([]byte("Running"))
+	})
+
+	log.Fatalln(http.ListenAndServe(":8080", mux))
 }
 
 //func getServicesForSupabase(ctx context.Context) *all.Services {
