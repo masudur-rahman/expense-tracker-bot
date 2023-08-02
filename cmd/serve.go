@@ -20,6 +20,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
@@ -42,10 +43,12 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		svc := getServicesForPostgres(cmd.Context())
-		bot, err := api.TeleBotRoutes(svc)
+		if err := getServicesForPostgres(cmd.Context()); err != nil {
+			log.Fatalln(err)
+		}
+		bot, err := api.TeleBotRoutes()
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 
 		log.Println("Expense Tracker Bot started")
@@ -63,10 +66,10 @@ func init() {
 //	var db sql.Database
 //	db = supabase.NewSupabase(ctx, supClient)
 //	logger := logr.DefaultLogger
-//	return all.GetSQLServices(db, logger)
+//	return all.InitiateSQLServices(db, logger)
 //}
 
-func getServicesForPostgres(ctx context.Context) *all.Services {
+func getServicesForPostgres(ctx context.Context) error {
 	cfg := lib.PostgresConfig{
 		Name:     "expense",
 		Host:     "localhost",
@@ -78,19 +81,31 @@ func getServicesForPostgres(ctx context.Context) *all.Services {
 
 	conn, err := lib.GetPostgresConnection(cfg)
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
 	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-	err = db.Sync(models.User{}, models.Account{}, models.Transaction{}, models.TxnCategory{}, models.TxnSubcategory{}, models.Event{})
+	syncTables(db)
+
+	logger := logr.DefaultLogger
+	all.InitiateSQLServices(db, logger)
+
+	if err = all.GetServices().Txn.UpdateTxnCategories(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func syncTables(db sql.Database) {
+	err := db.Sync(
+		models.User{},
+		models.Account{},
+		models.Transaction{},
+		models.TxnCategory{},
+		models.TxnSubcategory{},
+		models.Event{},
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	logger := logr.DefaultLogger
-	svc := all.GetSQLServices(db, logger)
-	if err = svc.Txn.UpdateTxnCategories(); err != nil {
-		log.Fatalln(err)
-	}
-	return svc
 }

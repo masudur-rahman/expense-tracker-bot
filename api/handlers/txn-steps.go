@@ -12,7 +12,7 @@ func loanOrBorrowTypeTransaction(callbackOpts CallbackOptions) bool {
 		callbackOpts.Transaction.SubcategoryID == models.BorrowSubcategoryID
 }
 
-func sendTransactionAmountTypeQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionAmountTypeQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepAmount
 	inlineButtons, err := generateAmountTypeInlineButton(callbackOpts)
 	if err != nil {
@@ -34,9 +34,9 @@ func sendTransactionAmountTypeQuery(ctx telebot.Context, svc *all.Services, call
 	return nil
 }
 
-func sendTransactionSrcTypeQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionSrcTypeQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepSrcID
-	inlineButtons, err := generateSrcDstTypeInlineButton(svc, callbackOpts, true)
+	inlineButtons, err := generateSrcDstTypeInlineButton(callbackOpts, true)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -50,9 +50,9 @@ func sendTransactionSrcTypeQuery(ctx telebot.Context, svc *all.Services, callbac
 	})
 }
 
-func sendTransactionDstTypeQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionDstTypeQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepDstID
-	inlineButtons, err := generateSrcDstTypeInlineButton(svc, callbackOpts, false)
+	inlineButtons, err := generateSrcDstTypeInlineButton(callbackOpts, false)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -66,9 +66,9 @@ func sendTransactionDstTypeQuery(ctx telebot.Context, svc *all.Services, callbac
 	})
 }
 
-func sendTransactionCategoryQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionCategoryQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepCategory
-	inlineButtons, err := generateTransactionCategoryTypeInlineButton(svc, callbackOpts)
+	inlineButtons, err := generateTransactionCategoryTypeInlineButton(callbackOpts)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -82,9 +82,9 @@ func sendTransactionCategoryQuery(ctx telebot.Context, svc *all.Services, callba
 	})
 }
 
-func sendTransactionSubcategoryQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionSubcategoryQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepSubcategory
-	inlineButtons, err := generateTransactionSubcategoryTypeInlineButton(svc, callbackOpts)
+	inlineButtons, err := generateTransactionSubcategoryTypeInlineButton(callbackOpts)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -98,9 +98,9 @@ func sendTransactionSubcategoryQuery(ctx telebot.Context, svc *all.Services, cal
 	})
 }
 
-func sendTransactionUserQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionUserQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepUser
-	inlineButtons, err := generateTransactionUserTypeInlineButton(svc, callbackOpts)
+	inlineButtons, err := generateTransactionUserTypeInlineButton(callbackOpts)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -114,9 +114,9 @@ func sendTransactionUserQuery(ctx telebot.Context, svc *all.Services, callbackOp
 	})
 }
 
-func sendTransactionRemarksQuery(ctx telebot.Context, svc *all.Services, callbackOpts CallbackOptions) error {
+func sendTransactionRemarksQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Transaction.NextStep = StepRemarks
-	inlineButtons, err := generateTransactionRemarksTypeInlineButton(svc, callbackOpts)
+	inlineButtons, err := generateTransactionRemarksTypeInlineButton(callbackOpts)
 	if err != nil {
 		return ctx.Send("Unexpected server error occurred!")
 	}
@@ -136,8 +136,8 @@ func sendTransactionRemarksQuery(ctx telebot.Context, svc *all.Services, callbac
 	return nil
 }
 
-func processTransaction(svc *all.Services, txn TransactionCallbackOptions) error {
-	return svc.Txn.AddTransaction(models.Transaction{
+func processTransaction(txn TransactionCallbackOptions) error {
+	return all.GetServices().Txn.AddTransaction(models.Transaction{
 		Amount:        txn.Amount,
 		SubcategoryID: txn.SubcategoryID,
 		Type:          txn.Type,

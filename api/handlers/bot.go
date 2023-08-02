@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/masudur-rahman/expense-tracker-bot/configs"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
@@ -26,78 +27,70 @@ Available options are:
 `, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
-func ListUsers(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		users, err := svc.User.ListUsers()
-		if err != nil {
-			return ctx.Send(err.Error())
-		}
-
-		return ctx.Send(pkg.FormatDocuments(users, "ID", "Name", "Balance"))
+func ListUsers(ctx telebot.Context) error {
+	users, err := all.GetServices().User.ListUsers()
+	if err != nil {
+		return ctx.Send(err.Error())
 	}
+
+	return ctx.Send(pkg.FormatDocuments(users, "ID", "Name", "Balance"))
 }
 
-func NewUser(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		// /newuser <id> <name> <email>
-		ui := pkg.SplitString(ctx.Text(), ' ')
-		if len(ui) < 3 {
-			return ctx.Send(`
+func NewUser(ctx telebot.Context) error {
+	// /newuser <id> <name> <email>
+	ui := pkg.SplitString(ctx.Text(), ' ')
+	if len(ui) < 3 {
+		return ctx.Send(`
 Syntax unknown.
 Format /newuser <id> <name> <email>
 `)
-		}
-		if err := svc.User.CreateUser(&models.User{
-			ID:   ui[1],
-			Name: ui[2],
-			Email: func() string {
-				if len(ui) >= 4 {
-					return ui[3]
-				}
-				return ""
-			}(),
-		}); err != nil {
-			log.Println(err)
-			return ctx.Send(err.Error())
-		}
-
-		return ctx.Send("New User added!")
 	}
+	if err := all.GetServices().User.CreateUser(&models.User{
+		ID:   ui[1],
+		Name: ui[2],
+		Email: func() string {
+			if len(ui) >= 4 {
+				return ui[3]
+			}
+			return ""
+		}(),
+	}); err != nil {
+		log.Println(err)
+		return ctx.Send(err.Error())
+	}
+
+	return ctx.Send("New User added!")
 }
 
-func AddAccount(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		// <type (Cash or Bank)> <unique-short-name> <Account Name>
-		aci := pkg.SplitString(ctx.Text(), ' ')
-		if len(aci) != 4 {
-			return ctx.Send(`
+func AddAccount(ctx telebot.Context) error {
+	// <type (Cash or Bank)> <unique-short-name> <Account Name>
+	aci := pkg.SplitString(ctx.Text(), ' ')
+	if len(aci) != 4 {
+		return ctx.Send(`
 Syntax unknown.
 Format /new <type> <unique-name> <Account Name>
 `)
-		}
-		acc := &models.Account{
-			ID:   aci[2],
-			Type: models.AccountType(aci[1]),
-			Name: aci[3],
-		}
-		if err := svc.Account.CreateAccount(acc); err != nil {
-			log.Println(err)
-			return ctx.Send(err.Error())
-		}
-
-		return ctx.Send("New Account Added !")
 	}
+	acc := &models.Account{
+		ID:   aci[2],
+		Type: models.AccountType(aci[1]),
+		Name: aci[3],
+	}
+	if err := all.GetServices().Account.CreateAccount(acc); err != nil {
+		log.Println(err)
+		return ctx.Send(err.Error())
+	}
+
+	return ctx.Send("New Account Added !")
 }
 
-func ListAccounts(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		accounts, err := svc.Account.ListAccounts()
-		if err != nil {
-			return err
-		}
-
-		return ctx.Send(printAccounts(accounts))
+func ListAccounts(ctx telebot.Context) error {
+	accounts, err := all.GetServices().Account.ListAccounts()
+	if err != nil {
+		return err
 	}
+
+	return ctx.Send(printAccounts(accounts))
 }
 
 func printAccounts(accounts []models.Account) string {
@@ -163,66 +156,62 @@ func parseTransactionFlags(txnString string) (TransactionOptions, error) {
 /txn <amount> -t=<type> -s=<subcat> -f=<src> -d=<dst> -u=<user> -r=<remarks>
 */
 
-func AddNewTransactions(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		flags := strings.SplitN(ctx.Text(), " ", 2)
-		if len(flags) != 2 {
-			return ctx.Send("no argument provided for the transaction")
-		}
-
-		txnOpts, err := parseTransactionFlags(flags[1])
-		if err != nil {
-			return ctx.Send(err.Error())
-		}
-		params := models.Transaction{
-			Amount:        txnOpts.Amount,
-			SubcategoryID: txnOpts.SubCatID,
-			Type:          models.TransactionType(txnOpts.Type),
-			SrcID:         txnOpts.SrcID,
-			DstID:         txnOpts.DstID,
-			UserID:        txnOpts.UserID,
-			Timestamp:     time.Now().Unix(),
-			Remarks:       txnOpts.Remarks,
-		}
-		err = svc.Txn.AddTransaction(params)
-		if err != nil {
-			return ctx.Send(err.Error())
-		}
-
-		return ctx.Send("Transaction added")
+func AddNewTransactions(ctx telebot.Context) error {
+	flags := strings.SplitN(ctx.Text(), " ", 2)
+	if len(flags) != 2 {
+		return ctx.Send("no argument provided for the transaction")
 	}
+
+	txnOpts, err := parseTransactionFlags(flags[1])
+	if err != nil {
+		return ctx.Send(err.Error())
+	}
+	params := models.Transaction{
+		Amount:        txnOpts.Amount,
+		SubcategoryID: txnOpts.SubCatID,
+		Type:          models.TransactionType(txnOpts.Type),
+		SrcID:         txnOpts.SrcID,
+		DstID:         txnOpts.DstID,
+		UserID:        txnOpts.UserID,
+		Timestamp:     time.Now().Unix(),
+		Remarks:       txnOpts.Remarks,
+	}
+	err = all.GetServices().Txn.AddTransaction(params)
+	if err != nil {
+		return ctx.Send(err.Error())
+	}
+
+	return ctx.Send("Transaction added")
 }
 
-func ListTransactions(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		txns, err := svc.Txn.ListTransactions()
-		if err != nil {
-			return err
-		}
-
-		//printer.WithRenderType(pkg.RenderTypeMarkdown)
-		printer.WithStyle(table.StyleLight)
-		printer.WithExceptColumns([]string{"ID"})
-		defer printer.ClearColumns()
-		printer.PrintDocuments(txns)
-
-		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
+func ListTransactions(ctx telebot.Context) error {
+	txns, err := all.GetServices().Txn.ListTransactions()
+	if err != nil {
+		return err
 	}
+
+	printer := configs.GetDefaultPrinter()
+	//printer.WithRenderType(pkg.RenderTypeMarkdown)
+	printer.WithStyle(table.StyleLight)
+	printer.WithExceptColumns([]string{"ID"})
+	defer printer.ClearColumns()
+	printer.PrintDocuments(txns)
+
+	return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
 }
 
-func ListExpenses(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		txns, err := svc.Txn.ListTransactionsByTime(models.ExpenseTransaction, pkg.StartOfMonth().Unix(), time.Now().Unix())
-		if err != nil {
-			return err
-		}
-
-		//printer.WithRenderType(pkg.RenderTypeMarkdown)
-		printer.WithStyle(table.StyleLight)
-		printer.WithExceptColumns([]string{"ID"})
-		defer printer.ClearColumns()
-		printer.PrintDocuments(txns)
-
-		return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
+func ListExpenses(ctx telebot.Context) error {
+	txns, err := all.GetServices().Txn.ListTransactionsByTime(models.ExpenseTransaction, pkg.StartOfMonth().Unix(), time.Now().Unix())
+	if err != nil {
+		return err
 	}
+
+	printer := configs.GetDefaultPrinter()
+	//printer.WithRenderType(pkg.RenderTypeMarkdown)
+	printer.WithStyle(table.StyleLight)
+	printer.WithExceptColumns([]string{"ID"})
+	defer printer.ClearColumns()
+	printer.PrintDocuments(txns)
+
+	return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
 }

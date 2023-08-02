@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
-	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"github.com/masudur-rahman/go-oneliners"
 
@@ -56,84 +55,80 @@ type TransactionCallbackOptions struct {
 
 var callbackData = make(map[int]CallbackOptions) // map[messageID]CallbackOptions
 
-func NewTransaction(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		callbackOpts := CallbackOptions{
-			Type: TransactionTypeCallback,
-			Transaction: TransactionCallbackOptions{
-				NextStep: StepTxnType,
-			},
-		}
-		types := []models.TransactionType{models.ExpenseTransaction, models.IncomeTransaction, models.TransferTransaction}
-		inlineButtons := make([]telebot.InlineButton, 0, 3)
-		for _, typ := range types {
-			callbackOpts.Transaction.Type = typ
-			btn := generateInlineButton(callbackOpts, string(typ))
-			inlineButtons = append(inlineButtons, btn)
-		}
+func NewTransaction(ctx telebot.Context) error {
+	callbackOpts := CallbackOptions{
+		Type: TransactionTypeCallback,
+		Transaction: TransactionCallbackOptions{
+			NextStep: StepTxnType,
+		},
+	}
+	types := []models.TransactionType{models.ExpenseTransaction, models.IncomeTransaction, models.TransferTransaction}
+	inlineButtons := make([]telebot.InlineButton, 0, 3)
+	for _, typ := range types {
+		callbackOpts.Transaction.Type = typ
+		btn := generateInlineButton(callbackOpts, string(typ))
+		inlineButtons = append(inlineButtons, btn)
+	}
 
-		return ctx.Send("Select Type of the Transaction:", &telebot.SendOptions{
-			ReplyTo: ctx.Message(),
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: generateInlineKeyboard(inlineButtons),
-				ForceReply:     true,
-			},
-		})
+	return ctx.Send("Select Type of the Transaction:", &telebot.SendOptions{
+		ReplyTo: ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
+		},
+	})
+}
+
+func Callback(ctx telebot.Context) error {
+	callbackOpts, err := parseCallbackOptions(ctx)
+	if err != nil {
+		return ctx.Send("Invalid data or data expired!")
+	}
+
+	oneliners.PrettyJson(callbackOpts, "Callback Options")
+
+	switch callbackOpts.Type {
+	case TransactionTypeCallback:
+		return handleTransactionCallback(ctx, callbackOpts)
+	case SummaryTypeCallback:
+		return handleSummaryCallback(ctx, callbackOpts)
+	default:
+		return ctx.Send("Invalid Callback type")
 	}
 }
 
-func Callback(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		callbackOpts, err := parseCallbackOptions(ctx)
-		if err != nil {
-			return ctx.Send("Invalid data or data expired!")
-		}
-
-		oneliners.PrettyJson(callbackOpts, "Callback Options")
-
-		switch callbackOpts.Type {
-		case TransactionTypeCallback:
-			return handleTransactionCallback(ctx, callbackOpts, svc)
-		case SummaryTypeCallback:
-			return handleSummaryCallback(ctx, callbackOpts, svc)
-		default:
-			return ctx.Send("Invalid Callback type")
-		}
-	}
-}
-
-func handleTransactionCallback(ctx telebot.Context, callbackOpts CallbackOptions, svc *all.Services) error {
+func handleTransactionCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	// Type -> Amount -> SrcID (and/or) DstID -> Category -> Subcategory -> (UserID) -> Remarks
 	txn := callbackOpts.Transaction
 	switch txn.NextStep {
 	case StepTxnType:
-		return sendTransactionAmountTypeQuery(ctx, svc, callbackOpts)
+		return sendTransactionAmountTypeQuery(ctx, callbackOpts)
 	case StepAmount:
 		if txn.Type == models.IncomeTransaction {
-			return sendTransactionDstTypeQuery(ctx, svc, callbackOpts)
+			return sendTransactionDstTypeQuery(ctx, callbackOpts)
 		} else {
-			return sendTransactionSrcTypeQuery(ctx, svc, callbackOpts)
+			return sendTransactionSrcTypeQuery(ctx, callbackOpts)
 		}
 	case StepSrcID:
 		if txn.Type == models.TransferTransaction {
-			return sendTransactionDstTypeQuery(ctx, svc, callbackOpts)
+			return sendTransactionDstTypeQuery(ctx, callbackOpts)
 		} else {
-			return sendTransactionCategoryQuery(ctx, svc, callbackOpts)
+			return sendTransactionCategoryQuery(ctx, callbackOpts)
 		}
 	case StepDstID:
-		return sendTransactionCategoryQuery(ctx, svc, callbackOpts)
+		return sendTransactionCategoryQuery(ctx, callbackOpts)
 	case StepCategory:
-		return sendTransactionSubcategoryQuery(ctx, svc, callbackOpts)
+		return sendTransactionSubcategoryQuery(ctx, callbackOpts)
 	case StepSubcategory:
 		if loanOrBorrowTypeTransaction(callbackOpts) {
-			return sendTransactionUserQuery(ctx, svc, callbackOpts)
+			return sendTransactionUserQuery(ctx, callbackOpts)
 		} else {
-			return sendTransactionRemarksQuery(ctx, svc, callbackOpts)
+			return sendTransactionRemarksQuery(ctx, callbackOpts)
 		}
 	case StepUser:
-		return sendTransactionRemarksQuery(ctx, svc, callbackOpts)
+		return sendTransactionRemarksQuery(ctx, callbackOpts)
 	case StepRemarks:
-		err := processTransaction(svc, callbackOpts.Transaction)
+		err := processTransaction(callbackOpts.Transaction)
 		if err != nil {
 			return ctx.Send(err.Error())
 		}
@@ -149,38 +144,36 @@ func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	return callbackOpts, err
 }
 
-func TransactionTextCallback(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
-		//return ctx.Send("Removing keyboard", &telebot.SendOptions{
-		//	ReplyTo:     ctx.Message(),
-		//	ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
-		//})
+func TransactionTextCallback(ctx telebot.Context) error {
+	fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
+	//return ctx.Send("Removing keyboard", &telebot.SendOptions{
+	//	ReplyTo:     ctx.Message(),
+	//	ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
+	//})
 
-		if ctx.Update().Message.ReplyTo == nil {
-			return ctx.Reply("Wrong keyword or data")
+	if ctx.Update().Message.ReplyTo == nil {
+		return ctx.Reply("Wrong keyword or data")
+	}
+
+	replyToID := ctx.Update().Message.ReplyTo.ID
+	callbackOpts := callbackData[replyToID]
+	if callbackOpts.Type != TransactionTypeCallback {
+		return ctx.Reply("Callback must be of Transaction type")
+	}
+
+	var err error
+	switch callbackOpts.Transaction.NextStep {
+	case StepAmount:
+		callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
+		if err != nil {
+			return ctx.Reply("Amount parse error")
 		}
 
-		replyToID := ctx.Update().Message.ReplyTo.ID
-		callbackOpts := callbackData[replyToID]
-		if callbackOpts.Type != TransactionTypeCallback {
-			return ctx.Reply("Callback must be of Transaction type")
-		}
-
-		var err error
-		switch callbackOpts.Transaction.NextStep {
-		case StepAmount:
-			callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
-			if err != nil {
-				return ctx.Reply("Amount parse error")
-			}
-
-			return handleTransactionCallback(ctx, callbackOpts, svc)
-		case StepRemarks:
-			callbackOpts.Transaction.Remarks = ctx.Text()
-			return handleTransactionCallback(ctx, callbackOpts, svc)
-		default:
-			return ctx.Reply("yet to be implemented")
-		}
+		return handleTransactionCallback(ctx, callbackOpts)
+	case StepRemarks:
+		callbackOpts.Transaction.Remarks = ctx.Text()
+		return handleTransactionCallback(ctx, callbackOpts)
+	default:
+		return ctx.Reply("yet to be implemented")
 	}
 }

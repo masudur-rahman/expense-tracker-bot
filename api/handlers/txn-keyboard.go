@@ -30,7 +30,8 @@ func generateAmountTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.Inl
 	return inlineButtons, nil
 }
 
-func generateSrcDstTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions, src bool) ([]telebot.InlineButton, error) {
+func generateSrcDstTypeInlineButton(callbackOpts CallbackOptions, src bool) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
 	acs, err := svc.Account.ListAccounts()
 	if err != nil {
 		return nil, err
@@ -54,7 +55,8 @@ func generateSrcDstTypeInlineButton(svc *all.Services, callbackOpts CallbackOpti
 	return inlineButtons, nil
 }
 
-func generateTransactionCategoryTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateTransactionCategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
 	cats, err := svc.Txn.ListTxnCategories()
 	if err != nil {
 		return nil, err
@@ -70,7 +72,8 @@ func generateTransactionCategoryTypeInlineButton(svc *all.Services, callbackOpts
 	return inlineButtons, nil
 }
 
-func generateTransactionSubcategoryTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateTransactionSubcategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
 	subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Transaction.CategoryID)
 	if err != nil {
 		return nil, err
@@ -86,7 +89,8 @@ func generateTransactionSubcategoryTypeInlineButton(svc *all.Services, callbackO
 	return inlineButtons, nil
 }
 
-func generateTransactionUserTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateTransactionUserTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
 	users, err := svc.User.ListUsers()
 	if err != nil {
 		return nil, err
@@ -102,7 +106,7 @@ func generateTransactionUserTypeInlineButton(svc *all.Services, callbackOpts Cal
 	return inlineButtons, nil
 }
 
-func generateTransactionRemarksTypeInlineButton(svc *all.Services, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateTransactionRemarksTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
 	btn := generateInlineButton(callbackOpts, "Done")
 	inlineButtons := []telebot.InlineButton{btn}
 

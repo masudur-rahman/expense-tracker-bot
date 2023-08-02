@@ -39,16 +39,14 @@ type SummaryCallbackOptions struct {
 	Duration SummaryDuration
 }
 
-func TransactionSummary(printer pkg.Printer, svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		txns, err := svc.Txn.ListTransactionsByTime("", pkg.StartOfMonth().Unix(), time.Now().Unix())
-		if err != nil {
-			return err
-		}
-
-		summary := generateSummary(txns)
-		return ctx.Send(summary.String())
+func TransactionSummary(ctx telebot.Context) error {
+	txns, err := all.GetServices().Txn.ListTransactionsByTime("", pkg.StartOfMonth().Unix(), time.Now().Unix())
+	if err != nil {
+		return err
 	}
+
+	summary := generateSummary(txns)
+	return ctx.Send(summary.String())
 }
 
 func generateSummary(txns []models.Transaction) gqtypes.Summary {
@@ -63,40 +61,38 @@ func generateSummary(txns []models.Transaction) gqtypes.Summary {
 	return summary
 }
 
-func TransactionSummaryCallback(svc *all.Services) func(ctx telebot.Context) error {
-	return func(ctx telebot.Context) error {
-		callbackOpts := CallbackOptions{
-			Type: SummaryTypeCallback,
-			Summary: SummaryCallbackOptions{
-				NextStep: StepGroupBy,
-			},
-		}
-
-		groupBies := []SummaryGroupBy{GroupByTxnType, GroupByTxnCategory, GroupByTxnSubCategory}
-		inlineButtons := make([]telebot.InlineButton, 0, 3)
-		for _, groupBy := range groupBies {
-			callbackOpts.Summary.GroupBy = groupBy
-			btn := generateInlineButton(callbackOpts, string(groupBy))
-			inlineButtons = append(inlineButtons, btn)
-		}
-
-		return ctx.Send("Group By:", &telebot.SendOptions{
-			ReplyTo: ctx.Message(),
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: generateInlineKeyboard(inlineButtons),
-				ForceReply:     true,
-			},
-		})
+func TransactionSummaryCallback(ctx telebot.Context) error {
+	callbackOpts := CallbackOptions{
+		Type: SummaryTypeCallback,
+		Summary: SummaryCallbackOptions{
+			NextStep: StepGroupBy,
+		},
 	}
+
+	groupBies := []SummaryGroupBy{GroupByTxnType, GroupByTxnCategory, GroupByTxnSubCategory}
+	inlineButtons := make([]telebot.InlineButton, 0, 3)
+	for _, groupBy := range groupBies {
+		callbackOpts.Summary.GroupBy = groupBy
+		btn := generateInlineButton(callbackOpts, string(groupBy))
+		inlineButtons = append(inlineButtons, btn)
+	}
+
+	return ctx.Send("Group By:", &telebot.SendOptions{
+		ReplyTo: ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
+		},
+	})
 }
 
-func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions, svc *all.Services) error {
+func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	summary := callbackOpts.Summary
 	switch summary.NextStep {
 	case StepGroupBy:
 		return sendSummaryDurationQuery(ctx, callbackOpts)
 	case StepDuration:
-		data, err := processSummary(callbackOpts.Summary, svc)
+		data, err := processSummary(callbackOpts.Summary)
 		if err != nil {
 			return err
 		}
@@ -107,7 +103,7 @@ func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions, sv
 	}
 }
 
-func processSummary(smop SummaryCallbackOptions, svc *all.Services) (string, error) {
+func processSummary(smop SummaryCallbackOptions) (string, error) {
 	now, startTime := time.Now(), pkg.StartOfMonth()
 	switch smop.Duration {
 	case DurationOneWeek:
@@ -123,6 +119,7 @@ func processSummary(smop SummaryCallbackOptions, svc *all.Services) (string, err
 	case DurationOneYear:
 		startTime = now.AddDate(-1, 0, 0)
 	}
+	svc := all.GetServices()
 	txns, err := svc.Txn.ListTransactionsByTime("", startTime.Unix(), now.Unix())
 	if err != nil {
 		return "", err

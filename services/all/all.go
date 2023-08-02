@@ -22,7 +22,13 @@ type Services struct {
 	Event   services.EventService
 }
 
-func GetSQLServices(db isql.Database, logger logr.Logger) *Services {
+var svc *Services
+
+func GetServices() *Services {
+	return svc
+}
+
+func InitiateSQLServices(db isql.Database, logger logr.Logger) {
 	accRepo := accounts.NewSQLAccountsRepository(db, logger)
 	userRepo := user.NewSQLUserRepository(db, logger)
 	txnRepo := transaction.NewSQLTransactionRepository(db, logger)
@@ -33,7 +39,7 @@ func GetSQLServices(db isql.Database, logger logr.Logger) *Services {
 	txnSvc := txnsvc.NewTxnService(accRepo, userRepo, txnRepo, eventRepo)
 	eventSvc := eventsvc.NewEventService(eventRepo)
 
-	return &Services{
+	svc = &Services{
 		Account: accSvc,
 		User:    userSvc,
 		Txn:     txnSvc,

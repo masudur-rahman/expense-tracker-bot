@@ -12,7 +12,7 @@ import (
 func FormatDocuments(docs any, cols ...string) string {
 	docsElem := reflect.ValueOf(docs)
 	if docsElem.Kind() != reflect.Slice || docsElem.Len() == 0 {
-		return ""
+		return "No data found"
 	}
 
 	buf := bytes.Buffer{}

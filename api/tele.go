@@ -5,20 +5,15 @@ import (
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/api/handlers"
-	"github.com/masudur-rahman/expense-tracker-bot/pkg"
-	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
-	"github.com/jedib0t/go-pretty/v6/table"
 	"gopkg.in/telebot.v3"
 )
 
-func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
+func TeleBotRoutes() (*telebot.Bot, error) {
 	settings := telebot.Settings{
 		Token:  os.Getenv("TELEGRAM_BOT_TOKEN"),
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
-
-	printer := pkg.NewPrinter(pkg.Options{Style: table.StyleColoredBright, EnableStdout: true})
 
 	bot, err := telebot.NewBot(settings)
 	if err != nil {
@@ -27,28 +22,29 @@ func TeleBotRoutes(svc *all.Services) (*telebot.Bot, error) {
 
 	bot.Handle("/", handlers.Welcome)
 
-	bot.Handle(telebot.OnCallback, handlers.Callback(svc))
-	bot.Handle(telebot.OnText, handlers.TransactionTextCallback(svc))
+	bot.Handle(telebot.OnCallback, handlers.Callback)
+	bot.Handle(telebot.OnText, handlers.TransactionTextCallback)
 
-	bot.Handle("/new", handlers.AddAccount(svc))
-	bot.Handle("/balance", handlers.ListAccounts(printer, svc))
+	bot.Handle("/new", handlers.AddAccount)
+	bot.Handle("/balance", handlers.ListAccounts)
+
+	bot.Handle("/list", handlers.ListTransactions)
+	bot.Handle("/expense", handlers.ListExpenses)
+
+	bot.Handle("/allsummary", handlers.TransactionSummaryCallback)
+	bot.Handle("/summary", handlers.TransactionSummary)
+
+	bot.Handle("/cat", handlers.ListTransactionCategories)
+	bot.Handle("/subcat", handlers.ListTransactionSubcategories)
 
 	// New transaction with flags
-	bot.Handle("/txn", handlers.AddNewTransactions(svc))
-	bot.Handle("/list", handlers.ListTransactions(printer, svc))
-	bot.Handle("/expense", handlers.ListExpenses(printer, svc))
-
-	bot.Handle("/allsummary", handlers.TransactionSummaryCallback(svc))
-	bot.Handle("/summary", handlers.TransactionSummary(printer, svc))
-
-	bot.Handle("/cat", handlers.ListTransactionCategories(svc))
-	bot.Handle("/subcat", handlers.ListTransactionSubcategories(svc))
+	bot.Handle("/txn", handlers.AddNewTransactions)
 
 	// New transaction with callback
-	bot.Handle("/newtxn", handlers.NewTransaction(svc))
+	bot.Handle("/newtxn", handlers.NewTransaction)
 
-	bot.Handle("/nuser", handlers.NewUser(svc))
-	bot.Handle("/user", handlers.ListUsers(svc))
+	bot.Handle("/nuser", handlers.NewUser)
+	bot.Handle("/user", handlers.ListUsers)
 
 	return bot, err
 }
