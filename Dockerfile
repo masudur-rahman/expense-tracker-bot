@@ -2,7 +2,7 @@ FROM ghcr.io/masudur-rahman/golang:1.20
 
 WORKDIR /expense-tracker
 
-COPY . .
+ADD . .
 #RUN go mod tidy && go mod vendor
 RUN go build -o expense-tracker
 
