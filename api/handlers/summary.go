@@ -34,9 +34,9 @@ const (
 )
 
 type SummaryCallbackOptions struct {
-	NextStep NextStep `json:"nextStep"`
-	GroupBy  SummaryGroupBy
-	Duration SummaryDuration
+	NextStep NextStep        `json:"nextStep"`
+	GroupBy  SummaryGroupBy  `json:"groupBy"`
+	Duration SummaryDuration `json:"duration"`
 }
 
 func TransactionSummary(ctx telebot.Context) error {
@@ -92,7 +92,7 @@ func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions) er
 	case StepGroupBy:
 		return sendSummaryDurationQuery(ctx, callbackOpts)
 	case StepDuration:
-		data, err := processSummary(callbackOpts.Summary)
+		data, err := processSummary(summary)
 		if err != nil {
 			return err
 		}
@@ -104,21 +104,8 @@ func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions) er
 }
 
 func processSummary(smop SummaryCallbackOptions) (string, error) {
-	now, startTime := time.Now(), pkg.StartOfMonth()
-	switch smop.Duration {
-	case DurationOneWeek:
-		startTime = now.AddDate(0, 0, -7)
-	case DurationThisMonth:
-		startTime = pkg.StartOfMonth()
-	case DurationOneMonth:
-		startTime = now.AddDate(0, -1, 0)
-	case DurationHalfYear:
-		startTime = now.AddDate(0, -6, 0)
-	case DurationThisYear:
-		startTime = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
-	case DurationOneYear:
-		startTime = now.AddDate(-1, 0, 0)
-	}
+	now, startTime := time.Now(), calculateStartTime(smop.Duration)
+
 	svc := all.GetServices()
 	txns, err := svc.Txn.ListTransactionsByTime("", startTime.Unix(), now.Unix())
 	if err != nil {
@@ -173,10 +160,7 @@ func processSummary(smop SummaryCallbackOptions) (string, error) {
 
 func sendSummaryDurationQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	callbackOpts.Summary.NextStep = StepDuration
-	inlineButtons, err := generateSummaryDurationInlineButton(callbackOpts)
-	if err != nil {
-		return ctx.Send("Unexpected server error occurred!")
-	}
+	inlineButtons := generateSummaryDurationInlineButton(callbackOpts)
 
 	return ctx.Send("Select Duration for Summary", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
@@ -187,7 +171,7 @@ func sendSummaryDurationQuery(ctx telebot.Context, callbackOpts CallbackOptions)
 	})
 }
 
-func generateSummaryDurationInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateSummaryDurationInlineButton(callbackOpts CallbackOptions) []telebot.InlineButton {
 	durations := []SummaryDuration{DurationOneWeek, DurationThisMonth, DurationOneMonth, DurationHalfYear, DurationThisYear, DurationOneYear}
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, duration := range durations {
@@ -196,5 +180,5 @@ func generateSummaryDurationInlineButton(callbackOpts CallbackOptions) ([]telebo
 		inlineButtons = append(inlineButtons, btn)
 	}
 
-	return inlineButtons, nil
+	return inlineButtons
 }

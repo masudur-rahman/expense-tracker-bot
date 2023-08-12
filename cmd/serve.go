@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -73,6 +74,7 @@ func startHealthz() {
 		writer.Write([]byte("Running"))
 	})
 
+	logr.DefaultLogger.Infow("Health checker started at :8080/healthz")
 	log.Fatalln(http.ListenAndServe(":8080", mux))
 }
 
@@ -126,6 +128,18 @@ func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
 					db = postgres.NewPostgres(ctx, conn).ShowSQL(true)
 					all.InitiateSQLServices(db, logger)
 					logger.Infow("New connection established")
+				}
+
+				resp, err := http.Get("http://localhost:8080/healthz")
+				if err != nil {
+					logger.Errorw("healthz api failed", "error", err.Error())
+				} else {
+					data, err := io.ReadAll(resp.Body)
+					var errMsg string
+					if err != nil {
+						errMsg = err.Error()
+					}
+					logger.Infow("healthz api", "status", resp.StatusCode, "msg", string(data), "error", errMsg)
 				}
 			}
 		}

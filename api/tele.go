@@ -35,6 +35,7 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 
 	bot.Handle("/allsummary", handlers.TransactionSummaryCallback)
 	bot.Handle("/summary", handlers.TransactionSummary)
+	bot.Handle("/report", handlers.TransactionReportCallback)
 
 	bot.Handle("/cat", handlers.ListTransactionCategories)
 	bot.Handle("/subcat", handlers.ListTransactionSubcategories)

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/modules/cache"
 
 	"github.com/masudur-rahman/go-oneliners"
 
@@ -21,6 +22,7 @@ const (
 
 	TransactionTypeCallback CallbackType = "transaction"
 	SummaryTypeCallback     CallbackType = "summary"
+	ReportTypeCallback      CallbackType = "report"
 
 	StepTxnType     NextStep = "txn-type"
 	StepAmount      NextStep = "txn-amount"
@@ -37,6 +39,7 @@ type CallbackOptions struct {
 	Type        CallbackType               `json:"type"`
 	Transaction TransactionCallbackOptions `json:"transaction"`
 	Summary     SummaryCallbackOptions     `json:"summary"`
+	Report      ReportCallbackOptions      `json:"report"`
 }
 
 type TransactionCallbackOptions struct {
@@ -92,6 +95,8 @@ func Callback(ctx telebot.Context) error {
 		return handleTransactionCallback(ctx, callbackOpts)
 	case SummaryTypeCallback:
 		return handleSummaryCallback(ctx, callbackOpts)
+	case ReportTypeCallback:
+		return handleReportCallback(ctx, callbackOpts)
 	default:
 		return ctx.Send("Invalid Callback type")
 	}
@@ -140,7 +145,7 @@ func handleTransactionCallback(ctx telebot.Context, callbackOpts CallbackOptions
 
 func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	var callbackOpts CallbackOptions
-	err := fetchInlineButtonDataFromCache(ctx.Callback().Data, &callbackOpts)
+	err := cache.FetchData(ctx.Callback().Data, &callbackOpts)
 	return callbackOpts, err
 }
 

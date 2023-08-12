@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -81,7 +82,9 @@ func (p *printer) PrintDocuments(docs interface{}) string {
 		t.AppendRow(dr)
 	}
 
-	return p.render(t)
+	table := fmt.Sprintf(`## %v
+`, reflect.TypeOf(doc).Name())
+	return table + p.render(t)
 }
 
 func (p *printer) WithColumns(columns ...string) Printer {
