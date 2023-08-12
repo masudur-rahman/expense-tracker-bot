@@ -113,18 +113,21 @@ func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
 
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
-		select {
-		case <-ticker.C:
-			if err = conn.PingContext(ctx); err != nil {
-				conn, err = lib.GetPostgresConnection(cfg)
-				if err != nil {
-					logger.Errorw("couldn't create database connection", "error", err.Error())
+		for {
+			select {
+			case <-ticker.C:
+				if err = conn.PingContext(ctx); err != nil {
+					logger.Errorw("Database connection closed", "error", err.Error())
+					conn, err = lib.GetPostgresConnection(cfg)
+					if err != nil {
+						logger.Errorw("couldn't create database connection", "error", err.Error())
+					}
+
+					db = postgres.NewPostgres(ctx, conn).ShowSQL(true)
+					all.InitiateSQLServices(db, logger)
+					logger.Infow("New connection established")
 				}
-
-				db = postgres.NewPostgres(ctx, conn).ShowSQL(true)
-				all.InitiateSQLServices(db, logger)
 			}
-
 		}
 	}()
 
