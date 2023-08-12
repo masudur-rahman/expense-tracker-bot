@@ -21,6 +21,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
@@ -85,6 +86,52 @@ func startHealthz() {
 //}
 
 func getServicesForPostgres(ctx context.Context) error {
+	cfg := parsePostgresConfig()
+
+	err := initiateSQLServices(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	if err = all.GetServices().Txn.UpdateTxnCategories(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
+	conn, err := lib.GetPostgresConnection(cfg)
+	if err != nil {
+		return err
+	}
+
+	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
+	syncTables(db)
+
+	logger := logr.DefaultLogger
+	all.InitiateSQLServices(db, logger)
+
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		select {
+		case <-ticker.C:
+			if err = conn.PingContext(ctx); err != nil {
+				conn, err = lib.GetPostgresConnection(cfg)
+				if err != nil {
+					logger.Errorw("couldn't create database connection", "error", err.Error())
+				}
+
+				db = postgres.NewPostgres(ctx, conn).ShowSQL(true)
+				all.InitiateSQLServices(db, logger)
+			}
+
+		}
+	}()
+
+	return nil
+}
+
+func parsePostgresConfig() lib.PostgresConfig {
 	cfg := lib.PostgresConfig{
 		Name:     "expense",
 		Host:     "localhost",
@@ -118,22 +165,7 @@ func getServicesForPostgres(ctx context.Context) error {
 	if ok {
 		cfg.SSLMode = ssl
 	}
-
-	conn, err := lib.GetPostgresConnection(cfg)
-	if err != nil {
-		return err
-	}
-
-	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-	syncTables(db)
-
-	logger := logr.DefaultLogger
-	all.InitiateSQLServices(db, logger)
-
-	if err = all.GetServices().Txn.UpdateTxnCategories(); err != nil {
-		return err
-	}
-	return nil
+	return cfg
 }
 
 func syncTables(db sql.Database) {
