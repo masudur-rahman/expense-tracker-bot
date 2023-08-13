@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -35,8 +34,8 @@ const (
 
 type SummaryCallbackOptions struct {
 	NextStep NextStep        `json:"nextStep"`
-	GroupBy  SummaryGroupBy  `json:"groupBy"`
-	Duration SummaryDuration `json:"duration"`
+	GroupBy  SummaryGroupBy  `json:"groupBy,omitempty"`
+	Duration SummaryDuration `json:"duration,omitempty"`
 }
 
 func TransactionSummary(ctx telebot.Context) error {
@@ -73,11 +72,11 @@ func TransactionSummaryCallback(ctx telebot.Context) error {
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, groupBy := range groupBies {
 		callbackOpts.Summary.GroupBy = groupBy
-		btn := generateInlineButton(callbackOpts, string(groupBy))
+		btn := generateInlineButton(callbackOpts, groupBy)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
-	return ctx.Send("Group By:", &telebot.SendOptions{
+	return ctx.Send("Select Summarization Group", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: generateInlineKeyboard(inlineButtons),
@@ -176,7 +175,7 @@ func generateSummaryDurationInlineButton(callbackOpts CallbackOptions) []telebot
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, duration := range durations {
 		callbackOpts.Summary.Duration = duration
-		btn := generateInlineButton(callbackOpts, fmt.Sprintf("%v", duration))
+		btn := generateInlineButton(callbackOpts, duration)
 		inlineButtons = append(inlineButtons, btn)
 	}
 

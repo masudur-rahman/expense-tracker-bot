@@ -27,7 +27,7 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 	bot.Handle(telebot.OnCallback, handlers.Callback)
 	bot.Handle(telebot.OnText, handlers.TransactionTextCallback)
 
-	bot.Handle("/new", handlers.AddAccount)
+	bot.Handle("/new", handlers.New)
 	bot.Handle("/balance", handlers.ListAccounts)
 
 	bot.Handle("/list", handlers.ListTransactions)
@@ -41,12 +41,11 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 	bot.Handle("/subcat", handlers.ListTransactionSubcategories)
 
 	// New transaction with flags
-	bot.Handle("/txn", handlers.AddNewTransactions)
+	//bot.Handle("/txn", handlers.AddNewTransactions)
 
 	// New transaction with callback
 	bot.Handle("/newtxn", handlers.NewTransaction)
 
-	bot.Handle("/nuser", handlers.NewUser)
 	bot.Handle("/user", handlers.ListUsers)
 
 	return bot, err

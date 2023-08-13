@@ -104,9 +104,9 @@ func generateTransactionRemarksTypeInlineButton(callbackOpts CallbackOptions) ([
 	return inlineButtons, nil
 }
 
-func generateInlineButton(obj any, btnText string) telebot.InlineButton {
+func generateInlineButton[str ~string](obj any, btnText str) telebot.InlineButton {
 	return telebot.InlineButton{
-		Text: btnText,
+		Text: string(btnText),
 		Data: cache.StoreData(obj),
 	}
 }

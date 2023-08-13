@@ -6,6 +6,7 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/modules/cache"
+	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 
 	"github.com/masudur-rahman/go-oneliners"
 
@@ -20,9 +21,12 @@ const (
 	TxnCategoryType    CallbackType = "txn-category"
 	TxnSubcategoryType CallbackType = "txn-subcategory"
 
-	TransactionTypeCallback CallbackType = "transaction"
-	SummaryTypeCallback     CallbackType = "summary"
-	ReportTypeCallback      CallbackType = "report"
+	TransactionTypeCallback     CallbackType = "Transaction"
+	TransactionFlagTypeCallback CallbackType = "Transaction with flags"
+	SummaryTypeCallback         CallbackType = "Summary"
+	ReportTypeCallback          CallbackType = "Report"
+	AccountTypeCallback         CallbackType = "Account"
+	UserTypeCallback            CallbackType = "User"
 
 	StepTxnType     NextStep = "txn-type"
 	StepAmount      NextStep = "txn-amount"
@@ -37,9 +41,11 @@ const (
 
 type CallbackOptions struct {
 	Type        CallbackType               `json:"type"`
-	Transaction TransactionCallbackOptions `json:"transaction"`
-	Summary     SummaryCallbackOptions     `json:"summary"`
-	Report      ReportCallbackOptions      `json:"report"`
+	Transaction TransactionCallbackOptions `json:"transaction,omitempty"`
+	Summary     SummaryCallbackOptions     `json:"summary,omitempty"`
+	Report      ReportCallbackOptions      `json:"report,omitempty"`
+	Account     AccountCallbackOptions     `json:"account,omitempty"`
+	User        UserCallbackOptions        `json:"user,omitempty"`
 }
 
 type TransactionCallbackOptions struct {
@@ -47,13 +53,13 @@ type TransactionCallbackOptions struct {
 
 	Type models.TransactionType `json:"type"`
 
-	Amount        float64 `json:"amount"`
-	SrcID         string  `json:"srcID"`
-	DstID         string  `json:"dstID"`
-	CategoryID    string  `json:"catID"`
-	SubcategoryID string  `json:"subcatID"`
-	UserID        string  `json:"userID"`
-	Remarks       string  `json:"remarks"`
+	Amount        float64 `json:"amount,omitempty"`
+	SrcID         string  `json:"srcID,omitempty"`
+	DstID         string  `json:"dstID,omitempty"`
+	CategoryID    string  `json:"catID,omitempty"`
+	SubcategoryID string  `json:"subcatID,omitempty"`
+	UserID        string  `json:"userID,omitempty"`
+	Remarks       string  `json:"remarks,omitempty"`
 }
 
 var callbackData = make(map[int]CallbackOptions) // map[messageID]CallbackOptions
@@ -69,7 +75,7 @@ func NewTransaction(ctx telebot.Context) error {
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, typ := range types {
 		callbackOpts.Transaction.Type = typ
-		btn := generateInlineButton(callbackOpts, string(typ))
+		btn := generateInlineButton(callbackOpts, typ)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -93,10 +99,16 @@ func Callback(ctx telebot.Context) error {
 	switch callbackOpts.Type {
 	case TransactionTypeCallback:
 		return handleTransactionCallback(ctx, callbackOpts)
+	case TransactionFlagTypeCallback:
+		return handleTransactionWithFlagsCallback(ctx, callbackOpts)
 	case SummaryTypeCallback:
 		return handleSummaryCallback(ctx, callbackOpts)
 	case ReportTypeCallback:
 		return handleReportCallback(ctx, callbackOpts)
+	case AccountTypeCallback:
+		return handleAccountCallback(ctx, callbackOpts)
+	case UserTypeCallback:
+		return handleUserCallback(ctx, callbackOpts)
 	default:
 		return ctx.Send("Invalid Callback type")
 	}
@@ -167,18 +179,57 @@ func TransactionTextCallback(ctx telebot.Context) error {
 	}
 
 	var err error
-	switch callbackOpts.Transaction.NextStep {
-	case StepAmount:
-		callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
-		if err != nil {
-			return ctx.Reply("Amount parse error")
-		}
+	switch callbackOpts.Type {
+	case TransactionTypeCallback:
+		switch callbackOpts.Transaction.NextStep {
+		case StepAmount:
+			callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
+			if err != nil {
+				return ctx.Reply("Amount parse error")
+			}
 
+			return handleTransactionCallback(ctx, callbackOpts)
+		case StepRemarks:
+			callbackOpts.Transaction.Remarks = ctx.Text()
+			return handleTransactionCallback(ctx, callbackOpts)
+		default:
+			return ctx.Reply("yet to be implemented")
+		}
+	case TransactionFlagTypeCallback:
+		callbackOpts.Type = TransactionTypeCallback
+		callbackOpts.Transaction, err = parseTransactionFlags(ctx.Text())
 		return handleTransactionCallback(ctx, callbackOpts)
-	case StepRemarks:
-		callbackOpts.Transaction.Remarks = ctx.Text()
-		return handleTransactionCallback(ctx, callbackOpts)
+	case AccountTypeCallback:
+		switch callbackOpts.Account.NextStep {
+		case StepAccountInfo:
+			info := pkg.SplitString(ctx.Text(), ' ')
+			if len(info) < 2 {
+				return ctx.Reply("must contain <id> <account name>")
+			}
+			callbackOpts.Account.ID, callbackOpts.Account.Name = info[0], info[1]
+			return processAccountCreation(ctx, callbackOpts.Account)
+		default:
+			return ctx.Reply("yet to be implemented")
+
+		}
+	case UserTypeCallback:
+		info := pkg.SplitString(ctx.Text(), ' ')
+		if len(info) < 2 {
+			return ctx.Reply("must contain <id> <name> <email>")
+		}
+		callbackOpts.User = UserCallbackOptions{
+			ID:   info[0],
+			Name: info[1],
+			Email: func() string {
+				if len(info) > 2 {
+					return info[2]
+				}
+				return ""
+			}(),
+		}
+		return processUserCreation(ctx, callbackOpts.User)
+
 	default:
-		return ctx.Reply("yet to be implemented")
+		return ctx.Reply("invalid callback type")
 	}
 }

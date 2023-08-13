@@ -27,6 +27,25 @@ Available options are:
 `, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
+func New(ctx telebot.Context) error {
+	var callbackOpts CallbackOptions
+	types := []CallbackType{TransactionFlagTypeCallback, AccountTypeCallback, UserTypeCallback}
+	inlineButtons := make([]telebot.InlineButton, 0, 2)
+	for _, typ := range types {
+		callbackOpts.Type = typ
+		btn := generateInlineButton(callbackOpts, typ)
+		inlineButtons = append(inlineButtons, btn)
+	}
+
+	return ctx.Send("Select One", &telebot.SendOptions{
+		ReplyTo: ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
+		},
+	})
+}
+
 func ListUsers(ctx telebot.Context) error {
 	users, err := all.GetServices().User.ListUsers()
 	if err != nil {
@@ -127,27 +146,30 @@ type TransactionOptions struct {
 	Remarks  string
 }
 
-func parseTransactionFlags(txnString string) (TransactionOptions, error) {
-	var txnOpts TransactionOptions
+func parseTransactionFlags(txnString string) (TransactionCallbackOptions, error) {
+	var txnOpts TransactionCallbackOptions
 
+	var typ string
 	set := pflag.NewFlagSet("transaction", pflag.ContinueOnError)
-	set.StringVarP(&txnOpts.Type, "type", "t", string(models.ExpenseTransaction), "Type of the transaction")
-	//set.Float64VarP(&txnOpts.Amount, "amount", "a", 0, "Transaction amount")
-	set.StringVarP(&txnOpts.SubCatID, "subcat", "s", "misc-misc", "Subcategory for the transaction")
+	set.StringVarP(&typ, "type", "t", string(models.ExpenseTransaction), "Type of the transaction")
+	set.StringVarP(&txnOpts.SubcategoryID, "subcat", "s", "misc-misc", "Subcategory for the transaction")
 	set.StringVarP(&txnOpts.SrcID, "src", "f", "cash", "Source account for the transaction")
 	set.StringVarP(&txnOpts.DstID, "dst", "d", "", "Destination account for the transaction")
 	set.StringVarP(&txnOpts.UserID, "user", "u", "", "User associated with the loan/borrow")
 	set.StringVarP(&txnOpts.Remarks, "remarks", "r", "", "Remarks for the transaction")
+	txnOpts.Type = models.TransactionType(typ)
 
 	args := strings.Split(txnString, " ")
 	err := set.Parse(args)
 	if err != nil {
-		return TransactionOptions{}, err
+		return TransactionCallbackOptions{}, err
 	}
 
 	if len(set.Args()) > 0 {
 		_, err = fmt.Sscanf(set.Args()[0], "%f", &txnOpts.Amount)
 	}
+	txnOpts.NextStep = StepRemarks
+	txnOpts.CategoryID = strings.Split(txnOpts.SubcategoryID, "-")[0]
 
 	return txnOpts, err
 }
@@ -156,33 +178,33 @@ func parseTransactionFlags(txnString string) (TransactionOptions, error) {
 /txn <amount> -t=<type> -s=<subcat> -f=<src> -d=<dst> -u=<user> -r=<remarks>
 */
 
-func AddNewTransactions(ctx telebot.Context) error {
-	flags := strings.SplitN(ctx.Text(), " ", 2)
-	if len(flags) != 2 {
-		return ctx.Send("no argument provided for the transaction")
-	}
-
-	txnOpts, err := parseTransactionFlags(flags[1])
-	if err != nil {
-		return ctx.Send(err.Error())
-	}
-	params := models.Transaction{
-		Amount:        txnOpts.Amount,
-		SubcategoryID: txnOpts.SubCatID,
-		Type:          models.TransactionType(txnOpts.Type),
-		SrcID:         txnOpts.SrcID,
-		DstID:         txnOpts.DstID,
-		UserID:        txnOpts.UserID,
-		Timestamp:     time.Now().Unix(),
-		Remarks:       txnOpts.Remarks,
-	}
-	err = all.GetServices().Txn.AddTransaction(params)
-	if err != nil {
-		return ctx.Send(err.Error())
-	}
-
-	return ctx.Send("Transaction added")
-}
+//func AddNewTransactions(ctx telebot.Context) error {
+//	flags := strings.SplitN(ctx.Text(), " ", 2)
+//	if len(flags) != 2 {
+//		return ctx.Send("no argument provided for the transaction")
+//	}
+//
+//	txnOpts, err := parseTransactionFlags(flags[1])
+//	if err != nil {
+//		return ctx.Send(err.Error())
+//	}
+//	params := models.Transaction{
+//		Amount:        txnOpts.Amount,
+//		SubcategoryID: txnOpts.SubCatID,
+//		Type:          models.TransactionType(txnOpts.Type),
+//		SrcID:         txnOpts.SrcID,
+//		DstID:         txnOpts.DstID,
+//		UserID:        txnOpts.UserID,
+//		Timestamp:     time.Now().Unix(),
+//		Remarks:       txnOpts.Remarks,
+//	}
+//	err = all.GetServices().Txn.AddTransaction(params)
+//	if err != nil {
+//		return ctx.Send(err.Error())
+//	}
+//
+//	return ctx.Send("Transaction added")
+//}
 
 func ListTransactions(ctx telebot.Context) error {
 	txns, err := all.GetServices().Txn.ListTransactions()

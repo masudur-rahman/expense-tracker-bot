@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"time"
 
@@ -41,7 +40,7 @@ func generateReportDurationInlineButton(callbackOpts CallbackOptions) []telebot.
 	inlineButtons := make([]telebot.InlineButton, 0, 3)
 	for _, duration := range durations {
 		callbackOpts.Report.Duration = duration
-		btn := generateInlineButton(callbackOpts, fmt.Sprintf("%v", duration))
+		btn := generateInlineButton(callbackOpts, duration)
 		inlineButtons = append(inlineButtons, btn)
 	}
 

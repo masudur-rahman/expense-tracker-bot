@@ -43,7 +43,7 @@ TAG := $(VERSION)_$(OS)_$(ARCH)
 
 DOCKER_IMAGE := $(REGISTRY)/$(BIN)
 
-GO_VERSION       ?= 1.20
+GO_VERSION       ?= 1.21
 BUILD_IMAGE      ?= ghcr.io/masudur-rahman/golang:$(GO_VERSION)
 
 BIN_EXTENSION :=
