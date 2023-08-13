@@ -114,10 +114,11 @@ func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
 	all.InitiateSQLServices(db, logger)
 
 	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
+		t5 := time.NewTicker(5 * time.Minute)
+		t20 := time.NewTicker(20 * time.Minute)
 		for {
 			select {
-			case <-ticker.C:
+			case <-t5.C:
 				if err = conn.PingContext(ctx); err != nil {
 					logger.Errorw("Database connection closed", "error", err.Error())
 					conn, err = lib.GetPostgresConnection(cfg)
@@ -129,8 +130,8 @@ func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
 					all.InitiateSQLServices(db, logger)
 					logger.Infow("New connection established")
 				}
-
-				resp, err := http.Get("http://localhost:8080/healthz")
+			case <-t20.C:
+				resp, err := http.Get("https://expensetracker-masud6rahman.b4a.run/healthz")
 				if err != nil {
 					logger.Errorw("healthz api failed", "error", err.Error())
 				} else {

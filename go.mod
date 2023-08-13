@@ -3,6 +3,7 @@ module github.com/masudur-rahman/expense-tracker-bot
 go 1.20
 
 require (
+	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12
 	github.com/graphql-go/graphql v0.8.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/jung-kurt/gofpdf v1.16.2

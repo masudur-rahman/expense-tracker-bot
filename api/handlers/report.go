@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
+	"github.com/gomarkdown/markdown"
 	"gopkg.in/telebot.v3"
 )
 
@@ -52,9 +54,11 @@ func handleReportCallback(ctx telebot.Context, callbackOpts CallbackOptions) err
 		return err
 	}
 
+	report := markdown.ToHTML([]byte(data), nil, nil)
+
 	return ctx.Send(&telebot.Document{
-		File:     telebot.FromReader(strings.NewReader(data)),
-		FileName: "transaction_report.md",
+		File:     telebot.FromReader(bytes.NewReader(report)),
+		FileName: "transaction_report.html",
 	})
 }
 
