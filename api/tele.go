@@ -42,7 +42,7 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 
 	bot.Handle("/cat", handlers.TransactionCategoryCallback)
 
-	return bot, err
+	return bot, nil
 }
 
 func masudur_rahman() telebot.MiddlewareFunc {

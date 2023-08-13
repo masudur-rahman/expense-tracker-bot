@@ -177,62 +177,77 @@ func TransactionTextCallback(ctx telebot.Context) error {
 
 	replyToID := ctx.Update().Message.ReplyTo.ID
 	callbackOpts := callbackData[replyToID]
-	if callbackOpts.Type != TransactionTypeCallback {
-		return ctx.Reply("Callback must be of Transaction type")
-	}
 
-	var err error
 	switch callbackOpts.Type {
 	case TransactionTypeCallback:
-		switch callbackOpts.Transaction.NextStep {
-		case StepAmount:
-			callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
-			if err != nil {
-				return ctx.Reply("Amount parse error")
-			}
-
-			return handleTransactionCallback(ctx, callbackOpts)
-		case StepRemarks:
-			callbackOpts.Transaction.Remarks = ctx.Text()
-			return handleTransactionCallback(ctx, callbackOpts)
-		default:
-			return ctx.Reply("yet to be implemented")
-		}
+		return handleTransactionTypeTextCallback(ctx, callbackOpts)
 	case TransactionFlagTypeCallback:
-		callbackOpts.Type = TransactionTypeCallback
-		callbackOpts.Transaction, err = parseTransactionFlags(ctx.Text())
-		return handleTransactionCallback(ctx, callbackOpts)
+		return handleTransactionWithFlagTypeTextCallback(ctx, callbackOpts)
 	case AccountTypeCallback:
-		switch callbackOpts.Account.NextStep {
-		case StepAccountInfo:
-			info := pkg.SplitString(ctx.Text(), ' ')
-			if len(info) < 2 {
-				return ctx.Reply("must contain <id> <account name>")
-			}
-			callbackOpts.Account.ID, callbackOpts.Account.Name = info[0], info[1]
-			return processAccountCreation(ctx, callbackOpts.Account)
-		default:
-			return ctx.Reply("yet to be implemented")
-
-		}
+		return handleAccountTypeTextCallback(ctx, callbackOpts)
 	case UserTypeCallback:
-		info := pkg.SplitString(ctx.Text(), ' ')
-		if len(info) < 2 {
-			return ctx.Reply("must contain <id> <name> <email>")
-		}
-		callbackOpts.User = UserCallbackOptions{
-			ID:   info[0],
-			Name: info[1],
-			Email: func() string {
-				if len(info) > 2 {
-					return info[2]
-				}
-				return ""
-			}(),
-		}
-		return processUserCreation(ctx, callbackOpts.User)
-
+		return handleUserTypeTextCallback(ctx, callbackOpts)
 	default:
 		return ctx.Reply("invalid callback type")
 	}
+}
+
+func handleTransactionTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	var err error
+	switch callbackOpts.Transaction.NextStep {
+	case StepAmount:
+		callbackOpts.Transaction.Amount, err = strconv.ParseFloat(ctx.Text(), 64)
+		if err != nil {
+			return ctx.Reply("Amount parse error")
+		}
+
+		return handleTransactionCallback(ctx, callbackOpts)
+	case StepRemarks:
+		callbackOpts.Transaction.Remarks = ctx.Text()
+		return handleTransactionCallback(ctx, callbackOpts)
+	default:
+		return ctx.Reply("yet to be implemented")
+	}
+}
+
+func handleTransactionWithFlagTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	var err error
+	callbackOpts.Type = TransactionTypeCallback
+	callbackOpts.Transaction, err = parseTransactionFlags(ctx.Text())
+	if err != nil {
+		return ctx.Reply("Data parse error")
+	}
+	return handleTransactionCallback(ctx, callbackOpts)
+}
+
+func handleAccountTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	switch callbackOpts.Account.NextStep {
+	case StepAccountInfo:
+		info := pkg.SplitString(ctx.Text(), ' ')
+		if len(info) < 2 {
+			return ctx.Reply("must contain <id> <account name>")
+		}
+		callbackOpts.Account.ID, callbackOpts.Account.Name = info[0], info[1]
+		return processAccountCreation(ctx, callbackOpts.Account)
+	default:
+		return ctx.Reply("yet to be implemented")
+	}
+}
+
+func handleUserTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	info := pkg.SplitString(ctx.Text(), ' ')
+	if len(info) < 2 {
+		return ctx.Reply("must contain <id> <name> <email>")
+	}
+	callbackOpts.User = UserCallbackOptions{
+		ID:   info[0],
+		Name: info[1],
+		Email: func() string {
+			if len(info) > 2 {
+				return info[2]
+			}
+			return ""
+		}(),
+	}
+	return processUserCreation(ctx, callbackOpts.User)
 }

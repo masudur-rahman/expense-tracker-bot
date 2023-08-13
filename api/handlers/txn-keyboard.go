@@ -99,7 +99,7 @@ func generateTransactionSubcategoryTypeInlineButton(callbackOpts CallbackOptions
 
 func generateJustTxnSubcategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
 	svc := all.GetServices()
-	subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Transaction.CategoryID)
+	subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Category.CategoryID)
 	if err != nil {
 		return nil, err
 	}
