@@ -25,7 +25,7 @@ type AccountCallbackOptions struct {
 func handleAccountCallback(ctx telebot.Context, callbackOptions CallbackOptions) error {
 	ac := callbackOptions.Account
 	switch ac.NextStep {
-	case StepAccountType:
+	case StepAccountType, "":
 		return sendAccountTypeQuery(ctx, callbackOptions)
 	case StepAccountInfo:
 		return sendAccountInfoQuery(ctx, callbackOptions)

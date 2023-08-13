@@ -63,6 +63,23 @@ func generateTransactionCategoryTypeInlineButton(callbackOpts CallbackOptions) (
 	return inlineButtons, nil
 }
 
+func generateJustTxnCategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
+	cats, err := svc.Txn.ListTxnCategories()
+	if err != nil {
+		return nil, err
+	}
+
+	inlineButtons := make([]telebot.InlineButton, 0, len(cats))
+	for _, cat := range cats {
+		callbackOpts.Category.CategoryID = cat.ID
+		btn := generateInlineButton(callbackOpts, cat.Name)
+		inlineButtons = append(inlineButtons, btn)
+	}
+
+	return inlineButtons, nil
+}
+
 func generateTransactionSubcategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
 	svc := all.GetServices()
 	subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Transaction.CategoryID)
@@ -73,6 +90,23 @@ func generateTransactionSubcategoryTypeInlineButton(callbackOpts CallbackOptions
 	inlineButtons := make([]telebot.InlineButton, 0, len(subcats))
 	for _, subcat := range subcats {
 		callbackOpts.Transaction.SubcategoryID = subcat.ID
+		btn := generateInlineButton(callbackOpts, subcat.Name)
+		inlineButtons = append(inlineButtons, btn)
+	}
+
+	return inlineButtons, nil
+}
+
+func generateJustTxnSubcategoryTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+	svc := all.GetServices()
+	subcats, err := svc.Txn.ListTxnSubcategories(callbackOpts.Transaction.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	inlineButtons := make([]telebot.InlineButton, 0, len(subcats))
+	for _, subcat := range subcats {
+		callbackOpts.Category.SubcategoryID = subcat.ID
 		btn := generateInlineButton(callbackOpts, subcat.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}

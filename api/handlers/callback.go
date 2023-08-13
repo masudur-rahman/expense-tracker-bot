@@ -18,8 +18,8 @@ type CallbackType string
 type NextStep string
 
 const (
-	TxnCategoryType    CallbackType = "txn-category"
-	TxnSubcategoryType CallbackType = "txn-subcategory"
+	TxnCategoryTypeCallback    CallbackType = "txn-category"
+	TxnSubcategoryTypeCallback CallbackType = "txn-subcategory"
 
 	TransactionTypeCallback     CallbackType = "Transaction"
 	TransactionFlagTypeCallback CallbackType = "Transaction with flags"
@@ -46,6 +46,7 @@ type CallbackOptions struct {
 	Report      ReportCallbackOptions      `json:"report,omitempty"`
 	Account     AccountCallbackOptions     `json:"account,omitempty"`
 	User        UserCallbackOptions        `json:"user,omitempty"`
+	Category    TxnCategoryCallbackOptions `json:"category,omitempty"`
 }
 
 type TransactionCallbackOptions struct {
@@ -101,6 +102,8 @@ func Callback(ctx telebot.Context) error {
 		return handleTransactionCallback(ctx, callbackOpts)
 	case TransactionFlagTypeCallback:
 		return handleTransactionWithFlagsCallback(ctx, callbackOpts)
+	case TxnCategoryTypeCallback:
+		return handleTransactionCategoryCallback(ctx, callbackOpts)
 	case SummaryTypeCallback:
 		return handleSummaryCallback(ctx, callbackOpts)
 	case ReportTypeCallback:

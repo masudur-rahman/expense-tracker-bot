@@ -4,12 +4,22 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"gopkg.in/telebot.v3"
 )
+
+const (
+	StepCategoryID    NextStep = "cat-id"
+	StepSubcategoryID NextStep = "subcat-id"
+)
+
+type TxnCategoryCallbackOptions struct {
+	NextStep      NextStep `json:"nextStep"`
+	CategoryID    string   `json:"categoryID"`
+	SubcategoryID string   `json:"subcategoryID"`
+}
 
 func handleTransactionWithFlagsCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	msg, err := ctx.Bot().Reply(ctx.Message(), `Reply to this Message with the following data
@@ -28,38 +38,76 @@ i.e.: 6666 -t=Expense -s=food-rest -f=cash -r="Coffee with no one"
 	return nil
 }
 
-func processNewTransaction(ctx telebot.Context, uop UserCallbackOptions) error {
-	if err := all.GetServices().User.CreateUser(&models.User{
-		ID:    uop.ID,
-		Name:  uop.Name,
-		Email: uop.Email,
-	}); err != nil {
-		log.Println(err)
-		return ctx.Send(err.Error())
+func TransactionCategoryCallback(ctx telebot.Context) error {
+	callbackOpts := CallbackOptions{
+		Type: TxnCategoryTypeCallback,
+		Category: TxnCategoryCallbackOptions{
+			NextStep: StepCategoryID,
+		},
 	}
-
-	return ctx.Send(fmt.Sprintf("New User [%v] added!", uop.Name))
+	return sendJustTxnCategoryQuery(ctx, callbackOpts)
 }
 
-func ListTransactionCategories(ctx telebot.Context) error {
-	txns, err := all.GetServices().Txn.ListTxnCategories()
+func handleTransactionCategoryCallback(ctx telebot.Context, callbackOptions CallbackOptions) error {
+	cat := callbackOptions.Category
+	switch cat.NextStep {
+	case StepCategoryID:
+		return sendJustTxnSubcategoryQuery(ctx, callbackOptions)
+	case StepSubcategoryID:
+		return sendTransactionCategoryInformation(ctx, callbackOptions.Category)
+	default:
+		return ctx.Send("Invalid Step")
+	}
+}
+
+func sendJustTxnCategoryQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	inlineButtons, err := generateJustTxnCategoryTypeInlineButton(callbackOpts)
 	if err != nil {
-		log.Println(err)
-		return ctx.Send("Can't list the transaction categories. Please contact the administrator")
+		return ctx.Send("Unexpected server error occurred!")
 	}
 
-	return ctx.Send("Choose one: ", &telebot.SendOptions{
+	return ctx.Send("Select Transaction category!", &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: func() [][]telebot.InlineButton {
-				var key []telebot.InlineButton
-				for _, cat := range txns {
-					key = append(key, telebot.InlineButton{Text: cat.Name, Data: cat.ID})
-				}
-				return [][]telebot.InlineButton{key}
-			}(),
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
 		},
 	})
+}
+
+func sendJustTxnSubcategoryQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
+	callbackOpts.Category.NextStep = StepSubcategoryID
+	inlineButtons, err := generateJustTxnSubcategoryTypeInlineButton(callbackOpts)
+	if err != nil {
+		return ctx.Send("Unexpected server error occurred!")
+	}
+
+	return ctx.Send("Select Transaction subcategory!", &telebot.SendOptions{
+		ReplyTo: ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
+		},
+	})
+}
+
+func sendTransactionCategoryInformation(ctx telebot.Context, cop TxnCategoryCallbackOptions) error {
+	txn := all.GetServices().Txn
+	cat, err := txn.GetTxnCategoryName(cop.CategoryID)
+	if err != nil {
+		return ctx.Send("Unexpected server error occurred!")
+	}
+
+	subcat, err := txn.GetTxnSubcategoryName(cop.SubcategoryID)
+	if err != nil {
+		return ctx.Send("Unexpected server error occurred!")
+	}
+
+	return ctx.Send(fmt.Sprintf(`Transaction Category Information:
+
+Category: %v (%v)
+Subcategory: %v (%v)
+`, cat, cop.CategoryID, subcat, cop.SubcategoryID))
 }
 
 func ListTransactionSubcategories(ctx telebot.Context) error {
