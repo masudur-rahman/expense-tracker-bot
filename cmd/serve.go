@@ -18,13 +18,16 @@ package cmd
 
 import (
 	"context"
+	"database/sql"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"time"
 
-	"github.com/masudur-rahman/database/sql"
+	isql "github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
@@ -58,6 +61,7 @@ to quickly create a Cobra application.`,
 			log.Fatalln(err)
 		}
 
+		go pingHealthzApiPeriodically()
 		log.Println("Expense Tracker Bot started")
 		bot.Start()
 	},
@@ -81,7 +85,7 @@ func startHealthz() {
 //func getServicesForSupabase(ctx context.Context) *all.Services {
 //	supClient := supabase.InitializeSupabase(ctx)
 //
-//	var db sql.Database
+//	var db isql.Database
 //	db = supabase.NewSupabase(ctx, supClient)
 //	logger := logr.DefaultLogger
 //	return all.InitiateSQLServices(db, logger)
@@ -113,40 +117,63 @@ func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
 	logger := logr.DefaultLogger
 	all.InitiateSQLServices(db, logger)
 
-	go func() {
-		t5 := time.NewTicker(5 * time.Minute)
-		t20 := time.NewTicker(20 * time.Minute)
-		for {
-			select {
-			case <-t5.C:
-				if err = conn.PingContext(ctx); err != nil {
-					logger.Errorw("Database connection closed", "error", err.Error())
-					conn, err = lib.GetPostgresConnection(cfg)
-					if err != nil {
-						logger.Errorw("couldn't create database connection", "error", err.Error())
-					}
-
-					db = postgres.NewPostgres(ctx, conn).ShowSQL(true)
-					all.InitiateSQLServices(db, logger)
-					logger.Infow("New connection established")
-				}
-			case <-t20.C:
-				resp, err := http.Get("https://expensetracker-masud6rahman.b4a.run/healthz")
-				if err != nil {
-					logger.Errorw("healthz api failed", "error", err.Error())
-				} else {
-					data, err := io.ReadAll(resp.Body)
-					var errMsg string
-					if err != nil {
-						errMsg = err.Error()
-					}
-					logger.Infow("healthz api", "status", resp.StatusCode, "msg", string(data), "error", errMsg)
-				}
-			}
-		}
-	}()
+	go pingPostgresDatabasePeriodically(ctx, cfg, conn, logger)
 
 	return nil
+}
+
+func pingPostgresDatabasePeriodically(ctx context.Context, cfg lib.PostgresConfig, conn *sql.Conn, logger logr.Logger) {
+	t5 := time.NewTicker(5 * time.Minute)
+	for {
+		select {
+		case <-t5.C:
+			if err := conn.PingContext(ctx); err != nil {
+				logger.Errorw("Database connection closed", "error", err.Error())
+				conn, err = lib.GetPostgresConnection(cfg)
+				if err != nil {
+					logger.Errorw("couldn't create database connection", "error", err.Error())
+				}
+
+				db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
+				all.InitiateSQLServices(db, logger)
+				logger.Infow("New connection established")
+			}
+		}
+	}
+}
+
+func pingHealthzApiPeriodically() {
+	logger := logr.DefaultLogger
+	baseURL, ok := os.LookupEnv("BASE_URL")
+	if !ok {
+		return
+	}
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	u.Path = path.Join(u.Path, "healthz")
+	healthPath := u.String()
+	logger.Infow("Health url provided", "url", healthPath)
+
+	t20 := time.NewTicker(20 * time.Minute)
+	for {
+		select {
+		case <-t20.C:
+			resp, err := http.Get(healthPath)
+			if err != nil {
+				logger.Errorw("healthz api failed", "error", err.Error())
+			} else {
+				data, err := io.ReadAll(resp.Body)
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				}
+				logger.Infow("healthz api", "status", resp.StatusCode, "msg", string(data), "error", errMsg)
+			}
+		}
+	}
 }
 
 func parsePostgresConfig() lib.PostgresConfig {
@@ -186,7 +213,7 @@ func parsePostgresConfig() lib.PostgresConfig {
 	return cfg
 }
 
-func syncTables(db sql.Database) {
+func syncTables(db isql.Database) {
 	err := db.Sync(
 		models.User{},
 		models.Account{},
