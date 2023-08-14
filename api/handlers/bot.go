@@ -159,7 +159,7 @@ func parseTransactionFlags(txnString string) (TransactionCallbackOptions, error)
 	set.StringVarP(&txnOpts.Remarks, "remarks", "r", "", "Remarks for the transaction")
 	txnOpts.Type = models.TransactionType(typ)
 
-	args := strings.Split(txnString, " ")
+	args := pkg.SplitString(txnString, ' ')
 	err := set.Parse(args)
 	if err != nil {
 		return TransactionCallbackOptions{}, err
