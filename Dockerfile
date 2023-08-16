@@ -1,7 +1,7 @@
 FROM ghcr.io/masudur-rahman/golang:1.21
 
 ARG TARGETOS
-ARG TARGETARCH
+ARG TARGETARCH=amd64
 
 RUN apt update && apt upgrade -y
 
