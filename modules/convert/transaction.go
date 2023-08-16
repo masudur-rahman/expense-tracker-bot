@@ -65,7 +65,7 @@ func ToTransactionAPIFormat(txn models.Transaction) gqtypes.Transaction {
 	}
 
 	return gqtypes.Transaction{
-		DateTime:    time.Unix(txn.Timestamp, 0).Format(time.DateTime),
+		Date:        time.Unix(txn.Timestamp, 0),
 		Type:        string(txn.Type),
 		Amount:      txn.Amount,
 		Source:      src,

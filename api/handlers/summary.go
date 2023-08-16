@@ -111,11 +111,10 @@ func processSummary(smop SummaryCallbackOptions) (string, error) {
 		return "", err
 	}
 
-	summary := gqtypes.CustomSummary{
+	summary := gqtypes.SummaryGroups{
 		Type:        map[string]gqtypes.FieldCost{},
 		Category:    map[string]gqtypes.FieldCost{},
 		Subcategory: map[string]gqtypes.FieldCost{},
-		Total:       0,
 	}
 	for _, txn := range txns {
 		if smop.GroupBy == GroupByTxnType {
@@ -132,8 +131,6 @@ func processSummary(smop SummaryCallbackOptions) (string, error) {
 			fc.Amount += txn.Amount
 			summary.Category[cat] = fc
 		}
-
-		summary.Total += txn.Amount
 	}
 
 	for k, fc := range summary.Category {

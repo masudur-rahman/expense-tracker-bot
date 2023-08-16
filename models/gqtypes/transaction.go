@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io"
 	"text/tabwriter"
+	"time"
 )
 
 type Transaction struct {
-	DateTime    string
+	Date        time.Time
 	Type        string
 	Amount      float64
 	Source      string
@@ -38,15 +39,18 @@ type FieldCost struct {
 	Amount float64
 }
 
-type CustomSummary struct {
+type SummaryGroups struct {
 	Type        map[string]FieldCost
 	Category    map[string]FieldCost
 	Subcategory map[string]FieldCost
-
-	Total float64
 }
 
-func (s CustomSummary) String() string {
+type Report struct {
+	Transactions []Transaction
+	Summary      SummaryGroups
+}
+
+func (s SummaryGroups) String() string {
 	buf := bytes.Buffer{}
 	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 	fmt.Fprintln(w, "Transaction Summary\n")
@@ -75,12 +79,11 @@ func (s CustomSummary) String() string {
 		fmt.Fprintln(w, fmt.Sprintf("%v:\t%v", f, v.Amount))
 	}
 
-	fmt.Fprintln(w, fmt.Sprintf("\nTotal:\t%v", s.Total))
 	_ = w.Flush()
 	return buf.String()
 }
 
-func (s CustomSummary) MarkdownString() string {
+func (s SummaryGroups) MarkdownString() string {
 	buf := bytes.Buffer{}
 	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 	fmt.Fprintln(w, "\n## Transaction Summary")
@@ -118,7 +121,6 @@ func (s CustomSummary) MarkdownString() string {
 		fmt.Fprintln(w, fmt.Sprintf("| %v | %v |", f, v.Amount))
 	}
 
-	writeRowHeader(w, "Total", s.Total)
 	_ = w.Flush()
 	return buf.String()
 }

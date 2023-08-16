@@ -2,16 +2,18 @@ package handlers
 
 import (
 	"bytes"
+	"os"
+	"os/exec"
 	"strings"
+	"text/template"
 	"time"
 
-	"github.com/masudur-rahman/expense-tracker-bot/configs"
 	"github.com/masudur-rahman/expense-tracker-bot/models/gqtypes"
 	"github.com/masudur-rahman/expense-tracker-bot/modules/convert"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
+	"github.com/masudur-rahman/expense-tracker-bot/templates"
 
-	"github.com/gomarkdown/markdown"
 	"gopkg.in/telebot.v3"
 )
 
@@ -48,60 +50,70 @@ func generateReportDurationInlineButton(callbackOpts CallbackOptions) []telebot.
 }
 
 func handleReportCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
-	data, err := processReport(callbackOpts.Report)
+	report, err := generateReport(callbackOpts.Report)
 	if err != nil {
 		return err
 	}
 
-	report := markdown.ToHTML([]byte(data), nil, nil)
+	if err = generateTransactionReportFromTemplate(report); err != nil {
+		return err
+	}
 
 	return ctx.Send(&telebot.Document{
-		File:     telebot.FromReader(bytes.NewReader(report)),
-		FileName: "transaction_report.html",
+		File:     telebot.FromDisk("/tmp/transaction_report.pdf"),
+		FileName: "transaction_report.pdf",
 	})
 }
 
-func processReport(rop ReportCallbackOptions) (string, error) {
+func generateReport(rop ReportCallbackOptions) (gqtypes.Report, error) {
 	now, startTime := time.Now(), calculateStartTime(rop.Duration)
 
 	svc := all.GetServices()
 	txns, err := svc.Txn.ListTransactionsByTime("", startTime.Unix(), now.Unix())
 	if err != nil {
-		return "", err
+		return gqtypes.Report{}, err
 	}
 
+	report := gqtypes.Report{}
 	txnApis := make([]gqtypes.Transaction, 0, len(txns))
 	for _, txn := range txns {
 		txnApis = append(txnApis, convert.ToTransactionAPIFormat(txn))
 	}
 
-	summary := gqtypes.CustomSummary{
+	report.Transactions = txnApis
+
+	summary := gqtypes.SummaryGroups{
 		Type:        map[string]gqtypes.FieldCost{},
 		Category:    map[string]gqtypes.FieldCost{},
 		Subcategory: map[string]gqtypes.FieldCost{},
-		Total:       0,
 	}
 	for _, txn := range txns {
+		// summarize transaction types
 		fc := summary.Type[string(txn.Type)]
 		fc.Amount += txn.Amount
 		summary.Type[string(txn.Type)] = fc
 
+		// summarize transaction subcategories
 		fc = summary.Subcategory[txn.SubcategoryID]
 		fc.Amount += txn.Amount
 		summary.Subcategory[txn.SubcategoryID] = fc
 
+		// summarize transaction categories
 		cat := strings.Split(txn.SubcategoryID, "-")[0]
 		fc = summary.Category[cat]
 		fc.Amount += txn.Amount
 		summary.Category[cat] = fc
+	}
 
-		summary.Total += txn.Amount
+	for k, fc := range summary.Type {
+		fc.Name = k
+		summary.Type[k] = fc
 	}
 
 	for k, fc := range summary.Category {
 		fc.Name, err = svc.Txn.GetTxnCategoryName(k)
 		if err != nil {
-			return "", err
+			return gqtypes.Report{}, err
 		}
 
 		summary.Category[k] = fc
@@ -110,13 +122,14 @@ func processReport(rop ReportCallbackOptions) (string, error) {
 	for k, fc := range summary.Subcategory {
 		fc.Name, err = svc.Txn.GetTxnSubcategoryName(k)
 		if err != nil {
-			return "", err
+			return gqtypes.Report{}, err
 		}
 
 		summary.Subcategory[k] = fc
 	}
-	printer := configs.GetDefaultPrinter().WithRenderType(pkg.RenderTypeMarkdown)
-	return printer.PrintDocuments(txnApis) + summary.MarkdownString(), nil
+
+	report.Summary = summary
+	return report, nil
 }
 
 func calculateStartTime(duration SummaryDuration) time.Time {
@@ -136,4 +149,31 @@ func calculateStartTime(duration SummaryDuration) time.Time {
 		startTime = now.AddDate(-1, 0, 0)
 	}
 	return startTime
+}
+
+func generateTransactionReportFromTemplate(report gqtypes.Report) error {
+	data, err := templates.FS.ReadFile("transaction_report.tmpl")
+	if err != nil {
+		return err
+	}
+
+	buf := bytes.Buffer{}
+	tmpl, err := template.New("report").Parse(string(data))
+	if err != nil {
+		return err
+	}
+
+	err = tmpl.Execute(&buf, &report)
+	if err != nil {
+		return err
+	}
+
+	fileName := "/tmp/transaction_report.html"
+	err = os.WriteFile(fileName, buf.Bytes(), 0644)
+	if err != nil {
+		return err
+	}
+
+	return exec.Command("wkhtmltopdf", "--title", "Transaction Report",
+		"--page-size", "A4", "--orientation", "Portrait", fileName, "/tmp/transaction_report.pdf").Run()
 }

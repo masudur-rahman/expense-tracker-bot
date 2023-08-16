@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+
+        .content-table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+            min-width: 400px;
+            border-radius: 5px 5px 0 0;
+            /* overflow: hidden; */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .content-table thead tr {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .content-table th,
+        .content-table td {
+            padding: 12px 14px;
+        }
+
+        .content-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .content-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+
+        .content-table tbody tr:last-of-type {
+            border-bottom: 3px solid #009879;
+        }
+
+        .content-table tbody tr.active-row {
+            font-weight: bold;
+            color: #009879;
+        }
+    </style>
+</head>
+
+<body>
+<h2>Transaction History</h2>
+
+<table class="content-table">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Source A/C</th>
+        <th>Dest A/C</th>
+        <th>Person</th>
+        <th>Category</th>
+        <th>Subcategory</th>
+        <th>Remarks</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range .Transactions }}
+    <tr>
+        <td>{{ .Date.Format "Jan 02, '06" }}</td>
+        <td>{{ .Type }}</td>
+        <td>$ {{ .Amount }}</td>
+        <td>{{ .Source }}</td>
+        <td>{{ .Destination }}</td>
+        <td>{{ .Person }}</td>
+        <td>{{ .Category }}</td>
+        <td>{{ .Subcategory }}</td>
+        <td>{{ .Remarks }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+<h2>Transaction Summary</h2>
+<table class="content-table">
+    <thead>
+    <tr>
+        <th>Transaction Type</th>
+        <th>Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{  range $type := .Summary.Type }}
+    <tr>
+        <td>{{ $type.Name }}</td>
+        <td>$ {{ $type.Amount }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+<table class="content-table">
+    <thead>
+    <tr>
+        <th>Transaction Category</th>
+        <th>Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $category := .Summary.Category }}
+    <tr>
+        <td>{{ $category.Name }}</td>
+        <td>$ {{ $category.Amount }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+<table class="content-table">
+    <thead>
+    <tr>
+        <th>Transaction Subcategory</th>
+        <th>Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range $subcategory := .Summary.Subcategory }}
+    <tr>
+        <td>{{ $subcategory.Name }}</td>
+        <td>$ {{ $subcategory.Amount }}</td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
+
+</body>
+
+</html>
