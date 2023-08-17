@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+  font-family: sans-serif; /* Change your font family */
+}
+
+.content-table {
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 0.9em;
+  min-width: 400px;
+  border-radius: 5px 5px 0 0;
+  /* overflow: hidden; */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.content-table thead tr {
+  background-color: #009879;
+  color: #ffffff;
+  text-align: left;
+  font-weight: bold;
+}
+
+.content-table th,
+.content-table td {
+  padding: 12px 14px;
+}
+
+.content-table tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.content-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.content-table tbody tr:last-of-type {
+  border-bottom: 3px solid #009879;
+}
+
+.content-table tbody tr.active-row {
+  font-weight: bold;
+  color: #009879;
+}
+
+</style>
+</head>
+
+<body>
+  <h2>Transaction History</h2>
+
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Source A/C</th>
+        <th>Dest A/C</th>
+        <th>Person</th>
+        <th>Category</th>
+        <th>Subcategory</th>
+        <th>Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Aug 13, '23</td>
+        <td>Transfer</td>
+        <td>$1000</td>
+        <td>BRAC</td>
+        <td>Cash</td>
+        <td></td>
+        <td>Food</td>
+        <td>Snacks</td>
+        <td>Potata</td>
+      </tr>
+      <tr>
+        <td>13-08-2023</td>
+        <td>Transfer</td>
+        <td>$1000</td>
+        <td>BRAC</td>
+        <td>Cash</td>
+        <td></td>
+        <td>Food</td>
+        <td>Snacks</td>
+        <td>Potata</td>
+      </tr>
+      <tr>
+        <td>13-08-23</td>
+        <td>Transfer</td>
+        <td>$10</td>
+        <td>BRAC</td>
+        <td>Cash</td>
+        <td></td>
+        <td>Food</td>
+        <td>Mobile Recharge</td>
+        <td>GP Recharge</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Transaction Summary</h2>
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Transaction Type</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Transfer</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Income</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Expense</td>
+        <td>1000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Transaction Category</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Financial</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Food</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Miscellaneous</td>
+        <td>1000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="content-table">
+    <thead>
+      <tr>
+        <th>Transaction Subcategory</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Withdraw</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Snacks</td>
+        <td>1000</td>
+      </tr>
+        <tr>
+        <td>Mobile Recharge</td>
+        <td>1000</td>
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+</html>
