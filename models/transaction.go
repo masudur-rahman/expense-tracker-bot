@@ -52,6 +52,7 @@ var foodSubs = []TxnSubcategory{
 	{ID: "food-take", Name: "Takeout", CatID: "food"},
 	{ID: "food-snack", Name: "Snacks", CatID: "food"},
 	{ID: "food-fruit", Name: "Fruits", CatID: "food"},
+	{ID: "food-bev", Name: "Beverages", CatID: "food"},
 }
 
 var houseSubs = []TxnSubcategory{
@@ -75,6 +76,7 @@ var pcSubs = []TxnSubcategory{
 	{ID: "pc-gym", Name: "Gym", CatID: "pc"},
 	{ID: "pc-cloth", Name: "Clothing", CatID: "pc"},
 	{ID: "pc-health", Name: "Health", CatID: "pc"},
+	{ID: "pc-med", Name: "Medicine", CatID: "pc"},
 }
 
 var trvSubs = []TxnSubcategory{
@@ -93,7 +95,9 @@ var finSubs = []TxnSubcategory{
 	{ID: "fin-ccpay", Name: "Credit Card Payment", CatID: "fin"},
 	{ID: "fin-bank", Name: "Bank Transfer", CatID: "fin"},
 	{ID: "fin-loan", Name: "Loan", CatID: "fin"},
+	{ID: "fin-recover", Name: "Loan Recovery", CatID: "fin"},
 	{ID: "fin-borrow", Name: "Borrow", CatID: "fin"},
+	{ID: "fin-return", Name: "Borrow Return", CatID: "fin"},
 	{ID: "fin-tax", Name: "Tax", CatID: "fin"},
 	{ID: "fin-charge", Name: "Charges", CatID: "fin"},
 	{ID: "fin-flexi", Name: "Mobile Recharge", CatID: "fin"},

@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"os"
-	"os/exec"
 	"strings"
 	"text/template"
 	"time"
@@ -168,12 +166,5 @@ func generateTransactionReportFromTemplate(report gqtypes.Report) error {
 		return err
 	}
 
-	fileName := "/tmp/transaction_report.html"
-	err = os.WriteFile(fileName, buf.Bytes(), 0644)
-	if err != nil {
-		return err
-	}
-
-	return exec.Command("wkhtmltopdf", "--title", "Transaction Report",
-		"--page-size", "A4", "--orientation", "Portrait", fileName, "/tmp/transaction_report.pdf").Run()
+	return pkg.ConvertHTMLToPDF("/tmp/transaction_report.pdf", buf.Bytes())
 }
