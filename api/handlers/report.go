@@ -50,11 +50,11 @@ func generateReportDurationInlineButton(callbackOpts CallbackOptions) []telebot.
 func handleReportCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	report, err := generateReport(callbackOpts.Report)
 	if err != nil {
-		return err
+		return ctx.Send(err.Error())
 	}
 
 	if err = generateTransactionReportFromTemplate(report); err != nil {
-		return err
+		return ctx.Send(err.Error())
 	}
 
 	return ctx.Send(&telebot.Document{

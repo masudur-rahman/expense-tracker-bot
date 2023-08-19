@@ -24,25 +24,31 @@ func NewTxnService(acRepo repos.AccountsRepository, userRepo repos.UserRepositor
 }
 
 func (ts *txnService) AddTransaction(txn models.Transaction) error {
+	if txn.SubcategoryID == "" {
+		return fmt.Errorf("subcategory is required")
+	}
+
 	switch txn.Type {
 	case models.ExpenseTransaction:
-		if txn.SubcategoryID == models.LoanSubcategoryID {
+		switch txn.SubcategoryID {
+		case models.LoanSubcategoryID, models.BorrowReturnSubID:
 			if err := ts.userRepo.UpdateUserBalance(txn.UserID, txn.Amount); err != nil {
 				return err
 			}
-		} else if txn.SubcategoryID == models.BorrowSubcategoryID {
-			return fmt.Errorf("borrow type expense should be under Income type")
+		case models.BorrowSubcategoryID, models.LoanRecoverySubID:
+			return fmt.Errorf("borrow or loan recovery type expense should be under Income type")
 		}
 		if err := ts.acRepo.UpdateAccountBalance(txn.SrcID, -txn.Amount); err != nil {
 			return err
 		}
 	case models.IncomeTransaction:
-		if txn.SubcategoryID == models.BorrowSubcategoryID {
+		switch txn.SubcategoryID {
+		case models.BorrowSubcategoryID, models.LoanRecoverySubID:
 			if err := ts.userRepo.UpdateUserBalance(txn.UserID, -txn.Amount); err != nil {
 				return err
 			}
-		} else if txn.SubcategoryID == models.LoanSubcategoryID {
-			return fmt.Errorf("loan type expense should be under Expense type")
+		case models.LoanSubcategoryID, models.BorrowReturnSubID:
+			return fmt.Errorf("loan or borrow return type expense should be under Expense type")
 		}
 		if err := ts.acRepo.UpdateAccountBalance(txn.DstID, txn.Amount); err != nil {
 			return err

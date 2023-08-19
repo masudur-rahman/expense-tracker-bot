@@ -12,5 +12,5 @@ func ConvertHTMLToPDF(outputFile string, data []byte) error {
 	}
 
 	return exec.Command("wkhtmltopdf", "--title", "Transaction Report",
-		"--zoom", "0.98", "--page-size", "A4", "--orientation", "Portrait", inputFile, outputFile).Run()
+		"--zoom", "0.96", "--page-size", "A4", "--orientation", "Portrait", inputFile, outputFile).Run()
 }

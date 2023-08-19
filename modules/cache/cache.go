@@ -37,11 +37,12 @@ func FetchDataWithCustomFunc(key string, obj any, getFunc func() (any, error)) e
 		return nil
 	}
 
-	obj, err := getFunc()
+	data, err := getFunc()
 	if err != nil {
 		return err
 	}
 
-	c.Set(key, obj, 5*time.Minute)
+	c.Set(key, data, 5*time.Minute)
+	reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(data))
 	return nil
 }

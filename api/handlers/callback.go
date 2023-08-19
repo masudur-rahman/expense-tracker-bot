@@ -6,7 +6,9 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/modules/cache"
+	"github.com/masudur-rahman/expense-tracker-bot/modules/transaction"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
+	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"github.com/masudur-rahman/go-oneliners"
 
@@ -166,13 +168,11 @@ func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 
 func TransactionTextCallback(ctx telebot.Context) error {
 	fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
-	//return ctx.Send("Removing keyboard", &telebot.SendOptions{
-	//	ReplyTo:     ctx.Message(),
-	//	ReplyMarkup: &telebot.ReplyMarkup{RemoveKeyboard: true},
-	//})
-
 	if ctx.Update().Message.ReplyTo == nil {
-		return ctx.Reply("Wrong keyword or data")
+		if err := handleTransactionFromRegularText(ctx.Text()); err != nil {
+			return ctx.Send(err.Error())
+		}
+		return ctx.Send("Transaction added successfully!")
 	}
 
 	replyToID := ctx.Update().Message.ReplyTo.ID
@@ -250,4 +250,12 @@ func handleUserTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOption
 		}(),
 	}
 	return processUserCreation(ctx, callbackOpts.User)
+}
+
+func handleTransactionFromRegularText(text string) error {
+	txn, err := transaction.ParseTransaction(text)
+	if err != nil {
+		return err
+	}
+	return all.GetServices().Txn.AddTransaction(txn)
 }

@@ -8,7 +8,9 @@ const (
 	TransferTransaction TransactionType = "Transfer"
 
 	LoanSubcategoryID   string = "fin-loan"
+	LoanRecoverySubID   string = "fin-recover"
 	BorrowSubcategoryID string = "fin-borrow"
+	BorrowReturnSubID   string = "fin-return"
 )
 
 type Transaction struct {
