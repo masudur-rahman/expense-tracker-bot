@@ -48,15 +48,17 @@ func TransactionSummary(ctx telebot.Context) error {
 	return ctx.Send(summary.String())
 }
 
-func generateSummary(txns []models.Transaction) gqtypes.Summary {
-	var summary gqtypes.Summary
-	for _, txn := range txns {
-		if txn.Type == models.ExpenseTransaction {
-			summary.Expense += txn.Amount
-		} else {
-			summary.Income += txn.Amount
-		}
+func generateSummary(txns []models.Transaction) gqtypes.SummaryGroups {
+	summary := gqtypes.SummaryGroups{
+		Type: map[string]gqtypes.FieldCost{},
 	}
+
+	for _, txn := range txns {
+		fc := summary.Type[string(txn.Type)]
+		fc.Amount += txn.Amount
+		summary.Type[string(txn.Type)] = fc
+	}
+
 	return summary
 }
 

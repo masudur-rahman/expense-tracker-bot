@@ -1,6 +1,9 @@
 FROM {ARG_FROM}
 
-LABEL org.opencontainers.image.source "https://github.com/masudur-rahman/expense-tracker-bot
+LABEL org.opencontainers.image.source "https://github.com/masudur-rahman/expense-tracker-bot"
+
+ARG TARGETOS
+ARG TARGETARCH
 
 # When building, we can pass a unique value (e.g. `date +%s`) for this arg,
 # which will force a rebuild from here (by invalidating docker's cache).
@@ -16,6 +19,23 @@ ARG HASH_LICENSES=0
 # When building, we can pass a hash of the binary, which docker checks against
 # its cache and can force a rebuild from here.
 ARG HASH_BINARY=0
+
+ARG WKHTMLTOPDF_VERSION=0.12.6.1-2
+
+RUN set -x \
+  && apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends ca-certificates wget \
+  && echo 'Etc/UTC' > /etc/timezone
+
+RUN set -x \
+  && wget https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTMLTOPDF_VERSION}/wkhtmltox_${WKHTMLTOPDF_VERSION}.bullseye_${TARGETARCH}.deb \
+  && dpkg -i wkhtmltox_${WKHTMLTOPDF_VERSION}.bullseye_${TARGETARCH}.deb || true \
+  && apt-get install -f -y \
+  && ldconfig \
+  && rm wkhtmltox_${WKHTMLTOPDF_VERSION}.bullseye_${TARGETARCH}.deb \
+  && rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man /tmp/*
+
 
 # Add the platform-specific binary.
 COPY bin/{ARG_OS}_{ARG_ARCH}/{ARG_BIN} /{ARG_BIN}

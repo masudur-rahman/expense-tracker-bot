@@ -37,7 +37,8 @@ ALL_PLATFORMS := linux/arm64 linux/amd64
 OS := $(if $(GOOS),$(GOOS),$(shell go env GOOS))
 ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
 
-BASEIMAGE ?= gcr.io/distroless/static
+#BASEIMAGE ?= gcr.io/distroless/static
+BASEIMAGE ?= debian:bullseye
 
 TAG := $(VERSION)_$(OS)_$(ARCH)
 
@@ -299,7 +300,7 @@ doc-gen:
 
 gen: proto-gen mockgen
 
-verify: verify-proto-gen verify-mockgen verify-modules verify-fmt
+verify: verify-modules verify-fmt
 
 CONTAINER_DOTFILES = $(foreach bin,$(BIN),.container-$(subst /,_,$(REGISTRY)/$(bin))-$(TAG))
 

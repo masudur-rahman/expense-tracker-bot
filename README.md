@@ -1,92 +1,189 @@
-# expense-tracker-bot
+# Expense Tracker
 
+A Telegram Bot to track your expenses.
 
+[![Build Status](https://travis-ci.com/masudur-rahman/expense-tracker-bot.svg?branch=main)](https://travis-ci.com/masudur-rahman/expense-tracker-bot)
+[![Go Report Card](https://goreportcard.com/badge/github.com/masudur-rahman/expense-tracker-bot)](https://goreportcard.com/report/github.com/masudur-rahman/expense-tracker-bot)
+[![codecov](https://codecov.io/gh/masudur-rahman/expense-tracker-bot/branch/master/graph/badge.svg)](https://codecov.io/gh/masudur-rahman/expense-tracker-bot)
+[![License](https://img.shields.io/github/license/masudur-rahman/expense-tracker-bot)](
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/masudur-rahman/expense-tracker-bot.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/masudur-rahman/expense-tracker-bot/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
 
 ## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+`Expense Tracker Bot` is a Telegram Bot to track your expenses. It is built using [Go](https://golang.org/) and [Postgres](https://www.postgresql.org/).
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+It's currently supporting a single user [masudur-rahman](https://t.me/masudur_rahman).
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+## Requirements
+
+### Telegram Bot
+
+1. Create a new bot using [BotFather](https://t.me/botfather).
+   - Use `/newbot` command to create a new bot.
+   - Use `/setname` command to set a name for the bot.
+   - Use `/setdescription` command to set a description for the bot.
+
+2. Set commands for the bot using `/setcommands` command.
+    ```
+    new - Add new Transaction, Account or User
+    newtxn - Add new transaction
+    user - List persons involved in some loan/borrow with the system user
+    balance - List Account Balance
+    expense - Fetch Expense of Current month
+    summary - Transaction summary of current month
+    allsummary - Transaction summary based on Type, Category, Subcategory
+    report - Transaction Report
+    cat - List Transaction categories
+    ```
+ 
+3. Create a Token for the bot.
+    - Use `/token` command to get the bot token.
+
+### Postgres Database
+
+#### Local Setup
+
+- Install Postgres using [Homebrew](https://brew.sh/).
+   ```bash
+   brew update
+   brew install postgresql
+   brew services start postgresql
+   ```
+- Create user superuser `postgres` with password `postgres`.
+   ```bash
+   psql postgres -c "CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';"
+   ```
+- Create a new database named `expense`.
+   ```bash
+   psql -u postgres -c "CREATE DATABASE expense;"
+   ```
+
+## Installation and Running
+
+### Local Setup
+
+1. Clone the repository.
+    ```bash
+    mkdir -p $GOPATH/src/github.com/masudur-rahman
+    cd $GOPATH/src/github.com/masudur-rahman
+    git clone git@github.com:masudur-rahman/expense-tracker-bot.git
+    ```
+2. Export required environment variables.
+    ```bash
+    export TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>
+    
+    # following environment variables are the default values
+    # you can ignore them if you are using the default values
+    export POSTGRES_USER=postgres
+    export POSTGRES_PASSWORD=postgres
+    export POSTGRES_DB=expense
+    export POSTGRES_HOST=localhost
+    export POSTGRES_PORT=5432
+    export POSTGRES_SSL_MODE=disable
+    ```
+3. Run `make run` to start the server.
+
+### Back4App Setup
+
+1. Create a new app on [Back4App](https://www.back4app.com/).
+2. Connect your app to a GitHub repository.
+3. Set the environment variables to the `Settings.Environment Variables` section.
+4. Restart the server.
+
+### Production Environment (Kubernetes)
+
+To deploy `Expense Tracker Bot` application in production environment, the preferred way is through Helm Chart.
+
+- First you need to add the repo for the helm chart.
+    ```bash
+    helm repo add masud https://masudur-rahman.github.io/helm-charts/stable
+    helm repo update
+    
+    helm search repo masud/expense-tracker-bot
+    ```
+- Install the chart
+    ```bash
+    helm upgrade --install expense-tracker-bot masud/expense-tracker-bot -n demo \
+        --create-namespace \
+        --set telegram.token=<TELEGRAM_BOT_TOKEN> \
+        --set database.deploy=true # set to false if you want to use external database
+        # --set database.postgres.user=<POSTGRES_USER> \
+        # --set database.postgres.password=<POSTGRES_PASSWORD> \
+        # --set database.postgres.db=<POSTGRES_DB> \
+        # --set database.postgres.host=<POSTGRES_HOST> \
+        # --set database.postgres.port=<POSTGRES_PORT> \ 
+        # --set database.postgres.sslmode=<POSTGRES_SSL_MODE>
+    ```
+
+- Verify Installation
+  To check if `Expense Tracker Bot` is installed, run the following command:
+    ```bash
+    $ kubectl get pods -n demo -l "app.kubernetes.io/instance=expense-tracker-bot"
+
+    NAME                                            READY   STATUS    RESTARTS      AGE
+    expense-tracker-bot-7989d96fcc-b4smq            1/1     Running   2 (30s ago)   31s
+    expense-tracker-bot-postgres-55dcb67965-95r7g   1/1     Running   0             31s
+    ```
+
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+### Telegram Bot
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Available commands:
+- `/new` - Add new Transaction, Account or User
+  - `user` - Add new user
+  - `account` - Add new account (Cash, Bank)
+    - i.e: `brac "BRAC Bank"`
+  - `txn` - Add new transaction
+    - through some flags
+    - i.e: `<amount> -t=<type> -s=<subcat> -f=<src> -d=<dst> -u=<user> -r=<remarks>`
+- `/newtxn` - Add new transaction
+  - Add a new transaction through a series of callback queries.
+- `/user` - List users
+  - list all the persons involved in some loan/borrow with the system user
+- `/balance` - List Account Balance
+  - list all the registered accounts and their balance
+- `/expense` - Fetch Expense of Current month
+  - list transactions of current month
+- `/summary` - Transaction summary of current month
+  - list transaction summary of current month
+- `/allsummary` - Transaction summary based on Type, Category, Subcategory
+  - list transaction summary based on Type, Category, Subcategory
+  - with a duration query parameter
+- `/report` - Transaction Report
+  - list transaction report
+  - with a duration query parameter
+- `/cat` - List Transaction categories
+  - list all the registered categories
+  - by selecting a category, list all the registered subcategories of that category
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+#### More importantly you can add a new transaction just by sending a regular text message
+You just need to mention
+- what you did
+- when you did
+- how much did it cost
+- affected accounts
+- affected persons in case of loan/borrow
+- remarks
+and the bot will take care of the rest
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Some example text for adding a new transaction:
+```
+- transfer 2000 from brac to dbbl on 2020-01-01 note "Bill payment"
+- spend 1000 for food-rest on "Jan 13, 2013" from dbbl note "Lunch"
+- earn 5000 to brac on 20-01-2023 note "Salary"
+- borrow 1000 from user to brac on 2020-01-01
+- return 1000 to user from brac on 2020-01-01
+- lend 1000 to user from brac on 2020-01-01
+- recover 1000 from user to brac on 2020-01-01
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Future Work
 
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+A list of possible future work:
+- [ ] Add support for undoing a transaction
+- [ ] Add Database backup and restore support
+- [ ] Add support for multiple users

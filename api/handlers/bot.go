@@ -21,9 +21,6 @@ import (
 func Welcome(ctx telebot.Context) error {
 	return ctx.Send(fmt.Sprintf(`Hello %v %v!
 Welcome to Expense Tracker !
-Available options are:
-/new <type> <unique-name> <Account Name>
-/newuser <id> <name> <email>
 `, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
@@ -117,7 +114,7 @@ func printAccounts(accounts []models.Account) string {
 	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 	fmt.Fprintln(w, "ID\tType\tName\tBalance")
 	for _, ac := range accounts {
-		fmt.Fprintf(w, "%v\t%v\t%v\t%v\n", ac.ID, ac.Type, ac.Name, ac.Balance)
+		fmt.Fprintf(w, "%v\t%v\t%v\t%.2f\n", ac.ID, ac.Type, ac.Name, ac.Balance)
 	}
 	_ = w.Flush()
 	return buf.String()

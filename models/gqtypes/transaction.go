@@ -53,14 +53,14 @@ type Report struct {
 func (s SummaryGroups) String() string {
 	buf := bytes.Buffer{}
 	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
-	fmt.Fprintln(w, "Transaction Summary\n")
+	fmt.Fprintln(w, fmt.Sprintf("Transaction Summary\n"))
 
 	for k, v := range s.Type {
 		f := v.Name
 		if f == "" {
 			f = k
 		}
-		fmt.Fprintln(w, fmt.Sprintf("%v:\t%v", f, v.Amount))
+		fmt.Fprintln(w, fmt.Sprintf("%v:\t%.2f", f, v.Amount))
 	}
 
 	for k, v := range s.Category {
@@ -68,7 +68,7 @@ func (s SummaryGroups) String() string {
 		if f == "" {
 			f = k
 		}
-		fmt.Fprintln(w, fmt.Sprintf("%v:\t%v", f, v.Amount))
+		fmt.Fprintln(w, fmt.Sprintf("%v:\t%.2f", f, v.Amount))
 	}
 
 	for k, v := range s.Subcategory {
@@ -76,7 +76,7 @@ func (s SummaryGroups) String() string {
 		if f == "" {
 			f = k
 		}
-		fmt.Fprintln(w, fmt.Sprintf("%v:\t%v", f, v.Amount))
+		fmt.Fprintln(w, fmt.Sprintf("%v:\t%.2f", f, v.Amount))
 	}
 
 	_ = w.Flush()

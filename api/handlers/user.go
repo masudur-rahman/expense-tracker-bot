@@ -19,8 +19,8 @@ type UserCallbackOptions struct {
 func handleUserCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	msg, err := ctx.Bot().Reply(ctx.Message(), `Reply to this Message with the following data
 
-<id> <name> <email>
-i.e.: john "John Doe", john@doe.com
+<id> <name> <email(optional)>
+i.e.: john "John Doe" john@doe.com
 `, &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 	})
