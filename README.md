@@ -2,12 +2,6 @@
 
 A Telegram Bot to track your expenses.
 
-[![Build Status](https://travis-ci.com/masudur-rahman/expense-tracker-bot.svg?branch=main)](https://travis-ci.com/masudur-rahman/expense-tracker-bot)
-[![Go Report Card](https://goreportcard.com/badge/github.com/masudur-rahman/expense-tracker-bot)](https://goreportcard.com/report/github.com/masudur-rahman/expense-tracker-bot)
-[![codecov](https://codecov.io/gh/masudur-rahman/expense-tracker-bot/branch/master/graph/badge.svg)](https://codecov.io/gh/masudur-rahman/expense-tracker-bot)
-[![License](https://img.shields.io/github/license/masudur-rahman/expense-tracker-bot)](
-
-
 ## Description
 
 `Expense Tracker Bot` is a Telegram Bot to track your expenses. It is built using [Go](https://golang.org/) and [Postgres](https://www.postgresql.org/).
