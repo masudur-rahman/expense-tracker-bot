@@ -28,13 +28,14 @@ import (
 	"time"
 
 	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/database/sql/postgres"
+	"github.com/masudur-rahman/database/sql/postgres/lib"
+	"github.com/masudur-rahman/database/sql/sqlite"
+	sqlib "github.com/masudur-rahman/database/sql/sqlite/lib"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
-
-	"github.com/masudur-rahman/database/sql/postgres"
-	"github.com/masudur-rahman/database/sql/postgres/lib"
 
 	"github.com/spf13/cobra"
 )
@@ -106,12 +107,18 @@ func getServicesForPostgres(ctx context.Context) error {
 }
 
 func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
-	conn, err := lib.GetPostgresConnection(cfg)
+	//conn, err := lib.GetPostgresConnection(cfg)
+	//if err != nil {
+	//	return err
+	//}
+
+	conn, err := sqlib.GetSQLiteConnection("expense-tracker.db")
 	if err != nil {
 		return err
 	}
 
-	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
+	//db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
+	db := sqlite.NewSqlite(ctx, conn)
 	syncTables(db)
 
 	logger := logr.DefaultLogger
