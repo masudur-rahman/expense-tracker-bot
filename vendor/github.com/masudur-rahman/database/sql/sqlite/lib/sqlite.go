@@ -13,7 +13,6 @@ import (
 	"github.com/masudur-rahman/database/sql/postgres/pg-grpc/pb"
 
 	"github.com/iancoleman/strcase"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 

@@ -96,9 +96,19 @@ func getFieldInfo(fieldType reflect.StructField, fieldValue reflect.Value) field
 	sqlType := getSQLType(fieldValue.Type(), autoincr)
 	return fieldInfo{
 		Name:        fieldName,
-		Type:        sqlType + columnConstraint,
+		Type:        removeDuplicateKeyword(sqlType + columnConstraint),
 		IsComposite: isComposite,
 	}
+}
+
+func removeDuplicateKeyword(keyword string) string {
+	pk := "PRIMARY KEY"
+	count := strings.Count(keyword, pk)
+	if count > 1 {
+		idx := strings.Index(keyword, pk)
+		keyword = keyword[:idx+1] + strings.ReplaceAll(keyword[idx+1:], pk, "")
+	}
+	return keyword
 }
 
 func getFieldName(fieldType reflect.StructField) string {
@@ -163,15 +173,18 @@ func getUniqueColumnGroups(t reflect.Type) [][]string {
 func getExistingColumns(ctx context.Context, conn *sql.Conn, tableName string) ([]string, error) {
 	var columns []string
 
-	rows, err := conn.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name='%s'", tableName))
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf("pragma table_info(%v)", tableName))
 	if err != nil {
 		return nil, fmt.Errorf("error getting columns for table %s: %v", tableName, err)
 	}
 	defer rows.Close()
+	cols, err := rows.Columns()
+	fmt.Println(cols)
 
 	for rows.Next() {
+		var x any
 		var column string
-		err = rows.Scan(&column)
+		err = rows.Scan(&x, &column, &x, &x, &x, &x)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning column for table %s: %v", tableName, err)
 		}

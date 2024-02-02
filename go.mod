@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
-	github.com/masudur-rahman/database v0.0.0-20230712191307-c3b5f6c5cd9b
+	github.com/masudur-rahman/database v0.0.0-20240202192925-ab358bc817d7
 	github.com/masudur-rahman/go-oneliners v1.0.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rs/xid v1.5.0
@@ -39,5 +39,3 @@ require (
 )
 
 replace github.com/nedpals/postgrest-go => github.com/nedpals/postgrest-go v0.1.3
-
-replace github.com/masudur-rahman/database => ../database

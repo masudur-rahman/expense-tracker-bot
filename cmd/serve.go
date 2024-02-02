@@ -53,7 +53,7 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		go startHealthz()
 
-		if err := getServicesForPostgres(cmd.Context()); err != nil {
+		if err := getServicesForSqlite(cmd.Context()); err != nil {
 			log.Fatalln(err)
 		}
 
@@ -95,30 +95,36 @@ func startHealthz() {
 func getServicesForPostgres(ctx context.Context) error {
 	cfg := parsePostgresConfig()
 
-	err := initiateSQLServices(ctx, cfg)
+	err := initiatePostgresQLServices(ctx, cfg)
 	if err != nil {
 		return err
 	}
 
-	if err = all.GetServices().Txn.UpdateTxnCategories(); err != nil {
-		return err
-	}
-	return nil
+	return all.GetServices().Txn.UpdateTxnCategories()
 }
 
-func initiateSQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
-	//conn, err := lib.GetPostgresConnection(cfg)
-	//if err != nil {
-	//	return err
-	//}
-
+func getServicesForSqlite(ctx context.Context) error {
 	conn, err := sqlib.GetSQLiteConnection("expense-tracker.db")
 	if err != nil {
 		return err
 	}
 
-	//db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
 	db := sqlite.NewSqlite(ctx, conn)
+	syncTables(db)
+
+	logger := logr.DefaultLogger
+	all.InitiateSQLServices(db, logger)
+
+	return all.GetServices().Txn.UpdateTxnCategories()
+}
+
+func initiatePostgresQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
+	conn, err := lib.GetPostgresConnection(cfg)
+	if err != nil {
+		return err
+	}
+
+	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
 	syncTables(db)
 
 	logger := logr.DefaultLogger
