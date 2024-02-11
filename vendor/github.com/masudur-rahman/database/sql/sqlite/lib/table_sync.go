@@ -173,13 +173,11 @@ func getUniqueColumnGroups(t reflect.Type) [][]string {
 func getExistingColumns(ctx context.Context, conn *sql.Conn, tableName string) ([]string, error) {
 	var columns []string
 
-	rows, err := conn.QueryContext(ctx, fmt.Sprintf("pragma table_info(%v)", tableName))
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf("pragma table_info('%v')", tableName))
 	if err != nil {
 		return nil, fmt.Errorf("error getting columns for table %s: %v", tableName, err)
 	}
 	defer rows.Close()
-	cols, err := rows.Columns()
-	fmt.Println(cols)
 
 	for rows.Next() {
 		var x any

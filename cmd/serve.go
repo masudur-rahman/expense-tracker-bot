@@ -17,8 +17,6 @@ limitations under the License.
 package cmd
 
 import (
-	"context"
-	"database/sql"
 	"io"
 	"log"
 	"net/http"
@@ -27,15 +25,9 @@ import (
 	"path"
 	"time"
 
-	isql "github.com/masudur-rahman/database/sql"
-	"github.com/masudur-rahman/database/sql/postgres"
-	"github.com/masudur-rahman/database/sql/postgres/lib"
-	"github.com/masudur-rahman/database/sql/sqlite"
-	sqlib "github.com/masudur-rahman/database/sql/sqlite/lib"
 	"github.com/masudur-rahman/expense-tracker-bot/api"
+	"github.com/masudur-rahman/expense-tracker-bot/configs"
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
-	"github.com/masudur-rahman/expense-tracker-bot/models"
-	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
 	"github.com/spf13/cobra"
 )
@@ -51,9 +43,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		go startHealthz()
-
-		if err := getServicesForSqlite(cmd.Context()); err != nil {
+		if err := configs.InitiateDatabaseConnection(cmd.Context()); err != nil {
 			log.Fatalln(err)
 		}
 
@@ -62,6 +52,7 @@ to quickly create a Cobra application.`,
 			log.Fatalln(err)
 		}
 
+		go startHealthz()
 		go pingHealthzApiPeriodically()
 		log.Println("Expense Tracker Bot started")
 		bot.Start()
@@ -70,89 +61,6 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
-}
-
-func startHealthz() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusOK)
-		writer.Write([]byte("Running"))
-	})
-
-	logr.DefaultLogger.Infow("Health checker started at :8080/healthz")
-	log.Fatalln(http.ListenAndServe(":8080", mux))
-}
-
-//func getServicesForSupabase(ctx context.Context) *all.Services {
-//	supClient := supabase.InitializeSupabase(ctx)
-//
-//	var db isql.Database
-//	db = supabase.NewSupabase(ctx, supClient)
-//	logger := logr.DefaultLogger
-//	return all.InitiateSQLServices(db, logger)
-//}
-
-func getServicesForPostgres(ctx context.Context) error {
-	cfg := parsePostgresConfig()
-
-	err := initiatePostgresQLServices(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	return all.GetServices().Txn.UpdateTxnCategories()
-}
-
-func getServicesForSqlite(ctx context.Context) error {
-	conn, err := sqlib.GetSQLiteConnection("expense-tracker.db")
-	if err != nil {
-		return err
-	}
-
-	db := sqlite.NewSqlite(ctx, conn)
-	syncTables(db)
-
-	logger := logr.DefaultLogger
-	all.InitiateSQLServices(db, logger)
-
-	return all.GetServices().Txn.UpdateTxnCategories()
-}
-
-func initiatePostgresQLServices(ctx context.Context, cfg lib.PostgresConfig) error {
-	conn, err := lib.GetPostgresConnection(cfg)
-	if err != nil {
-		return err
-	}
-
-	db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-	syncTables(db)
-
-	logger := logr.DefaultLogger
-	all.InitiateSQLServices(db, logger)
-
-	go pingPostgresDatabasePeriodically(ctx, cfg, conn, logger)
-
-	return nil
-}
-
-func pingPostgresDatabasePeriodically(ctx context.Context, cfg lib.PostgresConfig, conn *sql.Conn, logger logr.Logger) {
-	t5 := time.NewTicker(5 * time.Minute)
-	for {
-		select {
-		case <-t5.C:
-			if err := conn.PingContext(ctx); err != nil {
-				logger.Errorw("Database connection closed", "error", err.Error())
-				conn, err = lib.GetPostgresConnection(cfg)
-				if err != nil {
-					logger.Errorw("couldn't create database connection", "error", err.Error())
-				}
-
-				db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-				all.InitiateSQLServices(db, logger)
-				logger.Infow("New connection established")
-			}
-		}
-	}
 }
 
 func pingHealthzApiPeriodically() {
@@ -189,53 +97,13 @@ func pingHealthzApiPeriodically() {
 	}
 }
 
-func parsePostgresConfig() lib.PostgresConfig {
-	cfg := lib.PostgresConfig{
-		Name:     "expense",
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "postgres",
-		Password: "postgres",
-		SSLMode:  "disable",
-	}
+func startHealthz() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusOK)
+		writer.Write([]byte("Running"))
+	})
 
-	user, ok := os.LookupEnv("POSTGRES_USER")
-	if ok {
-		cfg.User = user
-	}
-	pass, ok := os.LookupEnv("POSTGRES_PASSWORD")
-	if ok {
-		cfg.Password = pass
-	}
-	name, ok := os.LookupEnv("POSTGRES_DB")
-	if ok {
-		cfg.Name = name
-	}
-	host, ok := os.LookupEnv("POSTGRES_HOST")
-	if ok {
-		cfg.Host = host
-	}
-	port, ok := os.LookupEnv("POSTGRES_PORT")
-	if ok {
-		cfg.Port = port
-	}
-	ssl, ok := os.LookupEnv("POSTGRES_SSL_MODE")
-	if ok {
-		cfg.SSLMode = ssl
-	}
-	return cfg
-}
-
-func syncTables(db isql.Database) {
-	err := db.Sync(
-		models.User{},
-		models.Account{},
-		models.Transaction{},
-		models.TxnCategory{},
-		models.TxnSubcategory{},
-		models.Event{},
-	)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	logr.DefaultLogger.Infow("Health checker started at :8080/healthz")
+	log.Fatalln(http.ListenAndServe(":8080", mux))
 }
