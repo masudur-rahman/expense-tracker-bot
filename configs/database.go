@@ -28,18 +28,18 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 			return err
 		}
 		return initializeSQLServices(db)
-	case DatabaseSqlite, "":
-		if cfg.Sqlite.SyncToDrive {
-			if !cfg.Sqlite.DisableSyncFromDrive {
+	case DatabaseSQLite, "":
+		if cfg.SQLite.SyncToDrive {
+			if !cfg.SQLite.DisableSyncFromDrive {
 				if err := google.SyncDatabaseFromDrive(); err != nil {
 					return err
 				}
-				logr.DefaultLogger.Infof("Sqlite database synced from google drive")
+				logr.DefaultLogger.Infof("SQLite database synced from google drive")
 			}
-			go google.SyncDatabaseToDrivePeriodically(TrackerConfig.Database.Sqlite.SyncInterval)
+			go google.SyncDatabaseToDrivePeriodically(TrackerConfig.Database.SQLite.SyncInterval)
 		}
 
-		db, err := getSqliteDatabase(ctx)
+		db, err := getSQLiteDatabase(ctx)
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 	}
 }
 
-func getSqliteDatabase(ctx context.Context) (isql.Database, error) {
+func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
 	conn, err := lib.GetSQLiteConnection("expense-tracker.db")
 	if err != nil {
 		return nil, err

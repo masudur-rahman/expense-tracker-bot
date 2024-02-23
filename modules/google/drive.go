@@ -138,7 +138,7 @@ func SyncDatabaseToDrivePeriodically(interval time.Duration) {
 		logr.DefaultLogger.Errorw("Sync database to drive failed", "error", err.Error())
 		return
 	}
-	logr.DefaultLogger.Infof("Sqlite database synced to google drive")
+	logr.DefaultLogger.Infof("SQLite database synced to google drive")
 
 	ticker := time.NewTicker(interval)
 	for {
@@ -148,7 +148,7 @@ func SyncDatabaseToDrivePeriodically(interval time.Duration) {
 				logr.DefaultLogger.Errorw("Sync database to drive failed", "error", err.Error())
 				return
 			}
-			logr.DefaultLogger.Infof("Sqlite database synced to google drive")
+			logr.DefaultLogger.Infof("SQLite database synced to google drive")
 		}
 	}
 }

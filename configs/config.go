@@ -19,7 +19,7 @@ type DatabaseConfig struct {
 
 	//ArangoDB DBConfigArangoDB `json:"arangodb" yaml:"arangodb"`
 	Postgres lib.PostgresConfig `json:"postgres" yaml:"postgres"`
-	Sqlite   DBConfigSqlite     `json:"sqlite" yaml:"sqlite"`
+	SQLite   DBConfigSQLite     `json:"sqlite" yaml:"sqlite"`
 }
 
 type DatabaseType string
@@ -27,7 +27,7 @@ type DatabaseType string
 const (
 	DatabaseArangoDB DatabaseType = "arangodb"
 	DatabasePostgres DatabaseType = "postgres"
-	DatabaseSqlite   DatabaseType = "sqlite"
+	DatabaseSQLite   DatabaseType = "sqlite"
 	DatabaseSupabase DatabaseType = "supabase"
 )
 
@@ -48,7 +48,7 @@ type DBConfigPostgres struct {
 	SSLMode  string `json:"sslmode" yaml:"sslmode"`
 }
 
-type DBConfigSqlite struct {
+type DBConfigSQLite struct {
 	SyncToDrive          bool          `json:"syncToDrive" yaml:"syncToDrive"`
 	DisableSyncFromDrive bool          `json:"disableSyncFromDrive" yaml:"disableSyncFromDrive"`
 	SyncInterval         time.Duration `json:"syncInterval" yaml:"syncInterval"`

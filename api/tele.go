@@ -42,6 +42,8 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 
 	bot.Handle("/cat", handlers.TransactionCategoryCallback)
 
+	bot.Handle("/sync", handlers.SyncSQLiteDatabase)
+
 	return bot, nil
 }
 
