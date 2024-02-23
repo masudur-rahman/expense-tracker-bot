@@ -10,13 +10,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Sqlite struct {
+type SQLite struct {
 	ctx       context.Context
 	conn      *sql.Conn
 	statement lib.Statement
 }
 
-func GetSqliteConnection() (*sql.Conn, error) {
+func GetSQLiteConnection() (*sql.Conn, error) {
 	db, err := sql.Open("sqlite3", "expense-tracker.db")
 	if err != nil {
 		return nil, err
@@ -33,51 +33,51 @@ func GetSqliteConnection() (*sql.Conn, error) {
 	return conn, nil
 }
 
-func NewSqlite(ctx context.Context, conn *sql.Conn) Sqlite {
-	return Sqlite{ctx: ctx, conn: conn}
+func NewSQLite(ctx context.Context, conn *sql.Conn) SQLite {
+	return SQLite{ctx: ctx, conn: conn}
 }
 
-func (pg Sqlite) Table(name string) isql.Database {
+func (pg SQLite) Table(name string) isql.Database {
 	pg.statement = pg.statement.Table(name)
 	return pg
 }
 
-func (pg Sqlite) ID(id any) isql.Database {
+func (pg SQLite) ID(id any) isql.Database {
 	pg.statement = pg.statement.ID(id)
 	return pg
 }
 
-func (pg Sqlite) In(col string, values ...any) isql.Database {
+func (pg SQLite) In(col string, values ...any) isql.Database {
 	pg.statement = pg.statement.In(col, values...)
 	return pg
 }
 
-func (pg Sqlite) Where(cond string, args ...any) isql.Database {
+func (pg SQLite) Where(cond string, args ...any) isql.Database {
 	pg.statement = pg.statement.Where(cond, args...)
 	return pg
 }
 
-func (pg Sqlite) Columns(cols ...string) isql.Database {
+func (pg SQLite) Columns(cols ...string) isql.Database {
 	pg.statement = pg.statement.Columns(cols...)
 	return pg
 }
 
-func (pg Sqlite) AllCols() isql.Database {
+func (pg SQLite) AllCols() isql.Database {
 	pg.statement = pg.statement.AllCols()
 	return pg
 }
 
-func (pg Sqlite) MustCols(cols ...string) isql.Database {
+func (pg SQLite) MustCols(cols ...string) isql.Database {
 	pg.statement = pg.statement.MustCols(cols...)
 	return pg
 }
 
-func (pg Sqlite) ShowSQL(showSQL bool) isql.Database {
+func (pg SQLite) ShowSQL(showSQL bool) isql.Database {
 	pg.statement = pg.statement.ShowSQL(showSQL)
 	return pg
 }
 
-func (pg Sqlite) FindOne(document any, filter ...any) (bool, error) {
+func (pg SQLite) FindOne(document any, filter ...any) (bool, error) {
 	pg.statement = pg.statement.GenerateWhereClause(filter...)
 
 	if err := pg.statement.CheckWhereClauseNotEmpty(); err != nil {
@@ -96,19 +96,19 @@ func (pg Sqlite) FindOne(document any, filter ...any) (bool, error) {
 	return false, err
 }
 
-func (pg Sqlite) FindMany(documents any, filter ...any) error {
+func (pg SQLite) FindMany(documents any, filter ...any) error {
 	pg.statement = pg.statement.GenerateWhereClause(filter...)
 
 	query := pg.statement.GenerateReadQuery()
 	return pg.statement.ExecuteReadQuery(pg.ctx, pg.conn, query, documents)
 }
 
-func (pg Sqlite) InsertOne(document any) (id any, err error) {
+func (pg SQLite) InsertOne(document any) (id any, err error) {
 	query := pg.statement.GenerateInsertQuery(document)
 	return pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, query)
 }
 
-func (pg Sqlite) InsertMany(documents []any) ([]any, error) {
+func (pg SQLite) InsertMany(documents []any) ([]any, error) {
 	var ids []any
 	for _, doc := range documents {
 		query := pg.statement.GenerateInsertQuery(doc)
@@ -122,7 +122,7 @@ func (pg Sqlite) InsertMany(documents []any) ([]any, error) {
 	return ids, nil
 }
 
-func (pg Sqlite) UpdateOne(document any) error {
+func (pg SQLite) UpdateOne(document any) error {
 	pg.statement = pg.statement.GenerateWhereClause()
 	if err := pg.statement.CheckWhereClauseNotEmpty(); err != nil {
 		return err
@@ -133,7 +133,7 @@ func (pg Sqlite) UpdateOne(document any) error {
 	return err
 }
 
-func (pg Sqlite) DeleteOne(filter ...any) error {
+func (pg SQLite) DeleteOne(filter ...any) error {
 	pg.statement = pg.statement.GenerateWhereClause(filter...)
 	if err := pg.statement.CheckWhereClauseNotEmpty(); err != nil {
 		return err
@@ -144,15 +144,15 @@ func (pg Sqlite) DeleteOne(filter ...any) error {
 	return err
 }
 
-func (pg Sqlite) Query(query string, args ...any) (*sql.Rows, error) {
+func (pg SQLite) Query(query string, args ...any) (*sql.Rows, error) {
 	return pg.conn.QueryContext(pg.ctx, query, args...)
 }
 
-func (pg Sqlite) Exec(query string, args ...any) (sql.Result, error) {
+func (pg SQLite) Exec(query string, args ...any) (sql.Result, error) {
 	return pg.conn.ExecContext(pg.ctx, query, args...)
 }
 
-func (p Sqlite) Sync(tables ...any) error {
+func (p SQLite) Sync(tables ...any) error {
 	ctx := context.Background()
 	for _, table := range tables {
 		if err := lib.SyncTable(ctx, p.conn, table); err != nil {
@@ -163,6 +163,6 @@ func (p Sqlite) Sync(tables ...any) error {
 	return nil
 }
 
-func (pg Sqlite) cleanup() {
+func (pg SQLite) cleanup() {
 	pg.statement = lib.Statement{}
 }

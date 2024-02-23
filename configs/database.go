@@ -55,7 +55,7 @@ func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
 		return nil, err
 	}
 
-	return sqlite.NewSqlite(ctx, conn), nil
+	return sqlite.NewSQLite(ctx, conn), nil
 }
 
 func initializeSQLServices(db isql.Database) error {
