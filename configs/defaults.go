@@ -3,8 +3,9 @@ package configs
 import (
 	"sync"
 
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
+
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 var (

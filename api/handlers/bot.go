@@ -10,6 +10,7 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/configs"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/modules/google"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
@@ -233,4 +234,17 @@ func ListExpenses(ctx telebot.Context) error {
 	printer.PrintDocuments(txns)
 
 	return ctx.Send(pkg.FormatDocuments(txns, "Timestamp", "Amount", "Type"))
+}
+
+func SyncSQLiteDatabase(ctx telebot.Context) error {
+	db := configs.TrackerConfig.Database
+	if !(db.Type == configs.DatabaseSQLite && db.SQLite.SyncToDrive) {
+		return ctx.Send("Database needs to be SQLite and sync needs to be enabled")
+	}
+
+	if err := google.SyncDatabaseToDrive(); err != nil {
+		return ctx.Send(fmt.Sprintf("Database sync failed, reason: %v", err))
+	}
+
+	return ctx.Send("Database synced to google drive successfully")
 }

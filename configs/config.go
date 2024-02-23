@@ -1,32 +1,25 @@
 package configs
 
-import "fmt"
+import (
+	"fmt"
+	"time"
 
-var PurrfectConfig PawsitiveConfiguration
+	"github.com/masudur-rahman/database/sql/postgres/lib"
+)
 
-type PawsitiveConfiguration struct {
-	Server   ServerConfig   `json:"server" yaml:"server"`
-	GRPC     GRPCConfig     `json:"grpc" yaml:"grpc"`
-	Database DatabaseConfig `json:"database" yaml:"database"`
-	Session  SessionConfig  `json:"session" yaml:"session"`
-}
+var TrackerConfig ExpenseConfiguration
 
-type ServerConfig struct {
-	Host   string `json:"host" yaml:"host"`
-	Port   int    `json:"port" yaml:"port"`
-	Domain string `json:"domain" yaml:"domain"`
-}
-
-type GRPCConfig struct {
-	ServerHost string `json:"serverHost" yaml:"serverHost"`
-	ClientHost string `json:"clientHost" yaml:"clientHost"`
-	Port       int    `json:"port" yaml:"port"`
+type ExpenseConfiguration struct {
+	TelegramSecret string         `json:"telegramSecret" yaml:"telegramSecret"`
+	Database       DatabaseConfig `json:"database" yaml:"database"`
 }
 
 type DatabaseConfig struct {
-	Type     DatabaseType     `json:"type" yaml:"type"`
-	ArangoDB DBConfigArangoDB `json:"arangodb" yaml:"arangodb"`
-	Postgres DBConfigPostgres `json:"postgres" yaml:"postgres"`
+	Type DatabaseType `json:"type" yaml:"type"`
+
+	//ArangoDB DBConfigArangoDB `json:"arangodb" yaml:"arangodb"`
+	Postgres lib.PostgresConfig `json:"postgres" yaml:"postgres"`
+	SQLite   DBConfigSQLite     `json:"sqlite" yaml:"sqlite"`
 }
 
 type DatabaseType string
@@ -34,6 +27,8 @@ type DatabaseType string
 const (
 	DatabaseArangoDB DatabaseType = "arangodb"
 	DatabasePostgres DatabaseType = "postgres"
+	DatabaseSQLite   DatabaseType = "sqlite"
+	DatabaseSupabase DatabaseType = "supabase"
 )
 
 type DBConfigArangoDB struct {
@@ -53,15 +48,12 @@ type DBConfigPostgres struct {
 	SSLMode  string `json:"sslmode" yaml:"sslmode"`
 }
 
-func (cp DBConfigPostgres) String() string {
-	return fmt.Sprintf("user=%v password=%v dbname=%v host=%v port=%v sslmode=%v", cp.User, cp.Password, cp.Name, cp.Host, cp.Port, cp.SSLMode)
+type DBConfigSQLite struct {
+	SyncToDrive          bool          `json:"syncToDrive" yaml:"syncToDrive"`
+	DisableSyncFromDrive bool          `json:"disableSyncFromDrive" yaml:"disableSyncFromDrive"`
+	SyncInterval         time.Duration `json:"syncInterval" yaml:"syncInterval"`
 }
 
-type SessionConfig struct {
-	Name       string `json:"name" yaml:"name"`
-	HttpOnly   bool   `json:"httpOnly" yaml:"httpOnly"`
-	CSRFSecret string `json:"csrfSecret" yaml:"csrfSecret"`
-	CSRFHeader string `json:"csrfHeader" yaml:"csrfHeader"`
-	CSRFForm   string `json:"csrfForm" yaml:"csrfForm"`
-	SessionKey string `json:"sessionKey" yaml:"sessionKey"`
+func (cp DBConfigPostgres) String() string {
+	return fmt.Sprintf("user=%v password=%v dbname=%v host=%v port=%v sslmode=%v", cp.User, cp.Password, cp.Name, cp.Host, cp.Port, cp.SSLMode)
 }
