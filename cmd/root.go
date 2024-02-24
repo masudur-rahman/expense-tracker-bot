@@ -17,7 +17,11 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+
+	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 
 	"github.com/spf13/cobra"
 )
@@ -51,9 +55,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./configs/.expense-tracker.yaml)")
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.expense-tracker-bot.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is %v)", filepath.Join(pkg.ProjectDirectory, "configs", ".expense-tracker.yaml")))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
