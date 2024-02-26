@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,13 @@ const (
 	dbFileName   = "expense-tracker.db"
 	dbFolderName = ".expense-tracker"
 )
+
+func DatabasePath() string {
+	if err := os.MkdirAll(dbFolderName, os.ModePerm); err != nil {
+		log.Fatalln(err)
+	}
+	return filepath.Join(dbFolderName, dbFileName)
+}
 
 func getDriveService() (*drive.Service, error) {
 	creds, err := google.FindDefaultCredentials(context.Background(), drive.DriveScope)
@@ -110,13 +118,12 @@ func SyncDatabaseFromDrive() error {
 		return err
 	}
 
-	upstreamDBPath := fmt.Sprintf("%s/%s", dbFolderName, dbFileName)
-	data, err := readFileFromDrive(svc, upstreamDBPath)
+	data, err := readFileFromDrive(svc, DatabasePath())
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(dbFileName, data, 0666)
+	return os.WriteFile(DatabasePath(), data, 0666)
 }
 
 func SyncDatabaseToDrive() error {
@@ -125,8 +132,8 @@ func SyncDatabaseToDrive() error {
 		return err
 	}
 
-	upstreamDBPath := fmt.Sprintf("%s/%s", dbFolderName, dbFileName)
-	return uploadFileToDrive(svc, upstreamDBPath, dbFileName)
+	dbPath := DatabasePath()
+	return uploadFileToDrive(svc, dbPath, dbPath)
 }
 
 func SyncDatabaseToDrivePeriodically(interval time.Duration) {

@@ -21,4 +21,4 @@ bin/
 .container-*
 .dockerfile-*
 
-expense-tracker.db
+.expense-tracker/expense-tracker.db

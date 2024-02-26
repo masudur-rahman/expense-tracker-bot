@@ -50,7 +50,7 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 }
 
 func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
-	conn, err := lib.GetSQLiteConnection("expense-tracker.db")
+	conn, err := lib.GetSQLiteConnection(google.DatabasePath())
 	if err != nil {
 		return nil, err
 	}
