@@ -22,3 +22,4 @@ bin/
 .dockerfile-*
 
 .expense-tracker/expense-tracker.db
+.DS_Store

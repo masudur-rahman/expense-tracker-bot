@@ -29,6 +29,7 @@ It's currently supporting a single user. By default, the user is [masudur-rahman
     allsummary - Transaction summary based on Type, Category, Subcategory
     report - Transaction Report
     cat - List Transaction categories
+    sync - Sync local SQLite db file to Google Drive
     ```
 
 3. Create a Token for the bot.
