@@ -144,6 +144,10 @@ func (p Postgres) Sync(tables ...any) error {
 	return nil
 }
 
+func (p Postgres) Close() error {
+	return p.conn.Close()
+}
+
 func (pg Postgres) cleanup() {
 	pg.statement = lib.Statement{}
 }
