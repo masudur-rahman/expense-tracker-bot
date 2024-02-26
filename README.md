@@ -91,9 +91,9 @@ If you want to back up your SQLite database to Google Drive regularly, follow th
 2. Update the configuration file (`configs/.expense-tracker.yaml`) as needed. You can modify the Telegram user and specify the database type.
     ```bash
     telegram:
-        user: masudur_rahman
+      user: masudur_rahman
     database:
-    type: sqlite
+      type: sqlite
     ```
 
 3. Export required environment variables:
