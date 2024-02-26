@@ -36,7 +36,7 @@ It's currently supporting a single user. By default, the user is [masudur-rahman
    - Use `/token` command to get the bot token.
 
 #### Telegram Bot Creation Demo
-https://github.com/masudur-rahman/expense-tracker-bot/assets/13915755/1c20fd46-54e0-4831-a5f6-31bba585ef1e
+https://github.com/masudur-rahman/expense-tracker-bot/assets/13915755/bc74ec7a-b243-4faa-a07b-31ebe2260264
 
 ### Database Setup
 
@@ -255,7 +255,7 @@ Some example text for adding a new transaction:
 ```
 
 ## Live Demonstration
-https://github.com/masudur-rahman/expense-tracker-bot/assets/13915755/7139ecd4-94f4-4fb3-8271-b507a2dae73a
+https://github.com/masudur-rahman/expense-tracker-bot/assets/13915755/83db45c8-1e84-473e-8d58-cda6ef8cc6ef
 
 ## Future Work
 
