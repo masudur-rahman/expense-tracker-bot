@@ -6,7 +6,7 @@ A Telegram Bot to track your expenses.
 
 `Expense Tracker Bot` is a Telegram Bot to track your expenses. It is built using [Go](https://golang.org/) and [Postgres](https://www.postgresql.org/).
 
-It's currently supporting a single user [masudur-rahman](https://t.me/masudur_rahman).
+It's currently supporting a single user. By default, the user is [masudur-rahman](https://t.me/masudur_rahman).
 
 
 ## Requirements
@@ -30,53 +30,83 @@ It's currently supporting a single user [masudur-rahman](https://t.me/masudur_ra
     report - Transaction Report
     cat - List Transaction categories
     ```
- 
+
 3. Create a Token for the bot.
-    - Use `/token` command to get the bot token.
+   - Use `/token` command to get the bot token.
 
-### Postgres Database
+### Database Setup
 
-#### Local Setup
+#### SQLite (Default)
 
-- Install Postgres using [Homebrew](https://brew.sh/).
+By default, the application uses SQLite as its database, requiring no additional setup.
+
+#### PostgreSQL (Optional)
+
+If you prefer to use PostgreSQL, follow these steps:
+
+##### Local Setup
+
+1. Install PostgreSQL using [Homebrew](https://brew.sh/):
    ```bash
    brew update
    brew install postgresql
    brew services start postgresql
    ```
-- Create user superuser `postgres` with password `postgres`.
+
+2. Create a superuser named `postgres` with password `postgres`:
    ```bash
    psql postgres -c "CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';"
    ```
-- Create a new database named `expense`.
+
+3. Create a new database named `expense`:
    ```bash
    psql -u postgres -c "CREATE DATABASE expense;"
    ```
+
+## Google Drive Access (Optional)
+
+If you want to back up your SQLite database to Google Drive regularly, follow these steps:
+
+1. [Create a Google Project](https://console.cloud.google.com/projectcreate) (if not already created).
+
+2. [Create a Service account](https://console.cloud.google.com/iam-admin/serviceaccounts/create) named `expense-tracker` and download a service account JSON key.
+
+3. [Enable the Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com) for your project.
+4. On Google Drive:
+    - Create a folder named `.expense-tracker`.
+    - Share this folder with the service account (`expense-tracker@<project-id>.iam.gserviceaccount.com`) and grant it "Editor" permission.
 
 ## Installation and Running
 
 ### Local Setup
 
-1. Clone the repository.
-    ```bash
-    mkdir -p $GOPATH/src/github.com/masudur-rahman
-    cd $GOPATH/src/github.com/masudur-rahman
-    git clone git@github.com:masudur-rahman/expense-tracker-bot.git
-    ```
-2. Export required environment variables.
-    ```bash
-    export TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>
-    
-    # following environment variables are the default values
-    # you can ignore them if you are using the default values
-    export POSTGRES_USER=postgres
-    export POSTGRES_PASSWORD=postgres
-    export POSTGRES_DB=expense
-    export POSTGRES_HOST=localhost
-    export POSTGRES_PORT=5432
-    export POSTGRES_SSL_MODE=disable
-    ```
-3. Run `make run` to start the server.
+1. Clone the repository:
+
+   ```bash
+   mkdir -p $GOPATH/src/github.com/masudur-rahman
+   cd $GOPATH/src/github.com/masudur-rahman
+   git clone git@github.com:masudur-rahman/expense-tracker-bot.git
+   ```
+
+2. Update the configuration file (`configs/.expense-tracker.yaml`) as needed. You can modify the Telegram user and specify the database type.
+
+3. Export required environment variables:
+
+   ```bash
+   export TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>
+   ```
+
+   If backing up to Google Drive:
+
+   ```bash
+   export GOOGLE_APPLICATION_CREDENTIALS=$HOME/Downloads/service-account-key.json
+   ```
+
+4. Run the server:
+
+   ```bash
+   make run
+   ```
 
 ### Back4App Setup
 
@@ -87,7 +117,8 @@ It's currently supporting a single user [masudur-rahman](https://t.me/masudur_ra
 
 ### Production Environment (Kubernetes)
 
-To deploy `Expense Tracker Bot` application in production environment, the preferred way is through Helm Chart.
+To deploy `Expense Tracker Bot` application in production environment, the preferred way is through Helm Chart. Checkout more [here](https://github.com/masudur-rahman/helm-charts/tree/main/charts/expense-tracker-bot).
+
 
 - First you need to add the repo for the helm chart.
     ```bash
@@ -96,20 +127,38 @@ To deploy `Expense Tracker Bot` application in production environment, the prefe
     
     helm search repo masud/expense-tracker-bot
     ```
-- Install the chart
-    ```bash
-    helm upgrade --install expense-tracker-bot masud/expense-tracker-bot -n demo \
-        --create-namespace \
-        --set telegram.token=<TELEGRAM_BOT_TOKEN> \
-        --set database.deploy=true # set to false if you want to use external database
-        # --set database.postgres.user=<POSTGRES_USER> \
-        # --set database.postgres.password=<POSTGRES_PASSWORD> \
-        # --set database.postgres.db=<POSTGRES_DB> \
-        # --set database.postgres.host=<POSTGRES_HOST> \
-        # --set database.postgres.port=<POSTGRES_PORT> \ 
-        # --set database.postgres.sslmode=<POSTGRES_SSL_MODE>
-    ```
-
+  - Install the chart
+      - For installing just with SQLite database (without Google Drive backup)
+        ```bash
+        helm upgrade --install expense-tracker-bot masud/expense-tracker-bot -n demo \
+            --create-namespace \
+            --set telegram.token=<TELEGRAM_BOT_TOKEN> \
+            --set telegram.user=<TELEGRAM_USERNAME>
+        ```
+      - SQLite with Google Drive backup
+        ```bash
+        helm upgrade --install expense-tracker-bot masud/expense-tracker-bot -n demo \
+            --create-namespace \
+            --set telegram.token=<TELEGRAM_BOT_TOKEN> \
+            --set telegram.user=<TELEGRAM_USERNAME> \
+            --set database.sqlite.syncToDrive=true \
+            --set-file googleCredJson=<GOOGLE-SVC-ACCOUNT-JSON-FILEPATH>
+        ```
+      - Postgres database
+        ```bash
+        helm upgrade --install expense-tracker-bot masud/expense-tracker-bot -n demo \
+            --create-namespace \
+            --set telegram.token=<TELEGRAM_BOT_TOKEN> \
+            --set telegram.user=<TELEGRAM_USERNAME> \
+            --set database.type=postgres \
+            --set database.deploy=true # set to false if you want to use external database
+            # --set database.postgres.user=<POSTGRES_USER> \
+            # --set database.postgres.password=<POSTGRES_PASSWORD> \
+            # --set database.postgres.db=<POSTGRES_DB> \
+            # --set database.postgres.host=<POSTGRES_HOST> \
+            # --set database.postgres.port=<POSTGRES_PORT> \ 
+            # --set database.postgres.sslmode=<POSTGRES_SSL_MODE>
+        ```
 - Verify Installation
   To check if `Expense Tracker Bot` is installed, run the following command:
     ```bash
@@ -161,12 +210,13 @@ You just need to mention
 - affected accounts
 - affected persons in case of loan/borrow
 - remarks
+
 and the bot will take care of the rest
 
 Some example text for adding a new transaction:
 ```
-- transfer 2000 from brac to dbbl on 2020-01-01 note "Bill payment"
-- spend 1000 for food-rest on "Jan 13, 2013" from dbbl note "Lunch"
+- transferred 2000 from brac to dbbl on 2020-01-01 note "Bill payment"
+- spent 1000 for food-rest on "Jan 13, 2013" from dbbl note "Lunch"
 - earn 5000 to brac on 20-01-2023 note "Salary"
 - borrow 1000 from user to brac on 2020-01-01
 - return 1000 to user from brac on 2020-01-01

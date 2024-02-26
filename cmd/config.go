@@ -27,4 +27,8 @@ func initConfig() {
 	if err = yaml.Unmarshal(data, &configs.TrackerConfig); err != nil {
 		log.Fatalf("Unmarshaling PurrfectConfig, %v", err)
 	}
+
+	if configs.TrackerConfig.Telegram.User == "" {
+		configs.TrackerConfig.Telegram.User = "masudur_rahman"
+	}
 }

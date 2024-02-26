@@ -1,10 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/api/handlers"
+	"github.com/masudur-rahman/expense-tracker-bot/configs"
 
 	"gopkg.in/telebot.v3"
 )
@@ -50,8 +52,8 @@ func TeleBotRoutes() (*telebot.Bot, error) {
 func masudur_rahman() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(ctx telebot.Context) error {
-			if ctx.Sender().Username != "masudur_rahman" {
-				return ctx.Send("Only allowed user is `masudur_rahman`")
+			if ctx.Sender().Username != configs.TrackerConfig.Telegram.User {
+				return ctx.Send(fmt.Sprintf("Ohho!!! Looks like you're not the admin of this bot.\n\nIf you wish to know how to use this bot, go to https://github.com/masudur-rahman/expense-tracker-bot ."))
 			}
 
 			return next(ctx)

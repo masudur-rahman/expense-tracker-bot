@@ -86,8 +86,31 @@ func uploadFileToDrive(svc *drive.Service, upstreamFilePath string, localFilePat
 	}
 	defer file.Close()
 
-	_, err = svc.Files.Create(fileMetadata).Media(file).Do()
-	return err
+	gf, err := svc.Files.Create(fileMetadata).Media(file).Do()
+	if err != nil {
+		return err
+	}
+
+	//_, err = svc.Files.Update(existingFiles.Files[0].Id, fileMetadata).Media(file).Do()
+	//return err
+
+	return removePreviousFiles(svc, ff[1], gf.Id, folderID)
+}
+
+func removePreviousFiles(svc *drive.Service, fileName, newFileID string, folderID string) error {
+	fileQuery := fmt.Sprintf("'%s' in parents and name='%s'", folderID, fileName)
+	fileList, err := svc.Files.List().Q(fileQuery).Do()
+	if err != nil {
+		return err
+	}
+	for _, file := range fileList.Files {
+		if file.Id != newFileID {
+			if err = svc.Files.Delete(file.Id).Do(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func getFolderID(svc *drive.Service, folderName string) (string, error) {

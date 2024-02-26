@@ -10,8 +10,13 @@ import (
 var TrackerConfig ExpenseConfiguration
 
 type ExpenseConfiguration struct {
-	TelegramSecret string         `json:"telegramSecret" yaml:"telegramSecret"`
-	Database       DatabaseConfig `json:"database" yaml:"database"`
+	Telegram Telegram       `json:"telegram" yaml:"telegram"`
+	Database DatabaseConfig `json:"database" yaml:"database"`
+}
+
+type Telegram struct {
+	User   string `json:"user" yaml:"user"`
+	Secret string `json:"secret" yaml:"secret"`
 }
 
 type DatabaseConfig struct {
