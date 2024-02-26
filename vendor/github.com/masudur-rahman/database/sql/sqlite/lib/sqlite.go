@@ -13,11 +13,12 @@ import (
 	"github.com/masudur-rahman/database/sql/postgres/pg-grpc/pb"
 
 	"github.com/iancoleman/strcase"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func GetSQLiteConnection(dbPath string) (*sql.Conn, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+	//db, err := sql.Open("sqlite3", dbPath) // mattn/go-sqlite3 library (cgo-enabled)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err
 	}

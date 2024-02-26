@@ -7,7 +7,7 @@ import (
 	isql "github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/database/sql/sqlite/lib"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SQLite struct {
