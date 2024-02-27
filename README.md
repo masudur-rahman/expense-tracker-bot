@@ -135,7 +135,7 @@ If you want to back up your SQLite database to Google Drive regularly, follow th
     docker run -v $HOME/.expense-tracker/configs:/configs \
       -v $HOME/.expense-tracker:/.expense-tracker \
       -e TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN> \
-      ghcr.io/masudur-rahman/expense-tracker-bot:v0.2.4 serve
+      ghcr.io/masudur-rahman/expense-tracker-bot:v1.0.0 serve
     ```
 
 ### Back4App Setup
