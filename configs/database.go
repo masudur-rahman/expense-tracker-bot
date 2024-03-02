@@ -137,6 +137,7 @@ func parsePostgresConfig() {
 func syncTables(db isql.Database) error {
 	return db.Sync(
 		models.User{},
+		models.DebtorsCreditors{},
 		models.Account{},
 		models.Transaction{},
 		models.TxnCategory{},

@@ -3,41 +3,42 @@ package user
 import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
-	"github.com/masudur-rahman/expense-tracker-bot/services"
 )
 
 type userService struct {
 	userRepo repos.UserRepository
 }
 
-var _ services.UserService = &userService{}
-
 func NewUserService(userRepo repos.UserRepository) *userService {
-	return &userService{
-		userRepo: userRepo,
-	}
+	return &userService{userRepo: userRepo}
 }
 
-func (u *userService) GetUserByID(id string) (*models.User, error) {
-	return u.userRepo.GetUserByID(id)
+func (us *userService) GetUserByID(id int64) (*models.User, error) {
+	return us.userRepo.GetUserByID(id)
 }
 
-func (u *userService) GetUserByName(username string) (*models.User, error) {
-	return u.userRepo.GetUserByName(username)
+func (us *userService) GetUserByTelegramID(id int64) (*models.User, error) {
+	filter := models.User{TelegramID: id}
+	return us.userRepo.GetUser(filter)
 }
 
-func (u *userService) ListUsers() ([]models.User, error) {
-	return u.userRepo.ListUsers()
+func (us *userService) GetUserByUsername(username string) (*models.User, error) {
+	filter := models.User{Username: username}
+	return us.userRepo.GetUser(filter)
 }
 
-func (u *userService) CreateUser(user *models.User) error {
-	return u.userRepo.AddNewUser(user)
+func (us *userService) ListUsers() ([]models.User, error) {
+	return us.userRepo.ListUsers()
 }
 
-func (u *userService) UpdateUserBalance(id string, amount float64) error {
-	return u.userRepo.UpdateUserBalance(id, amount)
+func (us *userService) SignUp(user *models.User) error {
+	return us.userRepo.AddNewUser(user)
 }
 
-func (u *userService) DeleteUser(id string) error {
-	return u.userRepo.DeleteUser(id)
+func (us *userService) UpdateUser(id int64, user *models.User) error {
+	return us.userRepo.UpdateUser(id, user)
+}
+
+func (us *userService) DeleteUser(id int64) error {
+	return us.userRepo.DeleteUser(id)
 }

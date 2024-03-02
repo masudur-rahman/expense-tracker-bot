@@ -1,8 +1,6 @@
 package user
 
 import (
-	"time"
-
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
@@ -21,7 +19,7 @@ func NewSQLUserRepository(db isql.Database, logger logr.Logger) *SQLUserReposito
 	}
 }
 
-func (u *SQLUserRepository) GetUserByID(id string) (*models.User, error) {
+func (u *SQLUserRepository) GetUserByID(id int64) (*models.User, error) {
 	u.logger.Infow("finding user by id", "id", id)
 	var user models.User
 	found, err := u.db.ID(id).FindOne(&user)
@@ -29,15 +27,28 @@ func (u *SQLUserRepository) GetUserByID(id string) (*models.User, error) {
 		return nil, err
 	}
 	if !found {
-		return nil, models.ErrUserNotFound{ID: id}
+		return nil, models.ErrUserNotFound{}
 	}
 	return &user, nil
 }
 
-func (u *SQLUserRepository) GetUserByName(username string) (*models.User, error) {
-	u.logger.Infow("finding user by name", "name", username)
+func (u *SQLUserRepository) GetUser(filter models.User) (*models.User, error) {
+	//u.logger.Infow("finding user by telegram id", "telegram id", id)
+	var user models.User
+	found, err := u.db.FindOne(&user, filter)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, models.ErrUserNotFound{}
+	}
+	return &user, nil
+}
+
+func (u *SQLUserRepository) GetUserByUsername(username string) (*models.User, error) {
+	u.logger.Infow("finding user by name", "username", username)
 	filter := models.User{
-		Name: username,
+		Username: username,
 	}
 	var user models.User
 	found, err := u.db.FindOne(&user, filter)
@@ -50,17 +61,11 @@ func (u *SQLUserRepository) GetUserByName(username string) (*models.User, error)
 	return &user, nil
 }
 
-func (u *SQLUserRepository) UpdateUserBalance(id string, txnAmount float64) error {
-	u.logger.Infow("updating user")
-	user, err := u.GetUserByID(id)
-	if err != nil {
-		return err
-	}
-
-	user.Balance += txnAmount
-	user.LastTxnTimestamp = time.Now().Unix()
-
-	return u.db.ID(user.ID).MustCols("balance").UpdateOne(user)
+func (u *SQLUserRepository) ListUsers() ([]models.User, error) {
+	u.logger.Infow("listing users")
+	users := make([]models.User, 0)
+	err := u.db.FindMany(&users)
+	return users, err
 }
 
 func (u *SQLUserRepository) AddNewUser(user *models.User) error {
@@ -68,14 +73,19 @@ func (u *SQLUserRepository) AddNewUser(user *models.User) error {
 	return err
 }
 
-func (u *SQLUserRepository) ListUsers() ([]models.User, error) {
-	u.logger.Infow("listing users")
-	users := make([]models.User, 0)
-	err := u.db.FindMany(&users, models.User{})
-	return users, err
+func (u *SQLUserRepository) UpdateUser(id int64, us *models.User) error {
+	user, err := u.GetUserByID(id)
+	if err != nil {
+		return err
+	}
+	user.Username = us.Username
+	user.FirstName = us.FirstName
+	user.LastName = us.LastName
+
+	return u.db.ID(id).UpdateOne(user)
 }
 
-func (u *SQLUserRepository) DeleteUser(id string) error {
+func (u *SQLUserRepository) DeleteUser(id int64) error {
 	u.logger.Infow("deleting user", "id", id)
 	return u.db.DeleteOne(models.User{ID: id})
 }

@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"text/template"
 	"time"
 
+	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/models/gqtypes"
 	"github.com/masudur-rahman/expense-tracker-bot/modules/convert"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
@@ -48,9 +50,9 @@ func generateReportDurationInlineButton(callbackOpts CallbackOptions) []telebot.
 }
 
 func handleReportCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
-	report, err := generateReport(callbackOpts.Report)
+	report, err := generateReport(ctx, callbackOpts.Report)
 	if err != nil {
-		return ctx.Send(err.Error())
+		return ctx.Send(models.ErrCommonResponse(err))
 	}
 
 	if err = generateTransactionReportFromTemplate(report); err != nil {
@@ -63,16 +65,21 @@ func handleReportCallback(ctx telebot.Context, callbackOpts CallbackOptions) err
 	})
 }
 
-func generateReport(rop ReportCallbackOptions) (gqtypes.Report, error) {
+func generateReport(ctx telebot.Context, rop ReportCallbackOptions) (gqtypes.Report, error) {
 	now, startTime := time.Now(), calculateStartTime(rop.Duration)
 
 	svc := all.GetServices()
-	txns, err := svc.Txn.ListTransactionsByTime("", startTime.Unix(), now.Unix())
+	user, err := svc.User.GetUserByTelegramID(ctx.Sender().ID)
 	if err != nil {
 		return gqtypes.Report{}, err
 	}
 
-	report := gqtypes.Report{}
+	txns, err := svc.Txn.ListTransactionsByTime(user.ID, "", startTime.Unix(), now.Unix())
+	if err != nil {
+		return gqtypes.Report{}, err
+	}
+
+	report := gqtypes.Report{Name: fmt.Sprintf("%v %v", user.FirstName, user.LastName)}
 	txnApis := make([]gqtypes.Transaction, 0, len(txns))
 	for _, txn := range txns {
 		txnApis = append(txnApis, convert.ToTransactionAPIFormat(txn))

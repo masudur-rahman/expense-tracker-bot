@@ -107,19 +107,19 @@ func (p *transactionParser) isVerbKeyword(keyword string) bool {
 	case "borrow", "borrowed":
 		p.txnType = models.IncomeTransaction
 		p.subcategory = models.BorrowSubcategoryID
-		p.from = &p.txn.UserID
+		p.from = &p.txn.DebtorCreditorName
 	case "return", "returned":
 		p.txnType = models.ExpenseTransaction
 		p.subcategory = models.BorrowReturnSubID
-		p.to = &p.txn.UserID
+		p.to = &p.txn.DebtorCreditorName
 	case "lend", "lent":
 		p.txnType = models.ExpenseTransaction
 		p.subcategory = models.LoanSubcategoryID
-		p.to = &p.txn.UserID
+		p.to = &p.txn.DebtorCreditorName
 	case "recover", "recovered", "collect", "collected":
 		p.txnType = models.IncomeTransaction
 		p.subcategory = models.LoanRecoverySubID
-		p.from = &p.txn.UserID
+		p.from = &p.txn.DebtorCreditorName
 	case "flexi":
 		p.txnType = models.ExpenseTransaction
 		p.subcategory = "fin-flexi"

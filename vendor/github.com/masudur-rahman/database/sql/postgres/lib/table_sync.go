@@ -227,7 +227,7 @@ func createTableQuery(tableName string, fields []fieldInfo) string {
 }
 
 func generateAddColumnQuery(tableName string, missingColumns []string) string {
-	alterQuery := fmt.Sprintf("ALTER TABLE %s ", tableName)
+	alterQuery := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
 	var addColumns []string
 	for _, col := range missingColumns {
 		addColumns = append(addColumns, fmt.Sprintf("ADD COLUMN %s", col))
@@ -312,7 +312,7 @@ func getUniqueConstraints(ctx context.Context, conn *sql.Conn, tableName string)
 }
 
 func generateDropConstraintStatement(tableName string, uqConstraints [][]string) string {
-	sql := fmt.Sprintf("ALTER TABLE %s ", tableName)
+	sql := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
 
 	var dropConstraints []string
 	for i := range uqConstraints {
@@ -329,7 +329,7 @@ func generateDropConstraintStatement(tableName string, uqConstraints [][]string)
 func generateAddConstraintStatement(tableName string,
 	uqGroups [][]string) string {
 
-	sql := fmt.Sprintf("ALTER TABLE %s ", tableName)
+	sql := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
 
 	var addConstraints []string
 	for i, group := range uqGroups {

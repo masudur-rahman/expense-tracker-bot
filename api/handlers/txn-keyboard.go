@@ -21,9 +21,14 @@ func generateAmountTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.Inl
 	return inlineButtons, nil
 }
 
-func generateSrcDstTypeInlineButton(callbackOpts CallbackOptions, src bool) ([]telebot.InlineButton, error) {
+func generateSrcDstTypeInlineButton(ctx telebot.Context, callbackOpts CallbackOptions, src bool) ([]telebot.InlineButton, error) {
 	svc := all.GetServices()
-	acs, err := svc.Account.ListAccounts()
+	user, err := svc.User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return nil, err
+	}
+
+	acs, err := svc.Account.ListAccounts(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -114,17 +119,22 @@ func generateJustTxnSubcategoryTypeInlineButton(callbackOpts CallbackOptions) ([
 	return inlineButtons, nil
 }
 
-func generateTransactionUserTypeInlineButton(callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
+func generateTransactionUserTypeInlineButton(ctx telebot.Context, callbackOpts CallbackOptions) ([]telebot.InlineButton, error) {
 	svc := all.GetServices()
-	users, err := svc.User.ListUsers()
+	user, err := svc.User.GetUserByTelegramID(ctx.Sender().ID)
 	if err != nil {
 		return nil, err
 	}
 
-	inlineButtons := make([]telebot.InlineButton, 0, len(users))
-	for _, user := range users {
-		callbackOpts.Transaction.UserID = user.ID
-		btn := generateInlineButton(callbackOpts, user.Name)
+	drcr, err := svc.DebtorCreditor.ListDebtorCreditors(user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	inlineButtons := make([]telebot.InlineButton, 0, len(drcr))
+	for _, user := range drcr {
+		callbackOpts.Transaction.DebtorCreditorName = user.NickName
+		btn := generateInlineButton(callbackOpts, user.FullName)
 		inlineButtons = append(inlineButtons, btn)
 	}
 
@@ -160,4 +170,15 @@ func generateInlineKeyboard(inlineButtons []telebot.InlineButton) [][]telebot.In
 	}
 
 	return keyboard
+}
+
+func commonSendOptions(ctx telebot.Context, inlineButtons []telebot.InlineButton) *telebot.SendOptions {
+	return &telebot.SendOptions{
+		ParseMode: telebot.ModeMarkdown,
+		ReplyTo:   ctx.Message(),
+		ReplyMarkup: &telebot.ReplyMarkup{
+			InlineKeyboard: generateInlineKeyboard(inlineButtons),
+			ForceReply:     true,
+		},
+	}
 }
