@@ -352,7 +352,7 @@ func tableExists(ctx context.Context, conn *sql.Conn, tableName string) (bool, e
 }
 
 func generateAddColumnQuery(tableName string, missingColumns []string) string {
-	alterQuery := fmt.Sprintf("ALTER TABLE %s ", tableName)
+	alterQuery := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
 	var addColumns []string
 	for _, col := range missingColumns {
 		addColumns = append(addColumns, fmt.Sprintf("ADD COLUMN %s", col))

@@ -3,7 +3,7 @@ telegram:
 database:
     type: sqlite
     sqlite:
-        syncToDrive: true
+#        syncToDrive: true
 #    postgres:
 #        name: expense
 #        host: localhost

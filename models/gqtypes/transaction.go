@@ -46,6 +46,7 @@ type SummaryGroups struct {
 }
 
 type Report struct {
+	Name         string
 	Transactions []Transaction
 	Summary      SummaryGroups
 }

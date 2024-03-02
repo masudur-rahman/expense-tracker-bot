@@ -14,15 +14,16 @@ const (
 )
 
 type Transaction struct {
-	ID            int64 `db:"id,pk autoincr"`
-	Amount        float64
-	SubcategoryID string
-	Type          TransactionType
-	SrcID         string
-	DstID         string
-	UserID        string
-	Timestamp     int64
-	Remarks       string
+	ID                 int64 `db:"id,pk autoincr"`
+	UserID             int64
+	Amount             float64
+	SubcategoryID      string
+	Type               TransactionType
+	SrcID              string
+	DstID              string
+	DebtorCreditorName string
+	Timestamp          int64
+	Remarks            string
 }
 
 type TxnCategory struct {

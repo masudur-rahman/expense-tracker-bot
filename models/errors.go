@@ -62,6 +62,30 @@ func (err ErrUserAlreadyExist) Error() string {
 	}.Error()
 }
 
+type ErrDebtorCreditorNotFound struct {
+	UserID   int64
+	NickName string
+}
+
+func (err ErrDebtorCreditorNotFound) Error() string {
+	return StatusError{
+		Status:  http.StatusNotFound,
+		Message: fmt.Sprintf("user [userid: %v, nickname: %v] doesn't exist", err.UserID, err.NickName),
+	}.Error()
+}
+
+type ErrDebtorCreditorAlreadyExist struct {
+	UserID   int64
+	NickName string
+}
+
+func (err ErrDebtorCreditorAlreadyExist) Error() string {
+	return StatusError{
+		Status:  http.StatusConflict,
+		Message: fmt.Sprintf("user [userid: %v, nickname: %v] already exist", err.UserID, err.NickName),
+	}.Error()
+}
+
 type ErrUserPasswordMismatch struct{}
 
 func (ErrUserPasswordMismatch) Error() string {
@@ -152,6 +176,9 @@ func IsErrNotFound(err error) bool {
 		return true
 	case ErrAccountNotFound:
 		return true
+	case ErrDebtorCreditorNotFound:
+		return true
+
 	default:
 		return false
 	}
@@ -175,4 +202,11 @@ func IsErrBadRequest(err error) bool {
 	default:
 		return false
 	}
+}
+
+func ErrCommonResponse(err error) string {
+	if IsErrNotFound(err) || IsErrConflict(err) {
+		return err.Error()
+	}
+	return "Unexpected server error occurred!"
 }

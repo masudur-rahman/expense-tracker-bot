@@ -39,7 +39,12 @@ type SummaryCallbackOptions struct {
 }
 
 func TransactionSummary(ctx telebot.Context) error {
-	txns, err := all.GetServices().Txn.ListTransactionsByTime("", pkg.StartOfMonth().Unix(), time.Now().Unix())
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
+	txns, err := all.GetServices().Txn.ListTransactionsByTime(user.ID, "", pkg.StartOfMonth().Unix(), time.Now().Unix())
 	if err != nil {
 		return err
 	}
@@ -93,9 +98,9 @@ func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions) er
 	case StepGroupBy:
 		return sendSummaryDurationQuery(ctx, callbackOpts)
 	case StepDuration:
-		data, err := processSummary(summary)
+		data, err := processSummary(ctx, summary)
 		if err != nil {
-			return err
+			return ctx.Send(models.ErrCommonResponse(err))
 		}
 
 		return ctx.Send(data)
@@ -104,11 +109,16 @@ func handleSummaryCallback(ctx telebot.Context, callbackOpts CallbackOptions) er
 	}
 }
 
-func processSummary(smop SummaryCallbackOptions) (string, error) {
+func processSummary(ctx telebot.Context, smop SummaryCallbackOptions) (string, error) {
 	now, startTime := time.Now(), calculateStartTime(smop.Duration)
 
 	svc := all.GetServices()
-	txns, err := svc.Txn.ListTransactionsByTime("", startTime.Unix(), now.Unix())
+	user, err := svc.User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return "", err
+	}
+
+	txns, err := svc.Txn.ListTransactionsByTime(user.ID, "", startTime.Unix(), now.Unix())
 	if err != nil {
 		return "", err
 	}

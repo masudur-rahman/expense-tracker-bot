@@ -39,17 +39,19 @@ func (t *SQLTransactionRepository) ListTransactions(filter models.Transaction) (
 	return txns, err
 }
 
-func (t *SQLTransactionRepository) ListTransactionsByCategory(catID string) ([]models.Transaction, error) {
+func (t *SQLTransactionRepository) ListTransactionsByCategory(userID int64, catID string) ([]models.Transaction, error) {
 	t.logger.Infow("list transactions by category")
 	txns := make([]models.Transaction, 0)
-	err := t.db.Where(fmt.Sprintf("sub_category_id LIKE %s%%", catID)).FindMany(&txns)
+	err := t.db.Where(fmt.Sprintf("sub_category_id LIKE %s%%", catID)).
+		FindMany(&txns, models.Transaction{UserID: userID})
 	return txns, err
 }
 
-func (t *SQLTransactionRepository) ListTransactionsByTime(txnType models.TransactionType, startTime, endTime int64) ([]models.Transaction, error) {
+func (t *SQLTransactionRepository) ListTransactionsByTime(userID int64, txnType models.TransactionType, startTime, endTime int64) ([]models.Transaction, error) {
 	t.logger.Infow("list transactions by time")
 	txns := make([]models.Transaction, 0)
-	err := t.db.Where(fmt.Sprintf("timestamp >= ? AND timestamp <= ?"), startTime, endTime).FindMany(&txns, models.Transaction{Type: txnType})
+	err := t.db.Where(fmt.Sprintf("timestamp >= ? AND timestamp <= ?"), startTime, endTime).
+		FindMany(&txns, models.Transaction{UserID: userID, Type: txnType})
 	return txns, err
 }
 

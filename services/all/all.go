@@ -16,10 +16,11 @@ import (
 )
 
 type Services struct {
-	Account services.AccountsService
-	User    services.UserService
-	Txn     services.TransactionService
-	Event   services.EventService
+	User           services.UserService
+	Account        services.AccountsService
+	DebtorCreditor services.DebtorCreditorService
+	Txn            services.TransactionService
+	Event          services.EventService
 }
 
 var svc *Services
@@ -29,20 +30,23 @@ func GetServices() *Services {
 }
 
 func InitiateSQLServices(db isql.Database, logger logr.Logger) {
-	accRepo := accounts.NewSQLAccountsRepository(db, logger)
 	userRepo := user.NewSQLUserRepository(db, logger)
+	accRepo := accounts.NewSQLAccountsRepository(db, logger)
+	drCrRepo := user.NewSQLDebtorCreditorRepository(db, logger)
 	txnRepo := transaction.NewSQLTransactionRepository(db, logger)
 	eventRepo := event.NewSQLEventRepository(db, logger)
 
-	accSvc := accsvc.NewAccountService(accRepo)
 	userSvc := usersvc.NewUserService(userRepo)
-	txnSvc := txnsvc.NewTxnService(accRepo, userRepo, txnRepo, eventRepo)
+	accSvc := accsvc.NewAccountService(accRepo)
+	drCrSvc := usersvc.NewDebtorCreditorService(drCrRepo)
+	txnSvc := txnsvc.NewTxnService(accRepo, drCrRepo, txnRepo, eventRepo)
 	eventSvc := eventsvc.NewEventService(eventRepo)
 
 	svc = &Services{
-		Account: accSvc,
-		User:    userSvc,
-		Txn:     txnSvc,
-		Event:   eventSvc,
+		User:           userSvc,
+		Account:        accSvc,
+		DebtorCreditor: drCrSvc,
+		Txn:            txnSvc,
+		Event:          eventSvc,
 	}
 }
