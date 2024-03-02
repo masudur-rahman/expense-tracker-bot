@@ -48,11 +48,11 @@ func sendAccountTypeQuery(ctx telebot.Context, callbackOpts CallbackOptions) err
 }
 
 func sendAccountInfoQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
-	msg, err := ctx.Bot().Reply(ctx.Message(), `Reply to this Message with the following data
+	msg, err := ctx.Bot().Reply(ctx.Message(), fmt.Sprintf(`Reply to this Message with the following data
 
-<id> <account name>
-i.e.: brac "BRAC Bank"
-`, &telebot.SendOptions{
+<short name> <account name>
+i.e.: %v
+`, accountExample(callbackOpts.Account.Type)), &telebot.SendOptions{
 		ReplyTo: ctx.Message(),
 	})
 	if err != nil {
@@ -63,11 +63,24 @@ i.e.: brac "BRAC Bank"
 	return nil
 }
 
+func accountExample(typ models.AccountType) string {
+	if typ == models.CashAccount {
+		return "cash \"Cash in Hand\""
+	}
+	return "brac \"BRAC Bank\""
+}
+
 func processAccountCreation(ctx telebot.Context, aop AccountCallbackOptions) error {
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
 	acc := &models.Account{
-		ID:   aop.ID,
-		Type: aop.Type,
-		Name: aop.Name,
+		ID:     aop.ID,
+		UserID: user.ID,
+		Type:   aop.Type,
+		Name:   aop.Name,
 	}
 	if err := all.GetServices().Account.CreateAccount(acc); err != nil {
 		log.Println(err)

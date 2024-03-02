@@ -1,16 +1,26 @@
 package models
 
-type User struct {
-	ID               string `db:"id,pk"`
-	Name             string
-	Email            string `db:"email,uq"`
+type DebtorsCreditors struct {
+	ID               int64  `db:"id,pk"`
+	UserID           int64  `db:",uqs"`
+	NickName         string `db:",uqs"`
+	FullName         string
+	Email            string `db:"email,uqs"`
 	ContactInfo      string
 	Balance          float64
 	LastTxnTimestamp int64
 }
 
-//func (u *User) APIFormat() gqtypes.User {
-//	return gqtypes.User{
+type User struct {
+	ID         int64  `db:"id,pk"`
+	TelegramID int64  `db:",uq"`
+	Username   string `db:",uq"`
+	FirstName  string
+	LastName   string
+}
+
+//func (u *DebtorsCreditors) APIFormat() gqtypes.DebtorsCreditors {
+//	return gqtypes.DebtorsCreditors{
 //		ID:        u.ID,
 //		Username:  u.Username,
 //		Email:     u.Email,

@@ -28,7 +28,7 @@ const (
 	SummaryTypeCallback         CallbackType = "Summary"
 	ReportTypeCallback          CallbackType = "Report"
 	AccountTypeCallback         CallbackType = "Account"
-	UserTypeCallback            CallbackType = "User"
+	UserTypeCallback            CallbackType = "DebtorsCreditors"
 
 	StepTxnType     NextStep = "txn-type"
 	StepAmount      NextStep = "txn-amount"
@@ -42,13 +42,14 @@ const (
 )
 
 type CallbackOptions struct {
-	Type        CallbackType               `json:"type"`
-	Transaction TransactionCallbackOptions `json:"transaction,omitempty"`
-	Summary     SummaryCallbackOptions     `json:"summary,omitempty"`
-	Report      ReportCallbackOptions      `json:"report,omitempty"`
-	Account     AccountCallbackOptions     `json:"account,omitempty"`
-	User        UserCallbackOptions        `json:"user,omitempty"`
-	Category    TxnCategoryCallbackOptions `json:"category,omitempty"`
+	Type              CallbackType               `json:"type"`
+	Transaction       TransactionCallbackOptions `json:"transaction,omitempty"`
+	Summary           SummaryCallbackOptions     `json:"summary,omitempty"`
+	Report            ReportCallbackOptions      `json:"report,omitempty"`
+	Account           AccountCallbackOptions     `json:"account,omitempty"`
+	User              UserCallbackOptions        `json:"user,omitempty"`
+	Category          TxnCategoryCallbackOptions `json:"category,omitempty"`
+	LastSelectedValue string
 }
 
 type TransactionCallbackOptions struct {
@@ -56,13 +57,13 @@ type TransactionCallbackOptions struct {
 
 	Type models.TransactionType `json:"type"`
 
-	Amount        float64 `json:"amount,omitempty"`
-	SrcID         string  `json:"srcID,omitempty"`
-	DstID         string  `json:"dstID,omitempty"`
-	CategoryID    string  `json:"catID,omitempty"`
-	SubcategoryID string  `json:"subcatID,omitempty"`
-	UserID        string  `json:"userID,omitempty"`
-	Remarks       string  `json:"remarks,omitempty"`
+	Amount             float64 `json:"amount,omitempty"`
+	SrcID              string  `json:"srcID,omitempty"`
+	DstID              string  `json:"dstID,omitempty"`
+	CategoryID         string  `json:"catID,omitempty"`
+	SubcategoryID      string  `json:"subcatID,omitempty"`
+	DebtorCreditorName string  `json:"userID,omitempty"`
+	Remarks            string  `json:"remarks,omitempty"`
 }
 
 var callbackData = make(map[int]CallbackOptions) // map[messageID]CallbackOptions
@@ -120,37 +121,44 @@ func Callback(ctx telebot.Context) error {
 }
 
 func handleTransactionCallback(ctx telebot.Context, callbackOpts CallbackOptions) error {
-	// Type -> Amount -> SrcID (and/or) DstID -> Category -> Subcategory -> (UserID) -> Remarks
+	// Type -> Amount -> SrcID (and/or) DstID -> Category -> Subcategory -> (DebtorCreditorName) -> Remarks
 	txn := callbackOpts.Transaction
 	switch txn.NextStep {
 	case StepTxnType:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Type: *%v*\n\n", callbackOpts.Transaction.Type)
 		return sendTransactionAmountTypeQuery(ctx, callbackOpts)
 	case StepAmount:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Amount: *%v*\n\n", callbackOpts.Transaction.Amount)
 		if txn.Type == models.IncomeTransaction {
 			return sendTransactionDstTypeQuery(ctx, callbackOpts)
 		} else {
 			return sendTransactionSrcTypeQuery(ctx, callbackOpts)
 		}
 	case StepSrcID:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Source: *%v*\n\n", callbackOpts.Transaction.SrcID)
 		if txn.Type == models.TransferTransaction {
 			return sendTransactionDstTypeQuery(ctx, callbackOpts)
 		} else {
 			return sendTransactionCategoryQuery(ctx, callbackOpts)
 		}
 	case StepDstID:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Destination: *%v*\n\n", callbackOpts.Transaction.DstID)
 		return sendTransactionCategoryQuery(ctx, callbackOpts)
 	case StepCategory:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Category: *%v*\n\n", callbackOpts.Transaction.CategoryID)
 		return sendTransactionSubcategoryQuery(ctx, callbackOpts)
 	case StepSubcategory:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected Subcategory: *%v*\n\n", callbackOpts.Transaction.SubcategoryID)
 		if loanOrBorrowTypeTransaction(callbackOpts) {
 			return sendTransactionUserQuery(ctx, callbackOpts)
 		} else {
 			return sendTransactionRemarksQuery(ctx, callbackOpts)
 		}
 	case StepUser:
+		callbackOpts.LastSelectedValue = fmt.Sprintf("Selected User: *%v*\n\n", callbackOpts.Transaction.DebtorCreditorName)
 		return sendTransactionRemarksQuery(ctx, callbackOpts)
 	case StepRemarks:
-		err := processTransaction(callbackOpts.Transaction)
+		err := processTransaction(ctx, callbackOpts.Transaction)
 		if err != nil {
 			return ctx.Send(err.Error())
 		}
@@ -160,6 +168,10 @@ func handleTransactionCallback(ctx telebot.Context, callbackOpts CallbackOptions
 	}
 }
 
+func setLastSelectedValue(callbackOpts *CallbackOptions) {
+
+}
+
 func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 	var callbackOpts CallbackOptions
 	err := cache.FetchData(ctx.Callback().Data, &callbackOpts)
@@ -167,9 +179,8 @@ func parseCallbackOptions(ctx telebot.Context) (CallbackOptions, error) {
 }
 
 func TransactionTextCallback(ctx telebot.Context) error {
-	fmt.Println(ctx.Text(), "<==>", ctx.Message().Text)
 	if ctx.Update().Message.ReplyTo == nil {
-		if err := handleTransactionFromRegularText(ctx.Text()); err != nil {
+		if err := handleTransactionFromRegularText(ctx); err != nil {
 			return ctx.Send(err.Error())
 		}
 		return ctx.Send("Transaction added successfully!")
@@ -240,8 +251,8 @@ func handleUserTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOption
 		return ctx.Reply("must contain <id> <name> <email>")
 	}
 	callbackOpts.User = UserCallbackOptions{
-		ID:   info[0],
-		Name: info[1],
+		NickName: info[0],
+		FullName: info[1],
 		Email: func() string {
 			if len(info) > 2 {
 				return info[2]
@@ -252,10 +263,16 @@ func handleUserTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOption
 	return processUserCreation(ctx, callbackOpts.User)
 }
 
-func handleTransactionFromRegularText(text string) error {
-	txn, err := transaction.ParseTransaction(text)
+func handleTransactionFromRegularText(ctx telebot.Context) error {
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
 	if err != nil {
 		return err
 	}
+
+	txn, err := transaction.ParseTransaction(ctx.Text())
+	if err != nil {
+		return err
+	}
+	txn.UserID = user.ID
 	return all.GetServices().Txn.AddTransaction(txn)
 }

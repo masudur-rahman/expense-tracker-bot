@@ -54,4 +54,5 @@ go install                                                      \
     -gcflags="${gogcflags}"                                     \
     -asmflags="${goasmflags}"                                   \
     -ldflags="${always_ldflags} ${goldflags}"                   \
+    -buildvcs=false                                             \
     "$@"

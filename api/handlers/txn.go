@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
@@ -63,7 +64,7 @@ func handleTransactionCategoryCallback(ctx telebot.Context, callbackOptions Call
 func sendJustTxnCategoryQuery(ctx telebot.Context, callbackOpts CallbackOptions) error {
 	inlineButtons, err := generateJustTxnCategoryTypeInlineButton(callbackOpts)
 	if err != nil {
-		return ctx.Send("Unexpected server error occurred!")
+		return ctx.Send(models.ErrCommonResponse(err))
 	}
 
 	return ctx.Send("Select Transaction category!", &telebot.SendOptions{
@@ -79,7 +80,7 @@ func sendJustTxnSubcategoryQuery(ctx telebot.Context, callbackOpts CallbackOptio
 	callbackOpts.Category.NextStep = StepSubcategoryID
 	inlineButtons, err := generateJustTxnSubcategoryTypeInlineButton(callbackOpts)
 	if err != nil {
-		return ctx.Send("Unexpected server error occurred!")
+		return ctx.Send(models.ErrCommonResponse(err))
 	}
 
 	return ctx.Send("Select Transaction subcategory!", &telebot.SendOptions{
@@ -95,12 +96,12 @@ func sendTransactionCategoryInformation(ctx telebot.Context, cop TxnCategoryCall
 	txn := all.GetServices().Txn
 	cat, err := txn.GetTxnCategoryName(cop.CategoryID)
 	if err != nil {
-		return ctx.Send("Unexpected server error occurred!")
+		return ctx.Send(models.ErrCommonResponse(err))
 	}
 
 	subcat, err := txn.GetTxnSubcategoryName(cop.SubcategoryID)
 	if err != nil {
-		return ctx.Send("Unexpected server error occurred!")
+		return ctx.Send(models.ErrCommonResponse(err))
 	}
 
 	return ctx.Send(fmt.Sprintf(`Transaction Category Information:

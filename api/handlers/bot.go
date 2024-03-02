@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/masudur-rahman/expense-tracker-bot/configs"
+	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/modules/google"
 	"github.com/masudur-rahman/expense-tracker-bot/pkg"
@@ -18,6 +19,31 @@ import (
 	"github.com/spf13/pflag"
 	"gopkg.in/telebot.v3"
 )
+
+func StartTrackingExpenses(ctx telebot.Context) error {
+	us := all.GetServices().User
+	user, err := us.GetUserByTelegramID(ctx.Sender().ID)
+	if err == nil {
+		return ctx.Send(fmt.Sprintf("Welcome back %v %v !",
+			user.FirstName, user.LastName))
+	}
+	if models.IsErrNotFound(err) {
+		user = &models.User{
+			TelegramID: ctx.Sender().ID,
+			Username:   ctx.Sender().Username,
+			FirstName:  ctx.Sender().FirstName,
+			LastName:   ctx.Sender().LastName,
+		}
+		if err = us.SignUp(user); err == nil {
+			return ctx.Send(fmt.Sprintf(`Hello %v %v!
+Welcome to Expense Tracker !
+`, ctx.Sender().FirstName, ctx.Sender().LastName))
+		}
+	}
+
+	logr.DefaultLogger.Errorw("Start error", "error", err.Error())
+	return ctx.Send("Some error occurred")
+}
 
 func Welcome(ctx telebot.Context) error {
 	return ctx.Send(fmt.Sprintf(`Hello %v %v!
@@ -45,7 +71,12 @@ func New(ctx telebot.Context) error {
 }
 
 func ListUsers(ctx telebot.Context) error {
-	users, err := all.GetServices().User.ListUsers()
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
+	users, err := all.GetServices().DebtorCreditor.ListDebtorCreditors(user.ID)
 	if err != nil {
 		return ctx.Send(err.Error())
 	}
@@ -62,9 +93,14 @@ Syntax unknown.
 Format /newuser <id> <name> <email>
 `)
 	}
-	if err := all.GetServices().User.CreateUser(&models.User{
-		ID:   ui[1],
-		Name: ui[2],
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(err.Error())
+	}
+	if err := all.GetServices().DebtorCreditor.CreateDebtorCreditor(&models.DebtorsCreditors{
+		UserID:   user.ID,
+		NickName: ui[1],
+		FullName: ui[2],
 		Email: func() string {
 			if len(ui) >= 4 {
 				return ui[3]
@@ -76,7 +112,7 @@ Format /newuser <id> <name> <email>
 		return ctx.Send(err.Error())
 	}
 
-	return ctx.Send("New User added!")
+	return ctx.Send("New DebtorsCreditors added!")
 }
 
 func AddAccount(ctx telebot.Context) error {
@@ -102,7 +138,12 @@ Format /new <type> <unique-name> <Account Name>
 }
 
 func ListAccounts(ctx telebot.Context) error {
-	accounts, err := all.GetServices().Account.ListAccounts()
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
+	accounts, err := all.GetServices().Account.ListAccounts(user.ID)
 	if err != nil {
 		return err
 	}
@@ -128,7 +169,7 @@ If users will be able to select options from the UI, it's ideal to design the in
 2. Subcategory: Based on the selected type, present the relevant subcategories as options for the user to choose from. Display them as buttons or in a dropdown menu.
 3. Amount: Once the subcategory is selected, prompt the user to enter the monetary amount of the transaction.
 4. SrcID/DstID: Depending on the type of transaction, provide the appropriate options for the source ID (for Expense/Transfer) or destination ID (for Income/Transfer). This could be a dropdown menu or a list of selectable options.
-5. User (for Loan/Borrow): If the selected subcategory involves a person (Loan or Borrow), present the relevant users as options for the user to select from. Display them as buttons or in a dropdown menu.
+5. DebtorsCreditors (for Loan/Borrow): If the selected subcategory involves a person (Loan or Borrow), present the relevant users as options for the user to select from. Display them as buttons or in a dropdown menu.
 6. Remarks: Provide an optional input field for the user to enter any additional remarks or notes related to the transaction.
 
 By structuring the input sequence in this way, users can easily navigate through the available options and make their selections. It enhances the user experience by presenting a guided interface that reduces the chance of errors or confusion during the input process.
@@ -153,7 +194,7 @@ func parseTransactionFlags(txnString string) (TransactionCallbackOptions, error)
 	set.StringVarP(&txnOpts.SubcategoryID, "subcat", "s", "misc-misc", "Subcategory for the transaction")
 	set.StringVarP(&txnOpts.SrcID, "src", "f", "cash", "Source account for the transaction")
 	set.StringVarP(&txnOpts.DstID, "dst", "d", "", "Destination account for the transaction")
-	set.StringVarP(&txnOpts.UserID, "user", "u", "", "User associated with the loan/borrow")
+	set.StringVarP(&txnOpts.DebtorCreditorName, "user", "u", "", "DebtorsCreditors associated with the loan/borrow")
 	set.StringVarP(&txnOpts.Remarks, "remarks", "r", "", "Remarks for the transaction")
 	txnOpts.Type = models.TransactionType(typ)
 
@@ -192,7 +233,7 @@ func parseTransactionFlags(txnString string) (TransactionCallbackOptions, error)
 //		Type:          models.TransactionType(txnOpts.Type),
 //		SrcID:         txnOpts.SrcID,
 //		DstID:         txnOpts.DstID,
-//		UserID:        txnOpts.UserID,
+//		DebtorCreditorName:        txnOpts.DebtorCreditorName,
 //		Timestamp:     time.Now().Unix(),
 //		Remarks:       txnOpts.Remarks,
 //	}
@@ -205,7 +246,12 @@ func parseTransactionFlags(txnString string) (TransactionCallbackOptions, error)
 //}
 
 func ListTransactions(ctx telebot.Context) error {
-	txns, err := all.GetServices().Txn.ListTransactions()
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
+	txns, err := all.GetServices().Txn.ListTransactions(user.ID)
 	if err != nil {
 		return err
 	}
@@ -221,7 +267,12 @@ func ListTransactions(ctx telebot.Context) error {
 }
 
 func ListExpenses(ctx telebot.Context) error {
-	txns, err := all.GetServices().Txn.ListTransactionsByTime(models.ExpenseTransaction, pkg.StartOfMonth().Unix(), time.Now().Unix())
+	user, err := all.GetServices().User.GetUserByTelegramID(ctx.Sender().ID)
+	if err != nil {
+		return ctx.Send(models.ErrCommonResponse(err))
+	}
+
+	txns, err := all.GetServices().Txn.ListTransactionsByTime(user.ID, models.ExpenseTransaction, pkg.StartOfMonth().Unix(), time.Now().Unix())
 	if err != nil {
 		return err
 	}
