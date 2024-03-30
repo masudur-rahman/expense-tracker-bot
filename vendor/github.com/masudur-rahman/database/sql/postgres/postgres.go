@@ -133,10 +133,10 @@ func (pg Postgres) Exec(query string, args ...any) (sql.Result, error) {
 	return pg.conn.ExecContext(pg.ctx, query, args...)
 }
 
-func (p Postgres) Sync(tables ...any) error {
+func (pg Postgres) Sync(tables ...any) error {
 	ctx := context.Background()
 	for _, table := range tables {
-		if err := lib.SyncTable(ctx, p.conn, table); err != nil {
+		if err := lib.SyncTable(ctx, pg.conn, table); err != nil {
 			return err
 		}
 	}

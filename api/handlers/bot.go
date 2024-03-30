@@ -51,9 +51,15 @@ Welcome to Expense Tracker !
 `, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
+func Help(ctx telebot.Context) error {
+	return ctx.Send(fmt.Sprintf(`Click the following link to open the Usage documentation.
+%s
+`, "https://github.com/masudur-rahman/expense-tracker-bot/blob/main/README.md"))
+}
+
 func New(ctx telebot.Context) error {
 	var callbackOpts CallbackOptions
-	types := []CallbackType{TransactionFlagTypeCallback, AccountTypeCallback, UserTypeCallback}
+	types := []CallbackType{ /*TransactionFlagTypeCallback,*/ AccountTypeCallback, UserTypeCallback}
 	inlineButtons := make([]telebot.InlineButton, 0, 2)
 	for _, typ := range types {
 		callbackOpts.Type = typ
