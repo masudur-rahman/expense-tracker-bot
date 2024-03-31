@@ -87,7 +87,7 @@ func ListUsers(ctx telebot.Context) error {
 		return ctx.Send(err.Error())
 	}
 
-	return ctx.Send(pkg.FormatDocuments(users, "ID", "Name", "Balance"))
+	return ctx.Send(pkg.FormatDocuments(users, "NickName", "FullName", "Balance"))
 }
 
 func NewUser(ctx telebot.Context) error {
