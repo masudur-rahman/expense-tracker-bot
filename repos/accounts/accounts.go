@@ -21,15 +21,15 @@ func NewSQLAccountsRepository(db isql.Database, logger logr.Logger) *SQLAccounts
 	}
 }
 
-func (a *SQLAccountsRepository) GetAccountByID(userID int64, accID string) (*models.Account, error) {
-	a.logger.Infow("get account by account id", "account id", accID)
+func (a *SQLAccountsRepository) GetAccountByShortName(userID int64, shortName string) (*models.Account, error) {
+	a.logger.Infow("get account by account id", "account id", shortName)
 	var acc models.Account
-	found, err := a.db.FindOne(&acc, models.Account{ID: accID, UserID: userID})
+	found, err := a.db.FindOne(&acc, models.Account{ShortName: shortName, UserID: userID})
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		return nil, models.ErrAccountNotFound{AccID: accID}
+		return nil, models.ErrAccountNotFound{AccID: shortName}
 	}
 	return &acc, nil
 }
@@ -50,9 +50,9 @@ func (a *SQLAccountsRepository) ListAccountsByType(userID int64, typ models.Acco
 
 func (a *SQLAccountsRepository) AddNewAccount(account *models.Account) error {
 	a.logger.Infow("add new account", "name", account.Name)
-	_, err := a.GetAccountByID(account.UserID, account.ID)
+	_, err := a.GetAccountByShortName(account.UserID, account.ShortName)
 	if err == nil {
-		return models.ErrAccountAlreadyExist{AccID: account.ID}
+		return models.ErrAccountAlreadyExist{ShortName: account.ShortName}
 	} else if !models.IsErrNotFound(err) {
 		return err
 	}
@@ -61,9 +61,9 @@ func (a *SQLAccountsRepository) AddNewAccount(account *models.Account) error {
 	return err
 }
 
-func (a *SQLAccountsRepository) UpdateAccountBalance(userID int64, accID string, txnAmount float64) error {
-	a.logger.Infow("updating account balance", "account", accID)
-	acc, err := a.GetAccountByID(userID, accID)
+func (a *SQLAccountsRepository) UpdateAccountBalance(userID int64, shortName string, txnAmount float64) error {
+	a.logger.Infow("updating account balance", "account", shortName)
+	acc, err := a.GetAccountByShortName(userID, shortName)
 	if err != nil {
 		return err
 	}
@@ -71,10 +71,10 @@ func (a *SQLAccountsRepository) UpdateAccountBalance(userID int64, accID string,
 	acc.LastTxnAmount = txnAmount
 	acc.LastTxnTimestamp = time.Now().Unix()
 
-	return a.db.Where("id = ? AND user_id = ?", accID, userID).MustCols("balance").UpdateOne(acc)
+	return a.db.ID(acc.ID).MustCols("balance").UpdateOne(acc)
 }
 
-func (a *SQLAccountsRepository) DeleteAccount(userID int64, accID string) error {
-	a.logger.Infow("deleting account", "account", accID)
-	return a.db.DeleteOne(models.Account{ID: accID, UserID: userID})
+func (a *SQLAccountsRepository) DeleteAccount(userID int64, shortName string) error {
+	a.logger.Infow("deleting account", "account", shortName)
+	return a.db.DeleteOne(models.Account{ShortName: shortName, UserID: userID})
 }

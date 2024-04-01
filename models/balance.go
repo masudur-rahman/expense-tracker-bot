@@ -8,9 +8,10 @@ const (
 )
 
 type Account struct {
-	ID               string `db:"id,uqs"`
-	UserID           int64  `db:",uqs"`
+	ID               int64 `db:"id,pk autoincr"`
+	UserID           int64 `db:",uqs"`
 	Type             AccountType
+	ShortName        string `db:",uqs"`
 	Name             string
 	Balance          float64
 	LastTxnAmount    float64

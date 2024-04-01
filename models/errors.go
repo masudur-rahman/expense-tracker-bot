@@ -154,13 +154,13 @@ func (err ErrAccountNotFound) Error() string {
 }
 
 type ErrAccountAlreadyExist struct {
-	AccID string
+	ShortName string
 }
 
 func (err ErrAccountAlreadyExist) Error() string {
 	return StatusError{
 		Status:  http.StatusConflict,
-		Message: fmt.Sprintf("account already exist with id: %v", err.AccID),
+		Message: fmt.Sprintf("account already exist with short-name: %v", err.ShortName),
 	}.Error()
 }
 
