@@ -15,8 +15,8 @@ func NewAccountService(accRepo repos.AccountsRepository) *accountService {
 	return &accountService{accRepo: accRepo}
 }
 
-func (as *accountService) GetAccountByID(userID int64, accID string) (*models.Account, error) {
-	return as.accRepo.GetAccountByID(userID, accID)
+func (as *accountService) GetAccountByShortName(userID int64, shortName string) (*models.Account, error) {
+	return as.accRepo.GetAccountByShortName(userID, shortName)
 }
 
 func (as *accountService) ListAccounts(userID int64) ([]models.Account, error) {
@@ -34,10 +34,10 @@ func (as *accountService) CreateAccount(account *models.Account) error {
 	return as.accRepo.AddNewAccount(account)
 }
 
-func (as *accountService) UpdateAccountBalance(userID int64, accID string, amount float64) error {
-	return as.accRepo.UpdateAccountBalance(userID, accID, amount)
+func (as *accountService) UpdateAccountBalance(userID int64, shortName string, amount float64) error {
+	return as.accRepo.UpdateAccountBalance(userID, shortName, amount)
 }
 
-func (as *accountService) DeleteAccount(userID int64, accID string) error {
-	return as.accRepo.DeleteAccount(userID, accID)
+func (as *accountService) DeleteAccount(userID int64, shortName string) error {
+	return as.accRepo.DeleteAccount(userID, shortName)
 }

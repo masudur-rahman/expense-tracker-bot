@@ -131,9 +131,9 @@ Format /new <type> <unique-name> <Account Name>
 `)
 	}
 	acc := &models.Account{
-		ID:   aci[2],
-		Type: models.AccountType(aci[1]),
-		Name: aci[3],
+		Type:      models.AccountType(aci[1]),
+		ShortName: aci[2],
+		Name:      aci[3],
 	}
 	if err := all.GetServices().Account.CreateAccount(acc); err != nil {
 		log.Println(err)
@@ -162,7 +162,7 @@ func printAccounts(accounts []models.Account) string {
 	w := tabwriter.NewWriter(&buf, 0, 0, 5, ' ', 0)
 	fmt.Fprintln(w, "ID\tType\tName\tBalance")
 	for _, ac := range accounts {
-		fmt.Fprintf(w, "%v\t%v\t%v\t%.2f\n", ac.ID, ac.Type, ac.Name, ac.Balance)
+		fmt.Fprintf(w, "%v\t%v\t%v\t%.2f\n", ac.ShortName, ac.Type, ac.Name, ac.Balance)
 	}
 	_ = w.Flush()
 	return buf.String()

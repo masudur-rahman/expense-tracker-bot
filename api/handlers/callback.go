@@ -238,7 +238,7 @@ func handleAccountTypeTextCallback(ctx telebot.Context, callbackOpts CallbackOpt
 		if len(info) < 2 {
 			return ctx.Reply("must contain <id> <account name>")
 		}
-		callbackOpts.Account.ID, callbackOpts.Account.Name = info[0], info[1]
+		callbackOpts.Account.ShortName, callbackOpts.Account.Name = info[0], info[1]
 		return processAccountCreation(ctx, callbackOpts.Account)
 	default:
 		return ctx.Reply("yet to be implemented")

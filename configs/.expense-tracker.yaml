@@ -4,6 +4,7 @@ database:
     type: sqlite
     sqlite:
 #        syncToDrive: true
+#        disableSyncFromDrive: true
 #    postgres:
 #        name: expense
 #        host: localhost

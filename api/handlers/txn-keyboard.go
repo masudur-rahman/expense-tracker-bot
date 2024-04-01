@@ -43,7 +43,7 @@ func generateSrcDstTypeInlineButton(ctx telebot.Context, callbackOpts CallbackOp
 	}
 
 	for _, ac := range acs {
-		*srcOrDst = ac.ID
+		*srcOrDst = ac.ShortName
 		btn := generateInlineButton(callbackOpts, ac.Name)
 		inlineButtons = append(inlineButtons, btn)
 	}

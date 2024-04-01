@@ -16,10 +16,10 @@ const (
 )
 
 type AccountCallbackOptions struct {
-	NextStep NextStep           `json:"nextStep"`
-	Type     models.AccountType `json:"type"`
-	ID       string             `json:"id"`
-	Name     string             `json:"name"`
+	NextStep  NextStep           `json:"nextStep"`
+	Type      models.AccountType `json:"type"`
+	ShortName string             `json:"shortName"`
+	Name      string             `json:"name"`
 }
 
 func handleAccountCallback(ctx telebot.Context, callbackOptions CallbackOptions) error {
@@ -77,10 +77,10 @@ func processAccountCreation(ctx telebot.Context, aop AccountCallbackOptions) err
 	}
 
 	acc := &models.Account{
-		ID:     aop.ID,
-		UserID: user.ID,
-		Type:   aop.Type,
-		Name:   aop.Name,
+		UserID:    user.ID,
+		Type:      aop.Type,
+		ShortName: aop.ShortName,
+		Name:      aop.Name,
 	}
 	if err := all.GetServices().Account.CreateAccount(acc); err != nil {
 		log.Println(err)
