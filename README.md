@@ -1,13 +1,7 @@
 # Expense Tracker
 
-A Telegram Bot to track your expenses.
-
-## Description
-
+A Telegram Bot to track your expenses.  
 `Expense Tracker Bot` is a Telegram Bot to track your daily transactions.
-
-The `Expense Tracker Bot` is now available for public use.  
-To use this bot, go to Telegram and search for [@XpenseTrackerBot](https://t.me/XpenseTrackerBot)
 
 ## Features
 
@@ -18,6 +12,8 @@ To use this bot, go to Telegram and search for [@XpenseTrackerBot](https://t.me/
 - **Transaction Reports**: Generate transaction reports in PDF format for your chosen duration.
 
 ## Usage
+The `Expense Tracker Bot` is now available for public use.  
+To use this bot, go to Telegram and search for [@XpenseTrackerBot](https://t.me/XpenseTrackerBot)
 
 Once you are inside the bot inbox,  press `Start` button to start using the Tracker Bot.
 
