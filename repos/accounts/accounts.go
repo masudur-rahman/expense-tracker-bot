@@ -71,7 +71,7 @@ func (a *SQLAccountsRepository) UpdateAccountBalance(userID int64, accID string,
 	acc.LastTxnAmount = txnAmount
 	acc.LastTxnTimestamp = time.Now().Unix()
 
-	return a.db.ID(acc.ID).MustCols("balance").UpdateOne(acc)
+	return a.db.Where("id = ? AND user_id = ?", accID, userID).MustCols("balance").UpdateOne(acc)
 }
 
 func (a *SQLAccountsRepository) DeleteAccount(userID int64, accID string) error {
