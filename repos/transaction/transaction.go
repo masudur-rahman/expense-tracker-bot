@@ -7,7 +7,9 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
+	"github.com/masudur-rahman/database"
 	isql "github.com/masudur-rahman/database/sql"
 )
 
@@ -20,6 +22,13 @@ func NewSQLTransactionRepository(db isql.Database, logger logr.Logger) *SQLTrans
 	return &SQLTransactionRepository{
 		db:     db.Table("transaction"),
 		logger: logger,
+	}
+}
+
+func (t *SQLTransactionRepository) WithUnitOfWork(uow database.UnitOfWork) repos.TransactionRepository {
+	return &SQLTransactionRepository{
+		db:     uow.SQL.Table("transaction"),
+		logger: t.logger,
 	}
 }
 
@@ -55,9 +64,9 @@ func (t *SQLTransactionRepository) ListTransactionsByTime(userID int64, txnType 
 	return txns, err
 }
 
-func (ts *SQLTransactionRepository) GetTxnCategoryName(catID string) (string, error) {
+func (t *SQLTransactionRepository) GetTxnCategoryName(catID string) (string, error) {
 	cat := models.TxnCategory{}
-	has, err := ts.db.Table("txn_category").ID(catID).FindOne(&cat)
+	has, err := t.db.Table("txn_category").ID(catID).FindOne(&cat)
 	if err != nil {
 		return "", err
 	} else if !has {
@@ -74,9 +83,9 @@ func (t *SQLTransactionRepository) ListTxnCategories() ([]models.TxnCategory, er
 	return cats, err
 }
 
-func (ts *SQLTransactionRepository) GetTxnSubcategoryName(subcatID string) (string, error) {
+func (t *SQLTransactionRepository) GetTxnSubcategoryName(subcatID string) (string, error) {
 	subcat := models.TxnSubcategory{}
-	has, err := ts.db.Table("txn_subcategory").ID(subcatID).FindOne(&subcat)
+	has, err := t.db.Table("txn_subcategory").ID(subcatID).FindOne(&subcat)
 	if err != nil {
 		return "", err
 	} else if !has {

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	isql "github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/database/sql/sqlite/lib"
@@ -13,11 +14,44 @@ import (
 type SQLite struct {
 	ctx       context.Context
 	conn      *sql.Conn
+	tx        *sql.Tx
 	statement lib.Statement
 }
 
 func NewSQLite(ctx context.Context, conn *sql.Conn) SQLite {
 	return SQLite{ctx: ctx, conn: conn}
+}
+
+var _ isql.Database = SQLite{}
+
+func (sq SQLite) BeginTx() (isql.Database, error) {
+	if sq.tx != nil {
+		return nil, errors.New("session already in progress")
+	}
+	tx, err := sq.conn.BeginTx(sq.ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	sq.tx = tx
+	return sq, nil
+}
+
+func (sq SQLite) Commit() error {
+	if sq.tx == nil {
+		return errors.New("no transaction in progress")
+	}
+	err := sq.tx.Commit()
+	sq.tx = nil
+	return err
+}
+
+func (sq SQLite) Rollback() error {
+	if sq.tx == nil {
+		return errors.New("no transaction in progress")
+	}
+	err := sq.tx.Rollback()
+	sq.tx = nil
+	return err
 }
 
 func (sq SQLite) Table(name string) isql.Database {
@@ -68,7 +102,7 @@ func (sq SQLite) FindOne(document any, filter ...any) (bool, error) {
 	}
 
 	query := sq.statement.GenerateReadQuery()
-	err := sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, query, document)
+	err := sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, sq.tx, query, document)
 	if err == nil {
 		return true, nil
 	}
@@ -83,19 +117,19 @@ func (sq SQLite) FindMany(documents any, filter ...any) error {
 	sq.statement = sq.statement.GenerateWhereClause(filter...)
 
 	query := sq.statement.GenerateReadQuery()
-	return sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, query, documents)
+	return sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, sq.tx, query, documents)
 }
 
 func (sq SQLite) InsertOne(document any) (id any, err error) {
 	query := sq.statement.GenerateInsertQuery(document)
-	return sq.statement.ExecuteInsertQuery(sq.ctx, sq.conn, query)
+	return sq.statement.ExecuteInsertQuery(sq.ctx, sq.conn, sq.tx, query)
 }
 
 func (sq SQLite) InsertMany(documents []any) ([]any, error) {
 	var ids []any
 	for _, doc := range documents {
 		query := sq.statement.GenerateInsertQuery(doc)
-		id, err := sq.statement.ExecuteInsertQuery(sq.ctx, sq.conn, query)
+		id, err := sq.statement.ExecuteInsertQuery(sq.ctx, sq.conn, sq.tx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +146,7 @@ func (sq SQLite) UpdateOne(document any) error {
 	}
 
 	query := sq.statement.GenerateUpdateQuery(document)
-	_, err := sq.statement.ExecuteWriteQuery(sq.ctx, sq.conn, query)
+	_, err := sq.statement.ExecuteWriteQuery(sq.ctx, sq.conn, sq.tx, query)
 	return err
 }
 
@@ -123,7 +157,7 @@ func (sq SQLite) DeleteOne(filter ...any) error {
 	}
 
 	query := sq.statement.GenerateDeleteQuery()
-	_, err := sq.statement.ExecuteWriteQuery(sq.ctx, sq.conn, query)
+	_, err := sq.statement.ExecuteWriteQuery(sq.ctx, sq.conn, sq.tx, query)
 	return err
 }
 
@@ -135,10 +169,10 @@ func (sq SQLite) Exec(query string, args ...any) (sql.Result, error) {
 	return sq.conn.ExecContext(sq.ctx, query, args...)
 }
 
-func (p SQLite) Sync(tables ...any) error {
+func (sq SQLite) Sync(tables ...any) error {
 	ctx := context.Background()
 	for _, table := range tables {
-		if err := lib.SyncTable(ctx, p.conn, table); err != nil {
+		if err := lib.SyncTable(ctx, sq.conn, table); err != nil {
 			return err
 		}
 	}

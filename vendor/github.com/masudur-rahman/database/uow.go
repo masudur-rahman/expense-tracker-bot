@@ -1,0 +1,51 @@
+package database
+
+import (
+	"github.com/masudur-rahman/database/nosql"
+	"github.com/masudur-rahman/database/sql"
+)
+
+// UnitOfWork represents the unit of work for coordinating transactions
+type UnitOfWork struct {
+	SQL   sql.Database
+	NoSQL nosql.Database
+}
+
+// Begin starts a new transaction
+func (uow UnitOfWork) Begin() (UnitOfWork, error) {
+	cp := UnitOfWork{
+		SQL:   uow.SQL,
+		NoSQL: uow.NoSQL,
+	}
+	if uow.SQL != nil {
+		sqlTx, err := uow.SQL.BeginTx()
+		if err != nil {
+			return UnitOfWork{}, err
+		}
+		cp.SQL = sqlTx
+	}
+	// For NoSQL databases, no action needed for beginning a transaction
+	return cp, nil
+}
+
+// Commit commits the transaction
+func (uow UnitOfWork) Commit() error {
+	if uow.SQL != nil {
+		if err := uow.SQL.Commit(); err != nil {
+			return err
+		}
+	}
+	// For NoSQL databases, no action needed for committing a transaction
+	return nil
+}
+
+// Rollback rolls back the transaction
+func (uow UnitOfWork) Rollback() error {
+	if uow.SQL != nil {
+		if err := uow.SQL.Rollback(); err != nil {
+			return err
+		}
+	}
+	// For NoSQL databases, no action needed for rolling back a transaction
+	return nil
+}

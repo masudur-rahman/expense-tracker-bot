@@ -12,6 +12,7 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/modules/google"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
+	"github.com/masudur-rahman/database"
 	isql "github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/database/sql/postgres"
 	sqlib "github.com/masudur-rahman/database/sql/postgres/lib"
@@ -27,7 +28,7 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		return initializeSQLServices(db)
+		return initializeSQLServices(database.UnitOfWork{SQL: db})
 	case DatabaseSQLite, "":
 		if cfg.SQLite.SyncToDrive {
 			if !cfg.SQLite.DisableSyncFromDrive {
@@ -43,7 +44,7 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		return initializeSQLServices(db)
+		return initializeSQLServices(database.UnitOfWork{SQL: db})
 	default:
 		return fmt.Errorf("unknown database type")
 	}
@@ -58,11 +59,11 @@ func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
 	return sqlite.NewSQLite(ctx, conn), nil
 }
 
-func initializeSQLServices(db isql.Database) error {
-	if err := syncTables(db); err != nil {
+func initializeSQLServices(uow database.UnitOfWork) error {
+	if err := syncTables(uow.SQL); err != nil {
 		return err
 	}
-	all.InitiateSQLServices(db, logr.DefaultLogger)
+	all.InitiateSQLServices(uow, logr.DefaultLogger)
 
 	return all.GetServices().Txn.UpdateTxnCategories()
 }
@@ -100,7 +101,7 @@ func pingPostgresDatabasePeriodically(ctx context.Context, cfg sqlib.PostgresCon
 				}
 
 				db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-				all.InitiateSQLServices(db, logger)
+				all.InitiateSQLServices(database.UnitOfWork{SQL: db}, logger)
 				logger.Infow("New connection established")
 			}
 		}

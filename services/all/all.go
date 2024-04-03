@@ -12,7 +12,7 @@ import (
 	txnsvc "github.com/masudur-rahman/expense-tracker-bot/services/transaction"
 	usersvc "github.com/masudur-rahman/expense-tracker-bot/services/user"
 
-	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/database"
 )
 
 type Services struct {
@@ -29,17 +29,17 @@ func GetServices() *Services {
 	return svc
 }
 
-func InitiateSQLServices(db isql.Database, logger logr.Logger) {
-	userRepo := user.NewSQLUserRepository(db, logger)
-	accRepo := accounts.NewSQLAccountsRepository(db, logger)
-	drCrRepo := user.NewSQLDebtorCreditorRepository(db, logger)
-	txnRepo := transaction.NewSQLTransactionRepository(db, logger)
-	eventRepo := event.NewSQLEventRepository(db, logger)
+func InitiateSQLServices(uow database.UnitOfWork, logger logr.Logger) {
+	userRepo := user.NewSQLUserRepository(uow.SQL, logger)
+	accRepo := accounts.NewSQLAccountsRepository(uow.SQL, logger)
+	drCrRepo := user.NewSQLDebtorCreditorRepository(uow.SQL, logger)
+	txnRepo := transaction.NewSQLTransactionRepository(uow.SQL, logger)
+	eventRepo := event.NewSQLEventRepository(uow.SQL, logger)
 
 	userSvc := usersvc.NewUserService(userRepo)
 	accSvc := accsvc.NewAccountService(accRepo)
 	drCrSvc := usersvc.NewDebtorCreditorService(drCrRepo)
-	txnSvc := txnsvc.NewTxnService(accRepo, drCrRepo, txnRepo, eventRepo)
+	txnSvc := txnsvc.NewTxnService(uow, accRepo, drCrRepo, txnRepo, eventRepo)
 	eventSvc := eventsvc.NewEventService(eventRepo)
 
 	svc = &Services{
