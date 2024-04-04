@@ -7,23 +7,23 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
-	"github.com/masudur-rahman/database"
-	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/styx"
+	isql "github.com/masudur-rahman/styx/sql"
 )
 
 type SQLAccountsRepository struct {
-	db     isql.Database
+	db     isql.Engine
 	logger logr.Logger
 }
 
-func NewSQLAccountsRepository(db isql.Database, logger logr.Logger) *SQLAccountsRepository {
+func NewSQLAccountsRepository(db isql.Engine, logger logr.Logger) *SQLAccountsRepository {
 	return &SQLAccountsRepository{
 		db:     db.Table("account"),
 		logger: logger,
 	}
 }
 
-func (a *SQLAccountsRepository) WithUnitOfWork(uow database.UnitOfWork) repos.AccountsRepository {
+func (a *SQLAccountsRepository) WithUnitOfWork(uow styx.UnitOfWork) repos.AccountsRepository {
 	return &SQLAccountsRepository{
 		db:     uow.SQL.Table("account"),
 		logger: a.logger,

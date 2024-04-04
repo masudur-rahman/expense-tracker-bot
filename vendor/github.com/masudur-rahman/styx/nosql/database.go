@@ -1,9 +1,9 @@
 package nosql
 
-type Database interface {
-	Collection(name string) Database
+type Engine interface {
+	Collection(name string) Engine
 
-	ID(id string) Database
+	ID(id string) Engine
 
 	FindOne(document interface{}, filter ...interface{}) (bool, error)
 	FindMany(documents interface{}, filter interface{}) error

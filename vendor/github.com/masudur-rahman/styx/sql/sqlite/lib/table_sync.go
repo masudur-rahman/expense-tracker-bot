@@ -17,12 +17,16 @@ type fieldInfo struct {
 	IsComposite bool
 }
 
-func getTableName(table interface{}) string {
+func GenerateTableName(table interface{}) string {
 	tableType := reflect.TypeOf(table)
 	tableValue := reflect.ValueOf(table)
 	if tableType.Kind() == reflect.Ptr {
 		tableType = tableType.Elem()
 		tableValue = tableValue.Elem()
+	}
+	if tableType.Kind() == reflect.Slice {
+		tableType = tableType.Elem()
+		tableValue = reflect.New(tableType)
 	}
 	tableName := tableType.Name()
 	tableName = strcase.ToSnake(tableName)
@@ -96,9 +100,19 @@ func getFieldInfo(fieldType reflect.StructField, fieldValue reflect.Value) field
 	sqlType := getSQLType(fieldValue.Type(), autoincr)
 	return fieldInfo{
 		Name:        fieldName,
-		Type:        sqlType + columnConstraint,
+		Type:        removeDuplicateKeyword(sqlType + columnConstraint),
 		IsComposite: isComposite,
 	}
+}
+
+func removeDuplicateKeyword(keyword string) string {
+	pk := "PRIMARY KEY"
+	count := strings.Count(keyword, pk)
+	if count > 1 {
+		idx := strings.Index(keyword, pk)
+		keyword = keyword[:idx+1] + strings.ReplaceAll(keyword[idx+1:], pk, "")
+	}
+	return keyword
 }
 
 func getFieldName(fieldType reflect.StructField) string {
@@ -160,95 +174,19 @@ func getUniqueColumnGroups(t reflect.Type) [][]string {
 	return result
 }
 
-func getSQLType(fieldType reflect.Type, autoincr bool) string {
-	if autoincr {
-		switch fieldType.Kind() {
-		case reflect.Int, reflect.Int32, reflect.Int64, reflect.Uint64:
-			return "SERIAL"
-		}
-	}
-
-	switch fieldType.Kind() {
-	case reflect.Int, reflect.Int32:
-		return "INTEGER"
-	case reflect.Int64, reflect.Uint64:
-		return "BIGINT"
-	case reflect.Float32, reflect.Float64:
-		return "FLOAT"
-	case reflect.Bool:
-		return "BOOLEAN"
-	case reflect.String:
-		return "VARCHAR(255)"
-	case reflect.Struct:
-		if fieldType == reflect.TypeOf(time.Time{}) {
-			return "TIMESTAMP WITH TIME ZONE"
-		}
-	}
-
-	return ""
-}
-
-func tableExists(ctx context.Context, conn *sql.Conn, tableName string) (bool, error) {
-	tableQuery := "" +
-		"SELECT EXISTS (" +
-		"    SELECT FROM " +
-		"        information_schema.tables " +
-		"    WHERE " +
-		"        table_schema LIKE 'public' AND " +
-		"        table_name = $1" +
-		");"
-
-	var exists bool
-	err := conn.QueryRowContext(ctx, tableQuery, tableName).Scan(&exists)
-	if err != nil {
-		return false, fmt.Errorf("error checking if table exists: %v", err)
-	}
-
-	return exists, nil
-}
-
-func createTableQuery(tableName string, fields []fieldInfo) string {
-	var columnDefs []string
-	var compositeKeyGroup []string
-	for _, field := range fields {
-		columnDefs = append(columnDefs, fmt.Sprintf("%s %s", field.Name, field.Type))
-		if field.IsComposite {
-			compositeKeyGroup = append(compositeKeyGroup, field.Name)
-		}
-	}
-
-	columnSQL := strings.Join(columnDefs, ", ")
-	if len(compositeKeyGroup) > 0 {
-		compositeKeySQL := fmt.Sprintf("UNIQUE(%s)", strings.Join(compositeKeyGroup, ", "))
-		columnSQL += ", " + compositeKeySQL
-	}
-
-	return fmt.Sprintf("CREATE TABLE \"%s\" (%s);", tableName, columnSQL)
-}
-
-func generateAddColumnQuery(tableName string, missingColumns []string) string {
-	alterQuery := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
-	var addColumns []string
-	for _, col := range missingColumns {
-		addColumns = append(addColumns, fmt.Sprintf("ADD COLUMN %s", col))
-	}
-
-	alterQuery += strings.Join(addColumns, ", ")
-	return alterQuery
-}
-
 func getExistingColumns(ctx context.Context, conn *sql.Conn, tableName string) ([]string, error) {
 	var columns []string
 
-	rows, err := conn.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name='%s'", tableName))
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf("pragma table_info('%v')", tableName))
 	if err != nil {
 		return nil, fmt.Errorf("error getting columns for table %s: %v", tableName, err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
+		var x any
 		var column string
-		err = rows.Scan(&column)
+		err = rows.Scan(&x, &column, &x, &x, &x, &x)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning column for table %s: %v", tableName, err)
 		}
@@ -312,7 +250,7 @@ func getUniqueConstraints(ctx context.Context, conn *sql.Conn, tableName string)
 }
 
 func generateDropConstraintStatement(tableName string, uqConstraints [][]string) string {
-	sql := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
+	sql := fmt.Sprintf("ALTER TABLE %s ", tableName)
 
 	var dropConstraints []string
 	for i := range uqConstraints {
@@ -329,7 +267,7 @@ func generateDropConstraintStatement(tableName string, uqConstraints [][]string)
 func generateAddConstraintStatement(tableName string,
 	uqGroups [][]string) string {
 
-	sql := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
+	sql := fmt.Sprintf("ALTER TABLE %s ", tableName)
 
 	var addConstraints []string
 	for i, group := range uqGroups {
@@ -356,8 +294,80 @@ func contains(slice []string, val string) bool {
 	return false
 }
 
-func SyncTable(ctx context.Context, conn *sql.Conn, table any) error {
-	tableName := getTableName(table)
+func createTableQuery(tableName string, fields []fieldInfo) string {
+	var columnDefs []string
+	var compositeKeyGroup []string
+	for _, field := range fields {
+		columnDefs = append(columnDefs, fmt.Sprintf("%s %s", field.Name, field.Type))
+		if field.IsComposite {
+			compositeKeyGroup = append(compositeKeyGroup, field.Name)
+		}
+	}
+
+	columnSQL := strings.Join(columnDefs, ", ")
+	if len(compositeKeyGroup) > 0 {
+		compositeKeySQL := fmt.Sprintf("UNIQUE(%s)", strings.Join(compositeKeyGroup, ", "))
+		columnSQL += ", " + compositeKeySQL
+	}
+
+	return fmt.Sprintf("CREATE TABLE IF NOT EXISTS \"%s\" (%s);", tableName, columnSQL)
+}
+
+func getSQLType(fieldType reflect.Type, autoincr bool) string {
+	if autoincr {
+		switch fieldType.Kind() {
+		case reflect.Int, reflect.Int32, reflect.Int64, reflect.Uint64:
+			return "INTEGER PRIMARY KEY AUTOINCREMENT"
+		}
+	}
+
+	switch fieldType.Kind() {
+	case reflect.Int, reflect.Int32:
+		return "INTEGER"
+	case reflect.Int64, reflect.Uint64:
+		return "INTEGER"
+	case reflect.Float32, reflect.Float64:
+		return "REAL"
+	case reflect.Bool:
+		return "BOOLEAN"
+	case reflect.String:
+		return "TEXT"
+	case reflect.Struct:
+		if fieldType == reflect.TypeOf(time.Time{}) {
+			return "DATETIME"
+		}
+	}
+
+	return ""
+}
+
+func tableExists(ctx context.Context, conn *sql.Conn, tableName string) (bool, error) {
+	tableQuery := "SELECT name FROM sqlite_master WHERE type='table' AND name=?;"
+	var name string
+	err := conn.QueryRowContext(ctx, tableQuery, tableName).Scan(&name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, fmt.Errorf("error checking if table exists: %v", err)
+	}
+
+	return true, nil
+}
+
+func generateAddColumnQuery(tableName string, missingColumns []string) string {
+	alterQuery := fmt.Sprintf("ALTER TABLE \"%s\" ", tableName)
+	var addColumns []string
+	for _, col := range missingColumns {
+		addColumns = append(addColumns, fmt.Sprintf("ADD COLUMN %s", col))
+	}
+
+	alterQuery += strings.Join(addColumns, ", ")
+	return alterQuery
+}
+
+func SyncTable(ctx context.Context, conn *sql.Conn, table interface{}) error {
+	tableName := GenerateTableName(table)
 	fields, err := getTableInfo(table)
 	if err != nil {
 		return err
@@ -373,9 +383,9 @@ func SyncTable(ctx context.Context, conn *sql.Conn, table any) error {
 		if err = addMissingColumns(ctx, conn, tableName, fields); err != nil {
 			return err
 		}
-		//if err = updateUniqueCompositeConstraints(ctx, p.conn, tableName); err != nil {
-		//	return err
-		//}
+		// if err = updateUniqueCompositeConstraints(ctx, conn, tableName); err != nil {
+		// 	return err
+		// }
 	}
 	return nil
 }

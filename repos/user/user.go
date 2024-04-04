@@ -4,15 +4,15 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
-	isql "github.com/masudur-rahman/database/sql"
+	isql "github.com/masudur-rahman/styx/sql"
 )
 
 type SQLUserRepository struct {
-	db     isql.Database
+	db     isql.Engine
 	logger logr.Logger
 }
 
-func NewSQLUserRepository(db isql.Database, logger logr.Logger) *SQLUserRepository {
+func NewSQLUserRepository(db isql.Engine, logger logr.Logger) *SQLUserRepository {
 	return &SQLUserRepository{
 		db:     db.Table("user"),
 		logger: logger,
