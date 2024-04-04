@@ -3,11 +3,11 @@ package repos
 import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
-	"github.com/masudur-rahman/database"
+	"github.com/masudur-rahman/styx"
 )
 
 type TransactionRepository interface {
-	WithUnitOfWork(uow database.UnitOfWork) TransactionRepository
+	WithUnitOfWork(uow styx.UnitOfWork) TransactionRepository
 	AddTransaction(txn models.Transaction) error
 	ListTransactionsByCategory(userID int64, catID string) ([]models.Transaction, error)
 	ListTransactions(filter models.Transaction) ([]models.Transaction, error)

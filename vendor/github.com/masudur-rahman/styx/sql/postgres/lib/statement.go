@@ -101,12 +101,21 @@ func (stmt Statement) ShowSQL(showSQL bool) Statement {
 	return stmt
 }
 
-func (stmt Statement) GenerateReadQuery() string {
+func (stmt Statement) GenerateReadQuery(doc any) string {
 	var cols string
 	if stmt.allCols || len(stmt.columns) == 0 {
 		cols = "*"
 	} else {
 		cols = strings.Join(stmt.columns, ", ")
+	}
+
+	if stmt.table == "" {
+		val := reflect.ValueOf(doc)
+		if val.Kind() == reflect.Slice {
+			doc = val.Index(0).Interface()
+		}
+
+		stmt.table = GenerateTableName(doc)
 	}
 
 	query := fmt.Sprintf("SELECT %s FROM \"%s\"", cols, stmt.table)
@@ -185,6 +194,10 @@ func (stmt Statement) GenerateInsertQuery(doc any) string {
 		values = append(values, value)
 	}
 
+	if stmt.table == "" {
+		stmt.table = GenerateTableName(doc)
+	}
+
 	colClause := strings.Join(cols, ", ")
 	valClause := strings.Join(values, ", ")
 	query := fmt.Sprintf("INSERT INTO \"%s\" (%s) VALUES (%s)", stmt.table, colClause, valClause)
@@ -218,7 +231,6 @@ func (stmt Statement) ExecuteWriteQuery(ctx context.Context, conn *sql.Conn, tx 
 	if tx != nil {
 		return tx.ExecContext(ctx, query, stmt.args...)
 	}
-
 	return conn.ExecContext(ctx, query, stmt.args...)
 }
 
@@ -248,6 +260,10 @@ func (stmt Statement) GenerateUpdateQuery(doc any) string {
 		value := formatValues(rvalue.Field(idx).Interface())
 		setValue := fmt.Sprintf("%s = %s", col, value)
 		setValues = append(setValues, setValue)
+	}
+
+	if stmt.table == "" {
+		stmt.table = GenerateTableName(doc)
 	}
 
 	setClause := strings.Join(setValues, ", ")

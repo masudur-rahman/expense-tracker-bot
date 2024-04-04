@@ -12,7 +12,7 @@ import (
 	txnsvc "github.com/masudur-rahman/expense-tracker-bot/services/transaction"
 	usersvc "github.com/masudur-rahman/expense-tracker-bot/services/user"
 
-	"github.com/masudur-rahman/database"
+	"github.com/masudur-rahman/styx"
 )
 
 type Services struct {
@@ -29,7 +29,7 @@ func GetServices() *Services {
 	return svc
 }
 
-func InitiateSQLServices(uow database.UnitOfWork, logger logr.Logger) {
+func InitiateSQLServices(uow styx.UnitOfWork, logger logr.Logger) {
 	userRepo := user.NewSQLUserRepository(uow.SQL, logger)
 	accRepo := accounts.NewSQLAccountsRepository(uow.SQL, logger)
 	drCrRepo := user.NewSQLDebtorCreditorRepository(uow.SQL, logger)

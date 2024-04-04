@@ -9,23 +9,23 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
-	"github.com/masudur-rahman/database"
-	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/styx"
+	isql "github.com/masudur-rahman/styx/sql"
 )
 
 type SQLTransactionRepository struct {
-	db     isql.Database
+	db     isql.Engine
 	logger logr.Logger
 }
 
-func NewSQLTransactionRepository(db isql.Database, logger logr.Logger) *SQLTransactionRepository {
+func NewSQLTransactionRepository(db isql.Engine, logger logr.Logger) *SQLTransactionRepository {
 	return &SQLTransactionRepository{
 		db:     db.Table("transaction"),
 		logger: logger,
 	}
 }
 
-func (t *SQLTransactionRepository) WithUnitOfWork(uow database.UnitOfWork) repos.TransactionRepository {
+func (t *SQLTransactionRepository) WithUnitOfWork(uow styx.UnitOfWork) repos.TransactionRepository {
 	return &SQLTransactionRepository{
 		db:     uow.SQL.Table("transaction"),
 		logger: t.logger,

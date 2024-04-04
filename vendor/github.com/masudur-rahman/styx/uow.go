@@ -1,14 +1,14 @@
-package database
+package styx
 
 import (
-	"github.com/masudur-rahman/database/nosql"
-	"github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/styx/nosql"
+	"github.com/masudur-rahman/styx/sql"
 )
 
 // UnitOfWork represents the unit of work for coordinating transactions
 type UnitOfWork struct {
-	SQL   sql.Database
-	NoSQL nosql.Database
+	SQL   sql.Engine
+	NoSQL nosql.Engine
 }
 
 // Begin starts a new transaction

@@ -8,23 +8,23 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
-	"github.com/masudur-rahman/database"
-	isql "github.com/masudur-rahman/database/sql"
+	"github.com/masudur-rahman/styx"
+	isql "github.com/masudur-rahman/styx/sql"
 )
 
 type SQLDebtorCreditorRepository struct {
-	db     isql.Database
+	db     isql.Engine
 	logger logr.Logger
 }
 
-func NewSQLDebtorCreditorRepository(db isql.Database, logger logr.Logger) *SQLDebtorCreditorRepository {
+func NewSQLDebtorCreditorRepository(db isql.Engine, logger logr.Logger) *SQLDebtorCreditorRepository {
 	return &SQLDebtorCreditorRepository{
 		db:     db.Table("debtors_creditors"),
 		logger: logger,
 	}
 }
 
-func (u *SQLDebtorCreditorRepository) WithUnitOfWork(uow database.UnitOfWork) repos.DebtorCreditorRepository {
+func (u *SQLDebtorCreditorRepository) WithUnitOfWork(uow styx.UnitOfWork) repos.DebtorCreditorRepository {
 	return &SQLDebtorCreditorRepository{
 		db:     uow.SQL.Table("debtors_creditors"),
 		logger: u.logger,

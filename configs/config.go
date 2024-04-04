@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/masudur-rahman/database/sql/postgres/lib"
+	"github.com/masudur-rahman/styx/sql/postgres/lib"
 )
 
 var TrackerConfig ExpenseConfiguration
