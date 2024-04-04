@@ -5,7 +5,9 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
+	"github.com/masudur-rahman/database"
 	isql "github.com/masudur-rahman/database/sql"
 )
 
@@ -18,6 +20,13 @@ func NewSQLAccountsRepository(db isql.Database, logger logr.Logger) *SQLAccounts
 	return &SQLAccountsRepository{
 		db:     db.Table("account"),
 		logger: logger,
+	}
+}
+
+func (a *SQLAccountsRepository) WithUnitOfWork(uow database.UnitOfWork) repos.AccountsRepository {
+	return &SQLAccountsRepository{
+		db:     uow.SQL.Table("account"),
+		logger: a.logger,
 	}
 }
 

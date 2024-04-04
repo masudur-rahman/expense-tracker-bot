@@ -118,14 +118,23 @@ func (stmt Statement) GenerateReadQuery() string {
 	return query
 }
 
-func (stmt Statement) ExecuteReadQuery(ctx context.Context, conn *sql.Conn, query string, doc any) error {
+func (stmt Statement) ExecuteReadQuery(ctx context.Context, conn *sql.Conn, tx *sql.Tx, query string, doc any) error {
 	//defer  stmt.cleanup()
 
 	if stmt.showSQL {
 		log.Printf("Read Query: query: %v, args: %v\n", query, stmt.args)
 	}
 
-	rows, err := conn.QueryContext(ctx, query, stmt.args...)
+	var (
+		err  error
+		rows *sql.Rows
+	)
+
+	if tx != nil {
+		rows, err = tx.QueryContext(ctx, query, stmt.args...)
+	} else {
+		rows, err = conn.QueryContext(ctx, query, stmt.args...)
+	}
 	if err != nil {
 		return err
 	}
@@ -183,25 +192,34 @@ func (stmt Statement) GenerateInsertQuery(doc any) string {
 	return query
 }
 
-func (stmt Statement) ExecuteInsertQuery(ctx context.Context, conn *sql.Conn, query string) (any, error) {
+func (stmt Statement) ExecuteInsertQuery(ctx context.Context, conn *sql.Conn, tx *sql.Tx, query string) (any, error) {
 	query += " RETURNING id;"
 	if stmt.showSQL {
 		log.Printf("Insert Query: query: %v, args: %v\n", query, stmt.args)
 	}
 
-	var id any
-	err := conn.QueryRowContext(ctx, query, stmt.args...).Scan(&id)
+	var (
+		id  any
+		err error
+	)
+	if tx != nil {
+		err = tx.QueryRowContext(ctx, query, stmt.args...).Scan(&id)
+	} else {
+		err = conn.QueryRowContext(ctx, query, stmt.args...).Scan(&id)
+	}
 	return id, err
 }
 
-func (stmt Statement) ExecuteWriteQuery(ctx context.Context, conn *sql.Conn, query string) (sql.Result, error) {
+func (stmt Statement) ExecuteWriteQuery(ctx context.Context, conn *sql.Conn, tx *sql.Tx, query string) (sql.Result, error) {
 	if stmt.showSQL {
 		log.Printf("Write Query: query: %v, args: %v\n", query, stmt.args)
 	}
 
-	result, err := conn.ExecContext(ctx, query, stmt.args...)
+	if tx != nil {
+		return tx.ExecContext(ctx, query, stmt.args...)
+	}
 
-	return result, err
+	return conn.ExecContext(ctx, query, stmt.args...)
 }
 
 func (stmt Statement) generateMustColMap() map[string]bool {

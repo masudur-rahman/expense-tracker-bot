@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	isql "github.com/masudur-rahman/database/sql"
 	"github.com/masudur-rahman/database/sql/postgres/lib"
@@ -11,11 +12,44 @@ import (
 type Postgres struct {
 	ctx       context.Context
 	conn      *sql.Conn
+	tx        *sql.Tx
 	statement lib.Statement
 }
 
 func NewPostgres(ctx context.Context, conn *sql.Conn) Postgres {
 	return Postgres{ctx: ctx, conn: conn}
+}
+
+var _ isql.Database = Postgres{}
+
+func (pg Postgres) BeginTx() (isql.Database, error) {
+	if pg.tx != nil {
+		return nil, errors.New("session already in progress")
+	}
+	tx, err := pg.conn.BeginTx(pg.ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	pg.tx = tx
+	return pg, nil
+}
+
+func (pg Postgres) Commit() error {
+	if pg.tx == nil {
+		return errors.New("no transaction in progress")
+	}
+	err := pg.tx.Commit()
+	pg.tx = nil
+	return err
+}
+
+func (pg Postgres) Rollback() error {
+	if pg.tx == nil {
+		return errors.New("no transaction in progress")
+	}
+	err := pg.tx.Rollback()
+	pg.tx = nil
+	return err
 }
 
 func (pg Postgres) Table(name string) isql.Database {
@@ -66,7 +100,7 @@ func (pg Postgres) FindOne(document any, filter ...any) (bool, error) {
 	}
 
 	query := pg.statement.GenerateReadQuery()
-	err := pg.statement.ExecuteReadQuery(pg.ctx, pg.conn, query, document)
+	err := pg.statement.ExecuteReadQuery(pg.ctx, pg.conn, pg.tx, query, document)
 	if err == nil {
 		return true, nil
 	}
@@ -81,19 +115,19 @@ func (pg Postgres) FindMany(documents any, filter ...any) error {
 	pg.statement = pg.statement.GenerateWhereClause(filter...)
 
 	query := pg.statement.GenerateReadQuery()
-	return pg.statement.ExecuteReadQuery(pg.ctx, pg.conn, query, documents)
+	return pg.statement.ExecuteReadQuery(pg.ctx, pg.conn, pg.tx, query, documents)
 }
 
 func (pg Postgres) InsertOne(document any) (id any, err error) {
 	query := pg.statement.GenerateInsertQuery(document)
-	return pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, query)
+	return pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, pg.tx, query)
 }
 
 func (pg Postgres) InsertMany(documents []any) ([]any, error) {
 	var ids []any
 	for _, doc := range documents {
 		query := pg.statement.GenerateInsertQuery(doc)
-		id, err := pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, query)
+		id, err := pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, pg.tx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +144,7 @@ func (pg Postgres) UpdateOne(document any) error {
 	}
 
 	query := pg.statement.GenerateUpdateQuery(document)
-	_, err := pg.statement.ExecuteWriteQuery(pg.ctx, pg.conn, query)
+	_, err := pg.statement.ExecuteWriteQuery(pg.ctx, pg.conn, pg.tx, query)
 	return err
 }
 
@@ -121,7 +155,7 @@ func (pg Postgres) DeleteOne(filter ...any) error {
 	}
 
 	query := pg.statement.GenerateDeleteQuery()
-	_, err := pg.statement.ExecuteWriteQuery(pg.ctx, pg.conn, query)
+	_, err := pg.statement.ExecuteWriteQuery(pg.ctx, pg.conn, pg.tx, query)
 	return err
 }
 
@@ -144,8 +178,8 @@ func (pg Postgres) Sync(tables ...any) error {
 	return nil
 }
 
-func (p Postgres) Close() error {
-	return p.conn.Close()
+func (pg Postgres) Close() error {
+	return pg.conn.Close()
 }
 
 func (pg Postgres) cleanup() {

@@ -5,6 +5,10 @@ import (
 )
 
 type Database interface {
+	BeginTx() (Database, error)
+	Commit() error
+	Rollback() error
+
 	Table(name string) Database
 
 	ID(id any) Database

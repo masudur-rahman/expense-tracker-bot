@@ -6,7 +6,9 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
+	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
+	"github.com/masudur-rahman/database"
 	isql "github.com/masudur-rahman/database/sql"
 )
 
@@ -19,6 +21,13 @@ func NewSQLDebtorCreditorRepository(db isql.Database, logger logr.Logger) *SQLDe
 	return &SQLDebtorCreditorRepository{
 		db:     db.Table("debtors_creditors"),
 		logger: logger,
+	}
+}
+
+func (u *SQLDebtorCreditorRepository) WithUnitOfWork(uow database.UnitOfWork) repos.DebtorCreditorRepository {
+	return &SQLDebtorCreditorRepository{
+		db:     uow.SQL.Table("debtors_creditors"),
+		logger: u.logger,
 	}
 }
 

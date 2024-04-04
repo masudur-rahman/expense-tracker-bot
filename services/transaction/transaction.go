@@ -5,17 +5,21 @@ import (
 
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
+
+	"github.com/masudur-rahman/database"
 )
 
 type txnService struct {
+	uow       database.UnitOfWork
 	acRepo    repos.AccountsRepository
 	drCrRepo  repos.DebtorCreditorRepository
 	txnRepo   repos.TransactionRepository
 	eventRepo repos.EventRepository
 }
 
-func NewTxnService(acRepo repos.AccountsRepository, drCrRepo repos.DebtorCreditorRepository, txnRepo repos.TransactionRepository, evRepo repos.EventRepository) *txnService {
+func NewTxnService(uow database.UnitOfWork, acRepo repos.AccountsRepository, drCrRepo repos.DebtorCreditorRepository, txnRepo repos.TransactionRepository, evRepo repos.EventRepository) *txnService {
 	return &txnService{
+		uow:       uow,
 		acRepo:    acRepo,
 		drCrRepo:  drCrRepo,
 		txnRepo:   txnRepo,
@@ -30,49 +34,62 @@ func (ts *txnService) AddTransaction(txn models.Transaction) error {
 	if txn.SubcategoryID == "" {
 		return fmt.Errorf("subcategory is required")
 	}
+
+	uow, err := ts.uow.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			err = uow.Rollback()
+			return
+		}
+		err = uow.Commit()
+	}()
+
 	switch txn.Type {
 	case models.ExpenseTransaction:
 		switch txn.SubcategoryID {
 		case models.LoanSubcategoryID, models.BorrowReturnSubID:
-			if err := ts.updateDebtorCreditorBalance(txn, txn.Amount); err != nil {
+			if err = ts.updateDebtorCreditorBalance(uow, txn, txn.Amount); err != nil {
 				return err
 			}
 		case models.BorrowSubcategoryID, models.LoanRecoverySubID:
 			return fmt.Errorf("borrow or loan recovery type expense should be under Income type")
 		}
-		if err := ts.acRepo.UpdateAccountBalance(txn.UserID, txn.SrcID, -txn.Amount); err != nil {
+		if err = ts.acRepo.WithUnitOfWork(uow).UpdateAccountBalance(txn.UserID, txn.SrcID, -txn.Amount); err != nil {
 			return err
 		}
 	case models.IncomeTransaction:
 		switch txn.SubcategoryID {
 		case models.BorrowSubcategoryID, models.LoanRecoverySubID:
-			if err := ts.updateDebtorCreditorBalance(txn, -txn.Amount); err != nil {
+			if err = ts.updateDebtorCreditorBalance(uow, txn, -txn.Amount); err != nil {
 				return err
 			}
 		case models.LoanSubcategoryID, models.BorrowReturnSubID:
 			return fmt.Errorf("loan or borrow return type expense should be under Expense type")
 		}
-		if err := ts.acRepo.UpdateAccountBalance(txn.UserID, txn.DstID, txn.Amount); err != nil {
+		if err = ts.acRepo.WithUnitOfWork(uow).UpdateAccountBalance(txn.UserID, txn.DstID, txn.Amount); err != nil {
 			return err
 		}
 	case models.TransferTransaction:
-		if err := ts.acRepo.UpdateAccountBalance(txn.UserID, txn.SrcID, -txn.Amount); err != nil {
+		if err = ts.acRepo.WithUnitOfWork(uow).UpdateAccountBalance(txn.UserID, txn.SrcID, -txn.Amount); err != nil {
 			return err
 		}
-		if err := ts.acRepo.UpdateAccountBalance(txn.UserID, txn.DstID, txn.Amount); err != nil {
+		if err = ts.acRepo.WithUnitOfWork(uow).UpdateAccountBalance(txn.UserID, txn.DstID, txn.Amount); err != nil {
 			return err
 		}
 	}
-	return ts.txnRepo.AddTransaction(txn)
+	return ts.txnRepo.WithUnitOfWork(uow).AddTransaction(txn)
 }
 
-func (ts *txnService) updateDebtorCreditorBalance(txn models.Transaction, amount float64) error {
-	drcr, err := ts.drCrRepo.GetDebtorCreditorByName(txn.UserID, txn.DebtorCreditorName)
+func (ts *txnService) updateDebtorCreditorBalance(uow database.UnitOfWork, txn models.Transaction, amount float64) error {
+	drcr, err := ts.drCrRepo.WithUnitOfWork(uow).GetDebtorCreditorByName(txn.UserID, txn.DebtorCreditorName)
 	if err != nil {
 		return err
 	}
 
-	return ts.drCrRepo.UpdateDebtorCreditorBalance(drcr.ID, amount)
+	return ts.drCrRepo.WithUnitOfWork(uow).UpdateDebtorCreditorBalance(drcr.ID, amount)
 }
 
 func (ts *txnService) ListTransactionsByType(userID int64, txnType models.TransactionType) ([]models.Transaction, error) {
