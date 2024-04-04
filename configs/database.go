@@ -12,12 +12,12 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/modules/google"
 	"github.com/masudur-rahman/expense-tracker-bot/services/all"
 
-	"github.com/masudur-rahman/database"
-	isql "github.com/masudur-rahman/database/sql"
-	"github.com/masudur-rahman/database/sql/postgres"
-	sqlib "github.com/masudur-rahman/database/sql/postgres/lib"
-	"github.com/masudur-rahman/database/sql/sqlite"
-	"github.com/masudur-rahman/database/sql/sqlite/lib"
+	"github.com/masudur-rahman/styx"
+	isql "github.com/masudur-rahman/styx/sql"
+	"github.com/masudur-rahman/styx/sql/postgres"
+	sqlib "github.com/masudur-rahman/styx/sql/postgres/lib"
+	"github.com/masudur-rahman/styx/sql/sqlite"
+	"github.com/masudur-rahman/styx/sql/sqlite/lib"
 )
 
 func InitiateDatabaseConnection(ctx context.Context) error {
@@ -28,7 +28,7 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		return initializeSQLServices(database.UnitOfWork{SQL: db})
+		return initializeSQLServices(styx.UnitOfWork{SQL: db})
 	case DatabaseSQLite, "":
 		if cfg.SQLite.SyncToDrive {
 			if !cfg.SQLite.DisableSyncFromDrive {
@@ -44,13 +44,13 @@ func InitiateDatabaseConnection(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		return initializeSQLServices(database.UnitOfWork{SQL: db})
+		return initializeSQLServices(styx.UnitOfWork{SQL: db})
 	default:
 		return fmt.Errorf("unknown database type")
 	}
 }
 
-func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
+func getSQLiteDatabase(ctx context.Context) (isql.Engine, error) {
 	conn, err := lib.GetSQLiteConnection(google.DatabasePath())
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func getSQLiteDatabase(ctx context.Context) (isql.Database, error) {
 	return sqlite.NewSQLite(ctx, conn), nil
 }
 
-func initializeSQLServices(uow database.UnitOfWork) error {
+func initializeSQLServices(uow styx.UnitOfWork) error {
 	if err := syncTables(uow.SQL); err != nil {
 		return err
 	}
@@ -71,13 +71,13 @@ func initializeSQLServices(uow database.UnitOfWork) error {
 //func getServicesForSupabase(ctx context.Context) *all.Services {
 //	supClient := supabase.InitializeSupabase(ctx)
 //
-//	var db isql.Database
+//	var db isql.Engine
 //	db = supabase.NewSupabase(ctx, supClient)
 //	logger := logr.DefaultLogger
 //	return all.InitiateSQLServices(db, logger)
 //}
 
-func getPostgresDatabase(ctx context.Context) (isql.Database, error) {
+func getPostgresDatabase(ctx context.Context) (isql.Engine, error) {
 	parsePostgresConfig()
 	conn, err := sqlib.GetPostgresConnection(TrackerConfig.Database.Postgres)
 	if err != nil {
@@ -101,7 +101,7 @@ func pingPostgresDatabasePeriodically(ctx context.Context, cfg sqlib.PostgresCon
 				}
 
 				db := postgres.NewPostgres(ctx, conn).ShowSQL(true)
-				all.InitiateSQLServices(database.UnitOfWork{SQL: db}, logger)
+				all.InitiateSQLServices(styx.UnitOfWork{SQL: db}, logger)
 				logger.Infow("New connection established")
 			}
 		}
@@ -135,7 +135,7 @@ func parsePostgresConfig() {
 	}
 }
 
-func syncTables(db isql.Database) error {
+func syncTables(db isql.Engine) error {
 	return db.Sync(
 		models.User{},
 		models.DebtorsCreditors{},

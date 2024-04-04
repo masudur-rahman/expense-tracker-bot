@@ -4,17 +4,17 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/infra/logr"
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
-	isql "github.com/masudur-rahman/database/sql"
+	isql "github.com/masudur-rahman/styx/sql"
 
 	"github.com/rs/xid"
 )
 
 type SQLExpenseRepository struct {
-	db     isql.Database
+	db     isql.Engine
 	logger logr.Logger
 }
 
-func NewSQLExpenseRepository(db isql.Database, logger logr.Logger) *SQLExpenseRepository {
+func NewSQLExpenseRepository(db isql.Engine, logger logr.Logger) *SQLExpenseRepository {
 	return &SQLExpenseRepository{
 		db:     db.Table("expense"),
 		logger: logger,

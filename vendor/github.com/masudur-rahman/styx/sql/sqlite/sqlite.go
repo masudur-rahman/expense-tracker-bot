@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	isql "github.com/masudur-rahman/database/sql"
-	"github.com/masudur-rahman/database/sql/sqlite/lib"
+	isql "github.com/masudur-rahman/styx/sql"
+	"github.com/masudur-rahman/styx/sql/sqlite/lib"
 
 	_ "modernc.org/sqlite"
 )
@@ -22,9 +22,9 @@ func NewSQLite(ctx context.Context, conn *sql.Conn) SQLite {
 	return SQLite{ctx: ctx, conn: conn}
 }
 
-var _ isql.Database = SQLite{}
+var _ isql.Engine = SQLite{}
 
-func (sq SQLite) BeginTx() (isql.Database, error) {
+func (sq SQLite) BeginTx() (isql.Engine, error) {
 	if sq.tx != nil {
 		return nil, errors.New("session already in progress")
 	}
@@ -54,42 +54,42 @@ func (sq SQLite) Rollback() error {
 	return err
 }
 
-func (sq SQLite) Table(name string) isql.Database {
+func (sq SQLite) Table(name string) isql.Engine {
 	sq.statement = sq.statement.Table(name)
 	return sq
 }
 
-func (sq SQLite) ID(id any) isql.Database {
+func (sq SQLite) ID(id any) isql.Engine {
 	sq.statement = sq.statement.ID(id)
 	return sq
 }
 
-func (sq SQLite) In(col string, values ...any) isql.Database {
+func (sq SQLite) In(col string, values ...any) isql.Engine {
 	sq.statement = sq.statement.In(col, values...)
 	return sq
 }
 
-func (sq SQLite) Where(cond string, args ...any) isql.Database {
+func (sq SQLite) Where(cond string, args ...any) isql.Engine {
 	sq.statement = sq.statement.Where(cond, args...)
 	return sq
 }
 
-func (sq SQLite) Columns(cols ...string) isql.Database {
+func (sq SQLite) Columns(cols ...string) isql.Engine {
 	sq.statement = sq.statement.Columns(cols...)
 	return sq
 }
 
-func (sq SQLite) AllCols() isql.Database {
+func (sq SQLite) AllCols() isql.Engine {
 	sq.statement = sq.statement.AllCols()
 	return sq
 }
 
-func (sq SQLite) MustCols(cols ...string) isql.Database {
+func (sq SQLite) MustCols(cols ...string) isql.Engine {
 	sq.statement = sq.statement.MustCols(cols...)
 	return sq
 }
 
-func (sq SQLite) ShowSQL(showSQL bool) isql.Database {
+func (sq SQLite) ShowSQL(showSQL bool) isql.Engine {
 	sq.statement = sq.statement.ShowSQL(showSQL)
 	return sq
 }
@@ -101,7 +101,7 @@ func (sq SQLite) FindOne(document any, filter ...any) (bool, error) {
 		return false, err
 	}
 
-	query := sq.statement.GenerateReadQuery()
+	query := sq.statement.GenerateReadQuery(document)
 	err := sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, sq.tx, query, document)
 	if err == nil {
 		return true, nil
@@ -116,7 +116,7 @@ func (sq SQLite) FindOne(document any, filter ...any) (bool, error) {
 func (sq SQLite) FindMany(documents any, filter ...any) error {
 	sq.statement = sq.statement.GenerateWhereClause(filter...)
 
-	query := sq.statement.GenerateReadQuery()
+	query := sq.statement.GenerateReadQuery(documents)
 	return sq.statement.ExecuteReadQuery(sq.ctx, sq.conn, sq.tx, query, documents)
 }
 

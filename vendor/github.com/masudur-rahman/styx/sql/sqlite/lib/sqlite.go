@@ -9,28 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/masudur-rahman/database/pkg"
-	"github.com/masudur-rahman/database/sql/postgres/pg-grpc/pb"
+	"github.com/masudur-rahman/styx/pkg"
+	"github.com/masudur-rahman/styx/sql/postgres/pg-grpc/pb"
 
 	"github.com/iancoleman/strcase"
-	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
 )
 
-type PostgresConfig struct {
-	Name     string `json:"name" yaml:"name"`
-	Host     string `json:"host" yaml:"host"`
-	Port     string `json:"port" yaml:"port"`
-	User     string `json:"user" yaml:"user"`
-	Password string `json:"password" yaml:"password"`
-	SSLMode  string `json:"sslmode" yaml:"sslmode"`
-}
-
-func (cp PostgresConfig) String() string {
-	return fmt.Sprintf("user=%v password=%v dbname=%v host=%v port=%v sslmode=%v", cp.User, cp.Password, cp.Name, cp.Host, cp.Port, cp.SSLMode)
-}
-
-func GetPostgresConnection(cfg PostgresConfig) (*sql.Conn, error) {
-	db, err := sql.Open("postgres", cfg.String())
+func GetSQLiteConnection(dbPath string) (*sql.Conn, error) {
+	//db, err := sql.Open("sqlite3", dbPath) // mattn/go-sqlite3 library (cgo-enabled)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -40,10 +28,7 @@ func GetPostgresConnection(cfg PostgresConfig) (*sql.Conn, error) {
 		return nil, err
 	}
 
-	if err = conn.PingContext(context.Background()); err != nil {
-		return nil, err
-	}
-	return conn, nil
+	return conn, conn.PingContext(context.Background())
 }
 
 func IsZeroValue(value any) bool {

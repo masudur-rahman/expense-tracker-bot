@@ -3,11 +3,11 @@ package repos
 import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 
-	"github.com/masudur-rahman/database"
+	"github.com/masudur-rahman/styx"
 )
 
 type DebtorCreditorRepository interface {
-	WithUnitOfWork(uow database.UnitOfWork) DebtorCreditorRepository
+	WithUnitOfWork(uow styx.UnitOfWork) DebtorCreditorRepository
 	GetDebtorCreditorByID(id int64) (*models.DebtorsCreditors, error)
 	GetDebtorCreditorByName(userID int64, name string) (*models.DebtorsCreditors, error)
 	ListDebtorCreditors(userID int64) ([]models.DebtorsCreditors, error)

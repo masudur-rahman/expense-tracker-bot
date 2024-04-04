@@ -4,20 +4,20 @@ import (
 	"database/sql"
 )
 
-type Database interface {
-	BeginTx() (Database, error)
+type Engine interface {
+	BeginTx() (Engine, error)
 	Commit() error
 	Rollback() error
 
-	Table(name string) Database
+	Table(name string) Engine
 
-	ID(id any) Database
-	In(col string, values ...any) Database
-	Where(cond string, args ...any) Database
-	Columns(cols ...string) Database
-	AllCols() Database
-	MustCols(cols ...string) Database
-	ShowSQL(showSQL bool) Database
+	ID(id any) Engine
+	In(col string, values ...any) Engine
+	Where(cond string, args ...any) Engine
+	Columns(cols ...string) Engine
+	AllCols() Engine
+	MustCols(cols ...string) Engine
+	ShowSQL(showSQL bool) Engine
 
 	FindOne(document any, filter ...any) (bool, error)
 	FindMany(documents any, filter ...any) error

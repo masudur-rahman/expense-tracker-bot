@@ -6,18 +6,18 @@ import (
 	"github.com/masudur-rahman/expense-tracker-bot/models"
 	"github.com/masudur-rahman/expense-tracker-bot/repos"
 
-	"github.com/masudur-rahman/database"
+	"github.com/masudur-rahman/styx"
 )
 
 type txnService struct {
-	uow       database.UnitOfWork
+	uow       styx.UnitOfWork
 	acRepo    repos.AccountsRepository
 	drCrRepo  repos.DebtorCreditorRepository
 	txnRepo   repos.TransactionRepository
 	eventRepo repos.EventRepository
 }
 
-func NewTxnService(uow database.UnitOfWork, acRepo repos.AccountsRepository, drCrRepo repos.DebtorCreditorRepository, txnRepo repos.TransactionRepository, evRepo repos.EventRepository) *txnService {
+func NewTxnService(uow styx.UnitOfWork, acRepo repos.AccountsRepository, drCrRepo repos.DebtorCreditorRepository, txnRepo repos.TransactionRepository, evRepo repos.EventRepository) *txnService {
 	return &txnService{
 		uow:       uow,
 		acRepo:    acRepo,
@@ -83,7 +83,7 @@ func (ts *txnService) AddTransaction(txn models.Transaction) error {
 	return ts.txnRepo.WithUnitOfWork(uow).AddTransaction(txn)
 }
 
-func (ts *txnService) updateDebtorCreditorBalance(uow database.UnitOfWork, txn models.Transaction, amount float64) error {
+func (ts *txnService) updateDebtorCreditorBalance(uow styx.UnitOfWork, txn models.Transaction, amount float64) error {
 	drcr, err := ts.drCrRepo.WithUnitOfWork(uow).GetDebtorCreditorByName(txn.UserID, txn.DebtorCreditorName)
 	if err != nil {
 		return err
