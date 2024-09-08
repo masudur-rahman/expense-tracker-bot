@@ -29,6 +29,7 @@ VERSION ?= $(shell git describe --tags --always --dirty)
 ###
 
 SRC_DIRS := api cmd infra models pkg repos services # directories which hold app source (not vendored)
+EXCLUDE_DIRS := vendor,hack,bin,.go
 
 #ALL_PLATFORMS := darwin/arm64 linux/amd64 linux/arm linux/arm64 linux/ppc64le linux/s390x windows/amd64
 ALL_PLATFORMS := linux/arm64 linux/amd64
@@ -172,7 +173,7 @@ fmt: $(BUILD_DIRS)
 	    --env HTTP_PROXY=$(HTTP_PROXY)                          \
 	    --env HTTPS_PROXY=$(HTTPS_PROXY)                        \
 	    $(BUILD_IMAGE)                                          \
-	    ./hack/fmt.sh $(SRC_DIRS)
+	    ./hack/fmt.sh $(EXCLUDE_DIRS)
 
 verify-fmt: fmt
 	@if !(git diff --exit-code HEAD); then 						\
