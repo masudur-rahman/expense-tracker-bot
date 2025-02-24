@@ -23,6 +23,7 @@ type Engine interface {
 	FindMany(documents any, filter ...any) error
 
 	InsertOne(document any) (id any, err error)
+	// TODO: might need to convert []any to just any
 	InsertMany(documents []any) ([]any, error)
 
 	UpdateOne(document any) error

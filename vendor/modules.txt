@@ -73,7 +73,7 @@ github.com/lib/pq/scram
 # github.com/masudur-rahman/go-oneliners v1.0.0
 ## explicit; go 1.19
 github.com/masudur-rahman/go-oneliners
-# github.com/masudur-rahman/styx v1.2.0
+# github.com/masudur-rahman/styx v1.2.2
 ## explicit; go 1.20
 github.com/masudur-rahman/styx
 github.com/masudur-rahman/styx/nosql

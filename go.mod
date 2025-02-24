@@ -6,7 +6,7 @@ require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/masudur-rahman/go-oneliners v1.0.0
-	github.com/masudur-rahman/styx v1.2.0
+	github.com/masudur-rahman/styx v1.2.2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rs/xid v1.5.0
 	github.com/spf13/cobra v1.7.0
@@ -60,5 +60,3 @@ require (
 )
 
 replace github.com/nedpals/postgrest-go => github.com/nedpals/postgrest-go v0.1.3
-
-//replace github.com/masudur-rahman/database => ../database
