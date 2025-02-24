@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"reflect"
+	"strings"
 
 	isql "github.com/masudur-rahman/styx/sql"
 	"github.com/masudur-rahman/styx/sql/postgres/lib"
@@ -120,7 +123,11 @@ func (pg Postgres) FindMany(documents any, filter ...any) error {
 
 func (pg Postgres) InsertOne(document any) (id any, err error) {
 	query := pg.statement.GenerateInsertQuery(document)
-	return pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, pg.tx, query)
+	id, err = pg.statement.ExecuteInsertQuery(pg.ctx, pg.conn, pg.tx, query)
+	if err != nil {
+		return nil, err
+	}
+	return assignID(document, id)
 }
 
 func (pg Postgres) InsertMany(documents []any) ([]any, error) {
@@ -131,10 +138,85 @@ func (pg Postgres) InsertMany(documents []any) ([]any, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// todo: test this
+		_, err = assignID(&doc, id)
+		if err != nil {
+			return nil, err
+		}
 		ids = append(ids, id)
 	}
 
 	return ids, nil
+}
+
+func assignID(document any, id any) (any, error) {
+	val := reflect.ValueOf(document)
+	if val.Kind() != reflect.Ptr {
+		return document, nil
+		// first make it backward compatible
+		// return id, fmt.Errorf("document must be a pointer to a struct")
+	}
+
+	valElem := val.Elem()
+	if valElem.Kind() != reflect.Struct {
+		return id, fmt.Errorf("document must be a pointer to a struct")
+	}
+
+	var idField = fetchIDField(valElem)
+	if !idField.CanSet() {
+		return id, fmt.Errorf("ID field is not settable")
+	}
+
+	idVal := reflect.ValueOf(id)
+	if idField.Kind() == reflect.Ptr {
+		elemType := idField.Type().Elem()
+		if !idVal.Type().AssignableTo(elemType) && !idVal.Type().ConvertibleTo(elemType) {
+			return id, fmt.Errorf("ID type %s cannot be assigned to pointer element type %s", idVal.Type(), elemType)
+		}
+		idValPtr := reflect.New(elemType)
+		if idVal.Type().AssignableTo(elemType) {
+			idValPtr.Elem().Set(idVal)
+		} else {
+			idValPtr.Elem().Set(idVal.Convert(elemType))
+		}
+		idField.Set(idValPtr)
+	} else {
+		if !idVal.Type().AssignableTo(idField.Type()) {
+			if idVal.Type().ConvertibleTo(idField.Type()) {
+				idVal = idVal.Convert(idField.Type())
+			} else {
+				return id, fmt.Errorf("ID type %s cannot be assigned or converted to field type %s", idVal.Type(), idField.Type())
+			}
+		}
+		idField.Set(idVal)
+	}
+
+	return id, nil
+}
+
+func fetchIDField(valElem reflect.Value) (idField reflect.Value) {
+	for i := 0; i < valElem.NumField(); i++ {
+		field := valElem.Type().Field(i)
+		dbTag := field.Tag.Get("db")
+		if dbTag != "" {
+			dbTag = strings.Split(dbTag, ",")[0]
+		}
+		jsonTag := field.Tag.Get("json")
+		if dbTag == "id" || jsonTag == "id" {
+			idField = valElem.Field(i)
+			return idField
+		}
+	}
+
+	idFieldNames := []string{"ID", "Id"}
+	for _, name := range idFieldNames {
+		idField = valElem.FieldByName(name)
+		if idField.IsValid() {
+			return idField
+		}
+	}
+	return
 }
 
 func (pg Postgres) UpdateOne(document any) error {
