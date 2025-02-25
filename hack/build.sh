@@ -49,10 +49,10 @@ else
 fi
 
 always_ldflags="-X $(go list -m)/pkg/version.Version=${VERSION}"
-go install                                                      \
-    -installsuffix "static"                                     \
-    -gcflags="${gogcflags}"                                     \
-    -asmflags="${goasmflags}"                                   \
-    -ldflags="${always_ldflags} ${goldflags}"                   \
-    -buildvcs=false                                             \
+go install \
+    -installsuffix "static" \
+    -gcflags="${gogcflags}" \
+    -asmflags="${goasmflags}" \
+    -ldflags="${always_ldflags} ${goldflags}" \
+    -buildvcs=false \
     "$@"
