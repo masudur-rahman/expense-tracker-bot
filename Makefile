@@ -13,22 +13,39 @@
 # limitations under the License.
 
 # The binaries to build (just the basenames).
+APP_NAME = Expense Tracker
 BIN := expense-tracker-bot
 
 # Where to push the docker image.
 REGISTRY ?= masudjuly02
 
 # This version-strategy uses git tags to set the version string
-VERSION ?= $(shell git describe --tags --always --dirty)
-#
-# This version-strategy uses a manual value to set the version string
-#VERSION ?= 1.2.3
+git_branch       := $(shell git rev-parse --abbrev-ref HEAD)
+git_tag          := $(shell git describe --exact-match --abbrev=0 2>/dev/null || echo "")
+commit_hash      := $(shell git rev-parse --verify HEAD)
+commit_timestamp := $(shell date -u -r $$(git show -s --format=%ct) +%FT%T)
+
+VERSION          := $(shell git describe --tags --always --dirty)
+version_strategy := commit_hash
+ifdef git_tag
+	VERSION := $(git_tag)
+	version_strategy := tag
+endif
+#else
+#	ifeq (,$(findstring $(git_branch),master HEAD))
+#		ifneq (,$(patsubst release-%,,$(git_branch)))
+#			VERSION := $(git_branch)
+#			version_strategy := branch
+#		endif
+#	endif
+#endif
 
 ###
 ### These variables should not need tweaking.
 ###
 
 SRC_DIRS := api cmd infra models pkg repos services # directories which hold app source (not vendored)
+EXCLUDE_DIRS := vendor,hack,bin,.go
 
 #ALL_PLATFORMS := darwin/arm64 linux/amd64 linux/arm linux/arm64 linux/ppc64le linux/s390x windows/amd64
 ALL_PLATFORMS := linux/arm64 linux/amd64
@@ -38,13 +55,13 @@ OS := $(if $(GOOS),$(GOOS),$(shell go env GOOS))
 ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
 
 #BASEIMAGE ?= gcr.io/distroless/static
-BASEIMAGE ?= debian:bullseye
+BASEIMAGE ?= debian:bookworm
 
 TAG := $(VERSION)_$(OS)_$(ARCH)
 
 DOCKER_IMAGE := $(REGISTRY)/$(BIN)
 
-GO_VERSION       ?= 1.21
+GO_VERSION       ?= 1.23
 BUILD_IMAGE      ?= ghcr.io/masudur-rahman/golang:$(GO_VERSION)
 
 BIN_EXTENSION :=
@@ -145,15 +162,22 @@ go-build: | $(BUILD_DIRS)
 	    -v $$(pwd)/.go/bin/$(OS)_$(ARCH):/go/bin                \
 	    -v $$(pwd)/.go/bin/$(OS)_$(ARCH):/go/bin/$(OS)_$(ARCH)  \
 	    -v $$(pwd)/.go/cache:/.cache                            \
-	    --env ARCH="$(ARCH)"                                    \
-	    --env OS="$(OS)"                                        \
-	    --env VERSION="$(VERSION)"                              \
 	    --env DEBUG="$(DBG)"                                    \
 	    --env GOFLAGS="$(GOFLAGS)"                              \
 	    --env HTTP_PROXY="$(HTTP_PROXY)"                        \
 	    --env HTTPS_PROXY="$(HTTPS_PROXY)"                      \
 	    $(BUILD_IMAGE)                                          \
-	    ./hack/build.sh ./...
+		/bin/bash -c "                                          \
+	        ARCH=$(ARCH)                                        \
+	        OS=$(OS)                                            \
+	        VERSION=$(VERSION)                                  \
+	        version_strategy=$(version_strategy)                \
+	        git_branch=$(git_branch)                            \
+	        git_tag=$(git_tag)                                  \
+	        commit_hash=$(commit_hash)                          \
+	        commit_timestamp=$(commit_timestamp)                \
+	        ./hack/build.sh ./...                               \
+	    "
 
 run:
 	@go run main.go serve
@@ -172,7 +196,7 @@ fmt: $(BUILD_DIRS)
 	    --env HTTP_PROXY=$(HTTP_PROXY)                          \
 	    --env HTTPS_PROXY=$(HTTPS_PROXY)                        \
 	    $(BUILD_IMAGE)                                          \
-	    ./hack/fmt.sh $(SRC_DIRS)
+	    ./hack/fmt.sh $(EXCLUDE_DIRS)
 
 verify-fmt: fmt
 	@if !(git diff --exit-code HEAD); then 						\
@@ -344,6 +368,7 @@ manifest-list: all-push
 
 .PHONY: docker-manifest
 docker-manifest:
+	docker manifest rm $(DOCKER_IMAGE):$(VERSION) | true
 	docker manifest create -a $(DOCKER_IMAGE):$(VERSION) $(foreach PLATFORM,$(ALL_PLATFORMS),$(DOCKER_IMAGE):$(VERSION)_$(subst /,_,$(PLATFORM)))
 	$(foreach PLATFORM,$(ALL_PLATFORMS), \
 		docker manifest annotate $(DOCKER_IMAGE):$(VERSION) $(DOCKER_IMAGE):$(VERSION)_$(subst /,_,$(PLATFORM)) --arch $(lastword $(subst /, ,$(PLATFORM))); \
@@ -358,11 +383,30 @@ docker-manifest:
 
 .PHONY: release
 release:
-	@$(MAKE) all-push docker-manifest --no-print-directory
+	docker buildx build --platform linux/amd64,linux/arm64 --output "type=image,push=true" --tag $(DOCKER_IMAGE):$(VERSION) --builder builder .
+	#@$(MAKE) all-push docker-manifest --no-print-directory
 
 version: # @HELP outputs the version string
 version:
-	@echo $(VERSION)
+	@echo "Application Version Information"
+	@echo "==============================="
+	@echo ""
+	@echo "Application Name:    $(APP_NAME)"
+	@echo ""
+	@echo "Version Details:"
+	@echo "    Version:            $(VERSION)"
+	@echo "    Version Strategy:   $(version_strategy)"
+	@echo ""
+	@echo "Git Information:"
+	@echo "    Git Tag:            $(git_tag)"
+	@echo "    Git Branch:         $(git_branch)"
+	@echo "    Commit Hash:        $(commit_hash)"
+	@echo "    Commit Timestamp:   $(commit_timestamp)"
+	@echo ""
+	@echo "Build Environment:"
+	@echo "    Go Version:         $(shell go version | cut -d " " -f 3)"
+	@echo "    Compiler:           $(shell go env CC)"
+	@echo "    Platform:           $(OS)/$(ARCH)"
 
 test: # @HELP runs tests, as defined in ./hack/test.sh
 test: $(BUILD_DIRS)
