@@ -71,7 +71,7 @@
     <tr>
         <td>{{ .Date.Format "Jan 02, '06" }}</td>
         <td>{{ .Type }}</td>
-        <td>$ {{ .Amount }}</td>
+        <td>&#2547; {{ .Amount }}</td>
         <td>{{ .Source }}</td>
         <td>{{ .Destination }}</td>
         <td>{{ .Person }}</td>
@@ -95,7 +95,7 @@
     {{  range $type := .Summary.Type }}
     <tr>
         <td>{{ $type.Name }}</td>
-        <td>$ {{ $type.Amount }}</td>
+        <td>&#2547; {{ $type.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>
@@ -112,7 +112,7 @@
     {{ range $category := .Summary.Category }}
     <tr>
         <td>{{ $category.Name }}</td>
-        <td>$ {{ $category.Amount }}</td>
+        <td>&#2547; {{ $category.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>
@@ -129,7 +129,7 @@
     {{ range $subcategory := .Summary.Subcategory }}
     <tr>
         <td>{{ $subcategory.Name }}</td>
-        <td>$ {{ $subcategory.Amount }}</td>
+        <td>&#2547; {{ $subcategory.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>
