@@ -134,6 +134,9 @@ func (p *transactionParser) parseTransaction() error {
 	p.txn.SubcategoryID = p.subcategory
 	p.txn.Remarks = p.note
 
+	p.parseFromTo()
+	p.setDefaultSourceDestination()
+
 	if p.txn.SubcategoryID == "" {
 		if p.txn.Type == models.TransferTransaction {
 			if p.txn.SrcID == "cash" {
@@ -148,11 +151,23 @@ func (p *transactionParser) parseTransaction() error {
 		}
 	}
 
-	p.parseFromTo()
 	if err := p.parseAmount(); err != nil {
 		return err
 	}
 	return p.parseTransactionTime()
+}
+
+func (p *transactionParser) setDefaultSourceDestination() {
+	if p.txn.Type == models.ExpenseTransaction || p.txn.Type == models.TransferTransaction {
+		if p.txn.SrcID == "" {
+			p.txn.SrcID = "cash"
+		}
+	}
+	if p.txn.Type == models.IncomeTransaction || p.txn.Type == models.TransferTransaction {
+		if p.txn.DstID == "" {
+			p.txn.DstID = "cash"
+		}
+	}
 }
 
 func (p *transactionParser) parseFromTo() {

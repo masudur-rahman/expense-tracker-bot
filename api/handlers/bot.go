@@ -27,22 +27,36 @@ func StartTrackingExpenses(ctx telebot.Context) error {
 		return ctx.Send(fmt.Sprintf("Welcome back %v %v !",
 			user.FirstName, user.LastName))
 	}
-	if models.IsErrNotFound(err) {
-		user = &models.User{
-			TelegramID: ctx.Sender().ID,
-			Username:   ctx.Sender().Username,
-			FirstName:  ctx.Sender().FirstName,
-			LastName:   ctx.Sender().LastName,
-		}
-		if err = us.SignUp(user); err == nil {
-			return ctx.Send(fmt.Sprintf(`Hello %v %v!
-Welcome to Expense Tracker !
-`, ctx.Sender().FirstName, ctx.Sender().LastName))
-		}
+	if !models.IsErrNotFound(err) {
+		logr.DefaultLogger.Errorw("Start error", "error", err.Error())
+		return ctx.Send(err.Error())
+	}
+	user = &models.User{
+		TelegramID: ctx.Sender().ID,
+		Username:   ctx.Sender().Username,
+		FirstName:  ctx.Sender().FirstName,
+		LastName:   ctx.Sender().LastName,
+	}
+	if err = us.SignUp(user); err != nil {
+		logr.DefaultLogger.Errorw("Sign up error", "error", err.Error())
+		return ctx.Send(err.Error())
 	}
 
-	logr.DefaultLogger.Errorw("Start error", "error", err.Error())
-	return ctx.Send("Some error occurred")
+	acc := &models.Account{
+		UserID:    user.ID,
+		Type:      models.CashAccount,
+		ShortName: "cash",
+		Name:      "Cash in Hand",
+	}
+
+	if err = all.GetServices().Account.CreateAccount(acc); err != nil {
+		logr.DefaultLogger.Errorw("Create default cash account error", "error", err.Error())
+		return ctx.Send(err.Error())
+	}
+
+	return ctx.Send(fmt.Sprintf(`Hello %v %v!
+Welcome to Expense Tracker !
+`, ctx.Sender().FirstName, ctx.Sender().LastName))
 }
 
 func Welcome(ctx telebot.Context) error {
