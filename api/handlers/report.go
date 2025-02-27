@@ -79,7 +79,11 @@ func generateReport(ctx telebot.Context, rop ReportCallbackOptions) (gqtypes.Rep
 		return gqtypes.Report{}, err
 	}
 
-	report := gqtypes.Report{Name: fmt.Sprintf("%v %v", user.FirstName, user.LastName)}
+	report := gqtypes.Report{
+		Name:      fmt.Sprintf("%v %v", user.FirstName, user.LastName),
+		StartDate: startTime,
+		EndDate:   now,
+	}
 	txnApis := make([]gqtypes.Transaction, 0, len(txns))
 	for _, txn := range txns {
 		txnApis = append(txnApis, convert.ToTransactionAPIFormat(txn))

@@ -1,59 +1,85 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<style>
-* {
-  font-family: sans-serif; /* Change your font family */
-}
+    <style>
+        * {
+            font-family: sans-serif;
+        }
 
-.content-table {
-  border-collapse: collapse;
-  margin: 15px 0;
-  font-size: 0.9em;
-  min-width: 400px;
-  border-radius: 5px 5px 0 0;
-  /* overflow: hidden; */
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-}
+        .content-table {
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9em;
+            min-width: 400px;
+            border-radius: 5px 5px 0 0;
+            /* overflow: hidden; */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
 
-.content-table thead tr {
-  background-color: #009879;
-  color: #ffffff;
-  text-align: left;
-  font-weight: bold;
-}
+        .content-table thead tr {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+            font-weight: bold;
+        }
 
-.content-table th,
-.content-table td {
-  padding: 12px 14px;
-}
+        .content-table th,
+        .content-table td {
+            padding: 12px 14px;
+        }
 
-.content-table tbody tr {
-  border-bottom: 1px solid #dddddd;
-}
+        .content-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
 
-.content-table tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
+        .content-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
 
-.content-table tbody tr:last-of-type {
-  border-bottom: 3px solid #009879;
-}
+        .content-table tbody tr:last-of-type {
+            border-bottom: 3px solid #009879;
+        }
 
-.content-table tbody tr.active-row {
-  font-weight: bold;
-  color: #009879;
-}
+        .content-table tbody tr.active-row {
+            font-weight: bold;
+            color: #009879;
+        }
 
-</style>
+        .header-block {
+            background-color: #b2e0d9; /* Lighter green shade matching the table */
+            border: 1px solid #009879; /* Darker green for the border */
+            border-radius: 8px; /* Slightly increased border radius for a softer look */
+            padding: 20px; /* Increased padding for better spacing */
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        }
+
+        .header-block h1 {
+            margin: 0;
+            font-size: 1.6em; /* Slightly larger font size for emphasis */
+            color: #333;
+        }
+
+        .header-block h4 {
+            margin: 5px 0 0;
+            font-size: 1.3em; /* Slightly larger font size for better visibility */
+            color: #555; /* Darker shade for better contrast */
+        }
+    </style>
 </head>
 
 <body>
-  <h2>Transaction History</h2>
+<div class="header-block">
+    <h1>Expense Tracker Report - Masudur Rahman</h1>
+    <h4>Duration: [Feb 01, 2025 - Feb 28, 2025]</h4>
+</div>
+<h2>Transaction History</h2>
 
-  <table class="content-table">
+<table class="content-table">
     <thead>
-      <tr>
+    <tr>
         <th>Date</th>
         <th>Type</th>
         <th>Amount</th>
@@ -63,114 +89,177 @@
         <th>Category</th>
         <th>Subcategory</th>
         <th>Remarks</th>
-      </tr>
+    </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>Aug 13, '23</td>
-        <td>Transfer</td>
-        <td>$1000</td>
-        <td>BRAC</td>
-        <td>Cash</td>
+    
+    <tr>
+        <td>Feb 01, '25</td>
+        <td>Income</td>
+        <td>&#2547;50000</td>
         <td></td>
-        <td>Food</td>
-        <td>Snacks</td>
-        <td>Potata</td>
-      </tr>
-      <tr>
-        <td>13-08-2023</td>
-        <td>Transfer</td>
-        <td>$1000</td>
-        <td>BRAC</td>
-        <td>Cash</td>
+        <td>Eastern Bank PLC</td>
         <td></td>
-        <td>Food</td>
-        <td>Snacks</td>
-        <td>Potata</td>
-      </tr>
-      <tr>
-        <td>13-08-23</td>
+        <td>Miscellaneous</td>
+        <td>Misc</td>
+        <td>Salary</td>
+    </tr>
+    
+    <tr>
+        <td>Feb 02, '25</td>
         <td>Transfer</td>
-        <td>$10</td>
-        <td>BRAC</td>
-        <td>Cash</td>
+        <td>&#2547;10000</td>
+        <td>Eastern Bank PLC</td>
+        <td>Cash in Hand</td>
         <td></td>
-        <td>Food</td>
-        <td>Mobile Recharge</td>
-        <td>GP Recharge</td>
-      </tr>
+        <td>Financial</td>
+        <td>Withdraw</td>
+        <td></td>
+    </tr>
+    
+    <tr>
+        <td>Feb 02, '25</td>
+        <td>Expense</td>
+        <td>&#2547;20000</td>
+        <td>Eastern Bank PLC</td>
+        <td></td>
+        <td>Jane Doe</td>
+        <td>Financial</td>
+        <td>Loan</td>
+        <td></td>
+    </tr>
+    
+    <tr>
+        <td>Feb 28, '25</td>
+        <td>Expense</td>
+        <td>&#2547;5000</td>
+        <td>Eastern Bank PLC</td>
+        <td></td>
+        <td></td>
+        <td>Entertainment</td>
+        <td>Recreation</td>
+        <td>Ear Buds</td>
+    </tr>
+    
+    <tr>
+        <td>Feb 28, '25</td>
+        <td>Expense</td>
+        <td>&#2547;15000</td>
+        <td>Eastern Bank PLC</td>
+        <td></td>
+        <td></td>
+        <td>Entertainment</td>
+        <td>Recreation</td>
+        <td>Mobile</td>
+    </tr>
+    
+    <tr>
+        <td>Feb 28, '25</td>
+        <td>Income</td>
+        <td>&#2547;10000</td>
+        <td></td>
+        <td>Eastern Bank PLC</td>
+        <td>John Doe</td>
+        <td>Financial</td>
+        <td>Borrow</td>
+        <td></td>
+    </tr>
+    
     </tbody>
-  </table>
+</table>
 
-  <h2>Transaction Summary</h2>
-  <table class="content-table">
+<h2>Transaction Summary</h2>
+<table class="content-table">
     <thead>
-      <tr>
+    <tr>
         <th>Transaction Type</th>
         <th>Amount</th>
-      </tr>
+    </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>Transfer</td>
-        <td>1000</td>
-      </tr>
-        <tr>
-        <td>Income</td>
-        <td>1000</td>
-      </tr>
-        <tr>
+    
+    <tr>
         <td>Expense</td>
-        <td>1000</td>
-      </tr>
+        <td>&#2547;40000</td>
+    </tr>
+    
+    <tr>
+        <td>Income</td>
+        <td>&#2547;60000</td>
+    </tr>
+    
+    <tr>
+        <td>Transfer</td>
+        <td>&#2547;10000</td>
+    </tr>
+    
     </tbody>
-  </table>
+</table>
 
-  <table class="content-table">
+<table class="content-table">
     <thead>
-      <tr>
+    <tr>
         <th>Transaction Category</th>
         <th>Amount</th>
-      </tr>
+    </tr>
     </thead>
     <tbody>
-      <tr>
+    
+    <tr>
+        <td>Entertainment</td>
+        <td>&#2547;20000</td>
+    </tr>
+    
+    <tr>
         <td>Financial</td>
-        <td>1000</td>
-      </tr>
-        <tr>
-        <td>Food</td>
-        <td>1000</td>
-      </tr>
-        <tr>
+        <td>&#2547;40000</td>
+    </tr>
+    
+    <tr>
         <td>Miscellaneous</td>
-        <td>1000</td>
-      </tr>
+        <td>&#2547;50000</td>
+    </tr>
+    
     </tbody>
-  </table>
+</table>
 
-  <table class="content-table">
+<table class="content-table">
     <thead>
-      <tr>
+    <tr>
         <th>Transaction Subcategory</th>
         <th>Amount</th>
-      </tr>
+    </tr>
     </thead>
     <tbody>
-      <tr>
+    
+    <tr>
+        <td>Recreation</td>
+        <td>&#2547;20000</td>
+    </tr>
+    
+    <tr>
+        <td>Borrow</td>
+        <td>&#2547;10000</td>
+    </tr>
+    
+    <tr>
+        <td>Loan</td>
+        <td>&#2547;20000</td>
+    </tr>
+    
+    <tr>
         <td>Withdraw</td>
-        <td>1000</td>
-      </tr>
-        <tr>
-        <td>Snacks</td>
-        <td>1000</td>
-      </tr>
-        <tr>
-        <td>Mobile Recharge</td>
-        <td>1000</td>
-      </tr>
+        <td>&#2547;10000</td>
+    </tr>
+    
+    <tr>
+        <td>Misc</td>
+        <td>&#2547;50000</td>
+    </tr>
+    
     </tbody>
-  </table>
+</table>
 
 </body>
+
 </html>

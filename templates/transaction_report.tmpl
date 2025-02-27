@@ -45,11 +45,36 @@
             font-weight: bold;
             color: #009879;
         }
+
+        .header-block {
+            background-color: #b2e0d9; /* Lighter green shade matching the table */
+            border: 1px solid #009879; /* Darker green for the border */
+            border-radius: 8px; /* Slightly increased border radius for a softer look */
+            padding: 20px; /* Increased padding for better spacing */
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+        }
+
+        .header-block h1 {
+            margin: 0;
+            font-size: 1.6em; /* Slightly larger font size for emphasis */
+            color: #333;
+        }
+
+        .header-block h4 {
+            margin: 5px 0 0;
+            font-size: 1.3em; /* Slightly larger font size for better visibility */
+            color: #555; /* Darker shade for better contrast */
+        }
     </style>
 </head>
 
 <body>
-<h1 style="text-align-all: center">Expense Tracker Report - {{ .Name }}</h1>
+<div class="header-block">
+    <h1>Expense Tracker Report - {{ .Name }}</h1>
+    <h4>Duration: [{{ .StartDate.Format "Jan 02, 2006" }} - {{ .EndDate.Format "Jan 02, 2006" }}]</h4>
+</div>
 <h2>Transaction History</h2>
 
 <table class="content-table">
@@ -71,7 +96,7 @@
     <tr>
         <td>{{ .Date.Format "Jan 02, '06" }}</td>
         <td>{{ .Type }}</td>
-        <td>&#2547; {{ .Amount }}</td>
+        <td>&#2547;{{ .Amount }}</td>
         <td>{{ .Source }}</td>
         <td>{{ .Destination }}</td>
         <td>{{ .Person }}</td>
@@ -95,7 +120,7 @@
     {{  range $type := .Summary.Type }}
     <tr>
         <td>{{ $type.Name }}</td>
-        <td>&#2547; {{ $type.Amount }}</td>
+        <td>&#2547;{{ $type.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>
@@ -112,7 +137,7 @@
     {{ range $category := .Summary.Category }}
     <tr>
         <td>{{ $category.Name }}</td>
-        <td>&#2547; {{ $category.Amount }}</td>
+        <td>&#2547;{{ $category.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>
@@ -129,7 +154,7 @@
     {{ range $subcategory := .Summary.Subcategory }}
     <tr>
         <td>{{ $subcategory.Name }}</td>
-        <td>&#2547; {{ $subcategory.Amount }}</td>
+        <td>&#2547;{{ $subcategory.Amount }}</td>
     </tr>
     {{ end }}
     </tbody>

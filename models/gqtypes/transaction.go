@@ -46,9 +46,10 @@ type SummaryGroups struct {
 }
 
 type Report struct {
-	Name         string
-	Transactions []Transaction
-	Summary      SummaryGroups
+	Name               string
+	Transactions       []Transaction
+	Summary            SummaryGroups
+	StartDate, EndDate time.Time
 }
 
 func (s SummaryGroups) String() string {
