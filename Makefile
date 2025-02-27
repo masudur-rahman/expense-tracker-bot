@@ -383,8 +383,10 @@ docker-manifest:
 
 .PHONY: release
 release:
+	@$(MAKE) all-push docker-manifest --no-print-directory
+
+docker-build-push:
 	docker buildx build --platform linux/amd64,linux/arm64 --output "type=image,push=true" --tag $(DOCKER_IMAGE):$(VERSION) --builder builder .
-	#@$(MAKE) all-push docker-manifest --no-print-directory
 
 version: # @HELP outputs the version string
 version:
