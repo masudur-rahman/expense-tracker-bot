@@ -187,6 +187,49 @@ func TestParseTransaction_bareWalletMention(t *testing.T) {
 	}
 }
 
+// TestParseTransaction_typeLock verifies that an explicit verb locks the
+// transaction type: classification is constrained to type-compatible
+// subcategories, and any still-incompatible result is reconciled to the
+// General bucket instead of failing service-level validation.
+func TestParseTransaction_typeLock(t *testing.T) {
+	initCache()
+	// Force an expense-only subcategory from the cache to exercise the safety net.
+	_ = cache.SetCache("widget", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+
+	tests := []struct {
+		name    string
+		text    string
+		wantTyp models.TransactionType
+		wantSub string
+		wantAmt float64
+	}{
+		{"sold vehicle is asset income", "sold rickshaw 50k", models.IncomeTransaction, "misc-asset", 50000},
+		{"sold gold is income", "sold gold 30k", models.IncomeTransaction, "fin-gold", 30000},
+		{"expense verb keeps ride", "spent 300 taxi", models.ExpenseTransaction, "trans-taxi", 300},
+		{"incompatible sub reconciled to general", "sold widget 10k", models.IncomeTransaction, "misc-misc", 10000},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, nil, nil, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.Type != tt.wantTyp {
+				t.Errorf("Type = %v, want %v", got.Type, tt.wantTyp)
+			}
+			if got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+			if got.Amount != tt.wantAmt {
+				t.Errorf("Amount = %v, want %v", got.Amount, tt.wantAmt)
+			}
+		})
+	}
+}
+
 // walkBackToDay returns the latest date at or before t with the given day-of-month.
 func walkBackToDay(t time.Time, day int) time.Time {
 	for t.Day() != day {

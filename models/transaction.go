@@ -343,6 +343,8 @@ var miscSubs = []TxnSubcategory{
 	{ID: "misc-office", Name: "Office/Work Exp", CatID: "misc", Hint: "office lunch, printing, courier, work-related expense"},
 	{ID: "misc-loss", Name: "Lost/Stolen", CatID: "misc", Hint: "lost money, theft, pickpocket, damaged item"},
 	{ID: "misc-adj", Name: "Balance Adjustment", CatID: "misc", Hint: "correction entry, balance fix, rounding adjustment"},
+	{ID: "misc-asset", Name: "Asset Buy/Sell", CatID: "misc", Hint: "buying or selling durable goods: vehicle, bike, car, furniture, appliance, gadget resale, secondhand item"},
+	{ID: "misc-refund", Name: "Refund/Reimbursement", CatID: "misc", Hint: "refund received, reimbursement, money returned for a cancelled/returned purchase"},
 	{ID: "misc-misc", Name: "General", CatID: "misc", Hint: "LAST RESORT only — use when no other subcategory fits at all"},
 }
 
@@ -417,6 +419,8 @@ var subKeywords = map[string]string{
 	"misc-init": "opening balance, initial", "misc-gift": "gift",
 	"misc-charity": "charity, tip, help", "misc-office": "office, work expense",
 	"misc-loss": "lost, stolen, theft", "misc-adj": "adjustment, correction",
+	"misc-asset": "asset, resale, secondhand, second hand, vehicle, bike, motorcycle, car, cycle, rickshaw, van, furniture, appliance",
+	"misc-refund": "refund, refunded, reimbursement, reimbursed, money back, returned money",
 	"misc-misc": "other, misc",
 }
 
@@ -500,8 +504,8 @@ func assignSubcategoryTypes() {
 		"fin-tax":      typExpense,
 		"fin-charge":   typExpense,
 		"fin-ins":      typExpense,
-		"fin-gold":     typExpense,
-		"fin-invest":   typExpense,
+		"fin-gold":     typExpOrInc,
+		"fin-invest":   typExpOrInc,
 		"fin-misc":     typExpense,
 	}
 
@@ -512,13 +516,25 @@ func assignSubcategoryTypes() {
 		"misc-office":  typExpense,
 		"misc-loss":    typExpense,
 		"misc-adj":     typExpOrInc,
+		"misc-asset":   typExpOrInc,
+		"misc-refund":  typExpOrInc,
 		"misc-misc":    typExpOrInc,
+	}
+
+	// houseSubTypes overrides the expense-only default for housing subcategories
+	// that have a real income side (e.g. selling land/flat).
+	houseSubTypes := map[string][]TransactionType{
+		"house-real": typExpOrInc,
 	}
 
 	for _, sub := range TxnSubcategories {
 		switch {
 		case expenseOnlyCats[sub.CatID]:
-			SubcategoryTypes[sub.ID] = typExpense
+			if override, ok := houseSubTypes[sub.ID]; ok {
+				SubcategoryTypes[sub.ID] = override
+			} else {
+				SubcategoryTypes[sub.ID] = typExpense
+			}
 		case sub.CatID == "fin":
 			SubcategoryTypes[sub.ID] = finSubTypes[sub.ID]
 		case sub.CatID == "misc":

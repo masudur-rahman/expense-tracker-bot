@@ -62,6 +62,11 @@ type transactionParser struct {
 	note        string
 	rawText     string
 	verbFound   bool
+	// typeLocked is set when an explicit verb fixes the transaction type
+	// ("sold" → Income, "spent" → Expense). While locked, classification is
+	// constrained to type-compatible subcategories and inferred AI intent is
+	// ignored, so the verb the user typed always wins.
+	typeLocked bool
 	// bareAccounts / bareContacts are wallet and contact names mentioned
 	// without a preposition ("salary 50k ebl", "lent 500 karim") — routed
 	// once the transaction type is known.
@@ -93,7 +98,7 @@ func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountV
 
 	loc := findMonetaryAmount(text, matches, reUnit)
 	if loc == nil {
-		return models.Transaction{}, fmt.Errorf("no valid amount found in text")
+		return models.Transaction{}, models.ErrInvalidTransaction{Reason: "amount is required"}
 	}
 
 	numberStr := text[loc[2]:loc[3]]
@@ -267,7 +272,7 @@ func (p *transactionParser) subcategoryAIParser() error {
 
 	// Keyword-first: resolve common inputs locally so the rate-limited AI endpoint
 	// is only hit for genuinely ambiguous text.
-	if subID, ok := localClassify(p.subcategory); ok {
+	if subID, ok := localClassify(p.subcategory, p.txnType, p.typeLocked); ok {
 		p.subcategory = subID
 		return nil
 	}
@@ -275,13 +280,13 @@ func (p *transactionParser) subcategoryAIParser() error {
 	inputText := p.subcategory
 	result, err := ai.TxnCategoryClassifier(context.Background(), inputText)
 	if err != nil {
-		// Degrade gracefully on quota/rate-limit: never drop the user's transaction.
-		if isRateLimitErr(err) {
-			logr.DefaultLogger.Warnw("AI rate-limited, falling back to misc", "input", inputText)
-			p.subcategory = "misc-misc"
-			return nil
-		}
-		return err
+		// Degrade gracefully on ANY classifier failure (rate-limit, network, bad
+		// key, malformed response) so a transaction is never dropped or surfaced
+		// to the user as a generic "unexpected server error".
+		logr.DefaultLogger.Warnw("AI classification failed, falling back to misc",
+			"input", inputText, "rateLimited", isRateLimitErr(err), "error", err.Error())
+		p.subcategory = "misc-misc"
+		return nil
 	}
 
 	// Only cache when AI actually classified (not a passthrough from missing API key).
@@ -305,7 +310,8 @@ func (p *transactionParser) subcategoryAIParser() error {
 }
 
 func (p *transactionParser) setIntent(intent string) {
-	if intent == "" {
+	// An explicit verb outranks inferred intent — don't flip a locked type.
+	if intent == "" || p.typeLocked {
 		return
 	}
 	switch strings.ToLower(intent) {
@@ -556,10 +562,22 @@ func (p *transactionParser) parseTransaction() error {
 			p.txn.SubcategoryID = "misc-misc"
 		}
 	}
+	p.reconcileSubcategoryType()
 	if err := p.parseAmount(); err != nil {
 		return err
 	}
 	return p.parseTransactionTime()
+}
+
+// reconcileSubcategoryType is the final safety net: if a known subcategory is
+// type-incompatible with the resolved transaction type (e.g. a locked Income verb
+// that still landed on an expense-only subcategory), fall back to the General bucket
+// so the transaction is never rejected by service-level validation.
+func (p *transactionParser) reconcileSubcategoryType() {
+	types, ok := models.SubcategoryTypes[p.txn.SubcategoryID]
+	if ok && !models.ContainsType(types, p.txn.Type) {
+		p.txn.SubcategoryID = "misc-misc"
+	}
 }
 
 func (p *transactionParser) parseAmount() error {
@@ -681,5 +699,8 @@ func (p *transactionParser) isVerbKeyword(keyword string) bool {
 	default:
 		return false
 	}
+	// An explicit verb fixes the transaction type; downstream classification
+	// must not override it or pick a type-incompatible subcategory.
+	p.typeLocked = true
 	return true
 }

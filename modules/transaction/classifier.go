@@ -41,8 +41,10 @@ func normalizePhrase(s string) string {
 // localClassify matches a phrase against subcategory keywords/names locally, without
 // calling the AI. It returns the best subcategory ID when a whole-word keyword hits,
 // preferring more specific (longer, multi-word) keywords. This keeps the common case
-// off the rate-limited AI endpoint.
-func localClassify(phrase string) (string, bool) {
+// off the rate-limited AI endpoint. When locked is true, candidates whose transaction
+// types exclude wantType are skipped so an Income verb never matches an expense-only
+// subcategory (e.g. "sold rickshaw" must not resolve to trans-taxi).
+func localClassify(phrase string, wantType models.TransactionType, locked bool) (string, bool) {
 	phrase = normalizePhrase(phrase)
 	if phrase == "" {
 		return "", false
@@ -52,6 +54,9 @@ func localClassify(phrase string) (string, bool) {
 	bestID := ""
 	bestScore := 0
 	for _, sub := range models.TxnSubcategories {
+		if locked && !models.ContainsType(models.SubcategoryTypes[sub.ID], wantType) {
+			continue
+		}
 		for _, kw := range subcategoryKeywords(sub) {
 			if !strings.Contains(padded, " "+kw+" ") {
 				continue
