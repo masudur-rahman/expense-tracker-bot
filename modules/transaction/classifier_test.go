@@ -47,6 +47,13 @@ func TestLocalClassify(t *testing.T) {
 		{"bare mobile is electronics", "mobile", models.ExpenseTransaction, false, "shop-elec", true},
 		{"mobile recharge is flexi", "mobile recharge", models.ExpenseTransaction, false, "fin-flexi", true},
 		{"no match", "asdf qwer zxcv", models.ExpenseTransaction, false, "", false},
+		// Financial instruments outrank shopping / fall through no more.
+		{"bare gold is asset", "gold", models.ExpenseTransaction, false, "fin-gold", true},
+		{"buy gold is asset", "buy gold", models.ExpenseTransaction, false, "fin-gold", true},
+		{"invest in gold is financial", "invest in gold", models.ExpenseTransaction, false, "fin-invest", true},
+		{"gold necklace stays jewelry", "gold necklace", models.ExpenseTransaction, false, "shop-jewelry", true},
+		{"sanchayapatra is investment", "sanchayapatra", models.ExpenseTransaction, false, "fin-invest", true},
+		{"savings certificates is investment", "saving certificates", models.ExpenseTransaction, false, "fin-invest", true},
 		// Locked type constrains candidates to compatible subcategories.
 		{"locked income skips expense-only taxi", "rickshaw", models.IncomeTransaction, true, "misc-asset", true},
 		{"locked income sold rickshaw", "rickshaw", models.IncomeTransaction, true, "misc-asset", true},

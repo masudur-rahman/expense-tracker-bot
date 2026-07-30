@@ -366,7 +366,7 @@ var subKeywords = map[string]string{
 	// Shopping
 	"shop-supply": "detergent, cleaning, broom", "shop-cloth": "clothes, jama, kapor, panjabi, lungi, shirt, pant, saree",
 	"shop-foot": "shoes, shoe, juta, sandal, slipper", "shop-elec": "phone, mobile, charger, earphone, headphone, laptop, gadget",
-	"shop-jewelry": "jewelry, gold, ring, chain", "shop-beauty": "makeup, lipstick, lotion, perfume, cosmetics",
+	"shop-jewelry": "jewelry, ornament, ring, chain, necklace, bangle, earring", "shop-beauty": "makeup, lipstick, lotion, perfume, cosmetics",
 	"shop-acc": "watch, bag, belt, sunglasses, umbrella", "shop-stat": "pen, notebook, stationery",
 	"shop-other": "shopping, purchase",
 	// Financial
@@ -379,7 +379,8 @@ var subKeywords = map[string]string{
 	"fin-recover": "recover, recovered, collected, got back, paid me back, they returned, loan repayment, ferot pelam", "fin-borrow": "borrow, borrowed, took, took loan, dhar nilam, theke nilam",
 	"fin-return": "return, returned, payback, paid back, gave back, repaid, dhar shodh, ferot dilam", "fin-tax": "tax, vat, income tax",
 	"fin-charge": "charge, fee, penalty", "fin-ins": "insurance, premium",
-	"fin-gold": "gold", "fin-invest": "stocks, shares, crypto, mutual fund",
+	"fin-gold": "gold, gold bar, gold coin",
+	"fin-invest": "stocks, shares, crypto, mutual fund, invest, investment, sanchayapatra, sanchaypatra, savings certificate, saving certificate, certificate, certificates, bond, bonds, treasury bond",
 	"fin-misc": "financial, misc",
 	// Housing
 	"house-rent": "rent, house rent, bhara, basha bhara", "house-util": "electricity, gas, current bill, water bill",

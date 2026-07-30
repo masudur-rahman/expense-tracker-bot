@@ -207,6 +207,7 @@ func TestParseTransaction_typeLock(t *testing.T) {
 		{"sold gold is income", "sold gold 30k", models.IncomeTransaction, "fin-gold", 30000},
 		{"expense verb keeps ride", "spent 300 taxi", models.ExpenseTransaction, "trans-taxi", 300},
 		{"incompatible sub reconciled to general", "sold widget 10k", models.IncomeTransaction, "misc-misc", 10000},
+		{"savings certificate is investment expense", "saving certificates for 500k", models.ExpenseTransaction, "fin-invest", 500000},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
