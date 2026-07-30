@@ -76,8 +76,8 @@ func TestImportAICacheEntries_higherConfidence(t *testing.T) {
 
 func TestExportAICache_returnsAll(t *testing.T) {
 	setupAICacheTest(t)
-	_, _ = CreateAICache("a", "food-rest", "expense", 1.0)
-	_, _ = CreateAICache("b", "trans-bus", "expense", 1.0)
+	_, _ = CreateAICache("coffee", "food-rest", "expense", 1.0)
+	_, _ = CreateAICache("bus fare", "trans-bus", "expense", 1.0)
 
 	rows, err := ExportAICache()
 	require.NoError(t, err)

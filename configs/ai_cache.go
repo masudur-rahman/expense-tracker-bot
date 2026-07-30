@@ -10,6 +10,7 @@ import (
 
 	"github.com/masudur-rahman/khorcha-pati/models"
 	"github.com/masudur-rahman/khorcha-pati/modules/cache"
+	"github.com/masudur-rahman/khorcha-pati/pkg"
 )
 
 // Sentinel errors for AI-cache admin operations.
@@ -97,7 +98,9 @@ func ImportAICacheEntries(entries []models.AICache, mode string) (AICacheImportS
 	ctx := context.Background()
 
 	for _, e := range entries {
-		e.InputText = strings.TrimSpace(e.InputText)
+		// Normalize to the same key the parser looks up, so hand-labeled seeds
+		// with filler words ("bought a bicycle") still hit ("bought bicycle").
+		e.InputText = pkg.NormalizePhrase(e.InputText)
 		if e.InputText == "" {
 			s.Invalid++
 			continue
@@ -151,6 +154,12 @@ func CreateAICache(inputText, subID, intent string, confidence float64) (models.
 		return models.AICache{}, fmt.Errorf("database not initialized")
 	}
 	ctx := context.Background()
+
+	// Store under the normalized key the parser looks up (single source of truth).
+	inputText = pkg.NormalizePhrase(inputText)
+	if inputText == "" {
+		return models.AICache{}, fmt.Errorf("input text is empty after normalization")
+	}
 
 	var existing models.AICache
 	found, err := GetUnitOfWork().SQL.Table(models.AICache{}.TableName()).

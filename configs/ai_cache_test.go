@@ -50,6 +50,34 @@ func TestCreateAICache_persistsAndCaches(t *testing.T) {
 	assert.Contains(t, cached, "Expense")
 }
 
+func TestCreateAICache_normalizesKey(t *testing.T) {
+	setupAICacheTest(t)
+
+	entry, err := CreateAICache("bought a Bicycle!", "shop-other", "expense", 1.0)
+	require.NoError(t, err)
+	// Stored under the normalized key the parser looks up.
+	assert.Equal(t, "bought bicycle", entry.InputText)
+
+	_, ok := cache.GetCache("bought bicycle")
+	assert.True(t, ok, "normalized key must be reachable")
+	_, ok = cache.GetCache("bought a Bicycle!")
+	assert.False(t, ok, "raw filler form must not be a separate key")
+}
+
+func TestImportAICacheEntries_normalizesKey(t *testing.T) {
+	setupAICacheTest(t)
+
+	s, err := ImportAICacheEntries([]models.AICache{
+		{InputText: "had a Lunch", SubcategoryID: "food-rest", Intent: "expense", Confidence: 1.0},
+	}, ImportSkip)
+	require.NoError(t, err)
+	assert.Equal(t, 1, s.Imported)
+
+	_, found, err := getAICacheByInputText(context.Background(), "lunch")
+	require.NoError(t, err)
+	assert.True(t, found, "hand-labeled seed must land under the normalized key")
+}
+
 func TestCreateAICache_duplicate(t *testing.T) {
 	setupAICacheTest(t)
 

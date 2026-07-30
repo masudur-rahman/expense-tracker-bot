@@ -379,9 +379,9 @@ var subKeywords = map[string]string{
 	"fin-recover": "recover, recovered, collected, got back, paid me back, they returned, loan repayment, ferot pelam", "fin-borrow": "borrow, borrowed, took, took loan, dhar nilam, theke nilam",
 	"fin-return": "return, returned, payback, paid back, gave back, repaid, dhar shodh, ferot dilam", "fin-tax": "tax, vat, income tax",
 	"fin-charge": "charge, fee, penalty", "fin-ins": "insurance, premium",
-	"fin-gold": "gold, gold bar, gold coin",
+	"fin-gold":   "gold, gold bar, gold coin",
 	"fin-invest": "stocks, shares, crypto, mutual fund, invest, investment, sanchayapatra, sanchaypatra, savings certificate, saving certificate, certificate, certificates, bond, bonds, treasury bond",
-	"fin-misc": "financial, misc",
+	"fin-misc":   "financial, misc",
 	// Housing
 	"house-rent": "rent, house rent, bhara, basha bhara", "house-util": "electricity, gas, current bill, water bill",
 	"house-net": "internet, wifi, broadband", "house-serv": "maid, bua, buya, cleaner, driver",
@@ -420,9 +420,9 @@ var subKeywords = map[string]string{
 	"misc-init": "opening balance, initial", "misc-gift": "gift",
 	"misc-charity": "charity, tip, help", "misc-office": "office, work expense",
 	"misc-loss": "lost, stolen, theft", "misc-adj": "adjustment, correction",
-	"misc-asset": "asset, resale, secondhand, second hand, vehicle, bike, motorcycle, car, cycle, rickshaw, van, furniture, appliance",
+	"misc-asset":  "asset, resale, secondhand, second hand, vehicle, bike, motorcycle, car, cycle, rickshaw, van, furniture, appliance",
 	"misc-refund": "refund, refunded, reimbursement, reimbursed, money back, returned money",
-	"misc-misc": "other, misc",
+	"misc-misc":   "other, misc",
 }
 
 func init() {
