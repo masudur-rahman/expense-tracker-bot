@@ -585,3 +585,130 @@ func TestParseTransaction_subcategoryIDAlwaysValid(t *testing.T) {
 		})
 	}
 }
+
+// TestParseTransaction_multiWordEntity verifies that wallet and contact names
+// spanning several words are matched whole — with or without a preposition, and
+// even when part of the name is a reserved keyword.
+func TestParseTransaction_multiWordEntity(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+
+	contacts := func(name string) bool { return strings.ToLower(name) == "boro bhai" }
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl", "brac bank", "google pay":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name        string
+		text        string
+		wantSrc     string
+		wantDst     string
+		wantContact string
+	}{
+		{"bare multi-word wallet", "spent 500 lunch brac bank", "brac bank", "", ""},
+		{"keyed multi-word wallet", "spent 500 lunch from brac bank", "brac bank", "", ""},
+		{"keyword inside wallet name", "spent 500 lunch from google pay", "google pay", "", ""},
+		{"bare wallet with keyword inside", "lunch 500 google pay", "google pay", "", ""},
+		{"multi-word transfer", "transfer 1000 from brac bank to ebl", "brac bank", "ebl", ""},
+		{"bare multi-word contact", "lent 500 boro bhai", "cash", "", "boro bhai"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.SrcID != tt.wantSrc {
+				t.Errorf("SrcID = %q, want %q", got.SrcID, tt.wantSrc)
+			}
+			if got.DstID != tt.wantDst {
+				t.Errorf("DstID = %q, want %q", got.DstID, tt.wantDst)
+			}
+			if got.ContactName != tt.wantContact {
+				t.Errorf("ContactName = %q, want %q", got.ContactName, tt.wantContact)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_remarksHygiene verifies that routing captured on the
+// transaction itself is not repeated in the remarks, while genuine context
+// (an unknown place or person) is kept.
+func TestParseTransaction_remarksHygiene(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("lunch from karim", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("salary from office", `{"intent":"income","subcategory_id":"fin-sal"}`, -1)
+
+	contacts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "karim", "kar":
+			return true
+		}
+		return false
+	}
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name      string
+		text      string
+		wantNote  string
+		wantExact bool
+	}{
+		{"resolved contact dropped from remarks", "spent 500 lunch from karim", "lunch", true},
+		{"resolved wallet dropped from remarks", "spent 500 lunch from ebl", "lunch", true},
+		{"debt person recorded once", "borrowed 1000 from rahim", "[Person: rahim]", true},
+		{"user note keeps similar wording", "spent 500 lunch from kar note paid from karim later", "lunch paid from karim later", true},
+		{"unknown context kept", "salary 50k ebl from office", "salary from office", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if tt.wantExact && got.Remarks != tt.wantNote {
+				t.Errorf("Remarks = %q, want %q", got.Remarks, tt.wantNote)
+			}
+		})
+	}
+}
+
+func TestRemoveWordSequence(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		seq  string
+		want string
+	}{
+		{"whole word match", "lunch from kar paid", "from kar", "lunch paid"},
+		{"prefix of longer word kept", "paid from karim later", "from kar", "paid from karim later"},
+		{"only first occurrence removed", "from ebl lunch from ebl", "from ebl", "lunch from ebl"},
+		{"trailing punctuation matched", "lunch from ebl, later", "from ebl", "lunch later"},
+		{"missing sequence is a no-op", "lunch today", "from ebl", "lunch today"},
+		{"empty sequence is a no-op", "lunch today", "", "lunch today"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeWordSequence(tt.text, tt.seq); got != tt.want {
+				t.Errorf("removeWordSequence(%q, %q) = %q, want %q", tt.text, tt.seq, got, tt.want)
+			}
+		})
+	}
+}

@@ -72,7 +72,11 @@ type transactionParser struct {
 	// once the transaction type is known.
 	bareAccounts []string
 	bareContacts []string
-	tz           *time.Location
+	// injected maps a lower-cased from/to value to the "from X"/"to X" fragment
+	// enrichContext added as classifier context, so the fragment can be removed
+	// from the remarks once the value resolves to a wallet or contact.
+	injected map[string]string
+	tz       *time.Location
 }
 
 func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountVerifier, tz *time.Location) (models.Transaction, error) {
@@ -133,10 +137,12 @@ func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountV
 		}
 		// A wallet or contact whose name collides with a reserved word ("pay",
 		// "sale", "noon", "friday") must be read as the entity, not the keyword —
-		// otherwise the token is swallowed and its from/to slot is lost. The
-		// literal "note" above still wins, since it ends the scan.
-		if isKnownEntity(lowerWord, isContact, isAccount) {
-			currentBuffer = append(currentBuffer, word)
+		// otherwise the token is swallowed and its from/to slot is lost. Multi-word
+		// names ("google pay") are matched whole, so no part of them is read as a
+		// keyword. The literal "note" above still wins, since it ends the scan.
+		if n := entityMatchLen(words, i, isContact, isAccount); n > 0 {
+			currentBuffer = append(currentBuffer, words[i:i+n]...)
+			i += n - 1
 			continue
 		}
 		if p.isVerbKeyword(lowerWord) {
@@ -235,7 +241,9 @@ func (p *transactionParser) enrichContext(isAccount AccountVerifier) {
 			return
 		}
 
-		if isAccount(strings.ToLower(val)) {
+		// A wallet is routing, not category context; a person already captured by the
+		// debt resolver is recorded once already — neither belongs in the text again.
+		if isAccount(strings.ToLower(val)) || p.isRecordedPerson(val) {
 			return
 		}
 
@@ -244,6 +252,7 @@ func (p *transactionParser) enrichContext(isAccount AccountVerifier) {
 			prefix = "from"
 		}
 		info := fmt.Sprintf("%s %s", prefix, val)
+		p.recordInjected(val, info)
 
 		if p.subcategory != "" {
 			p.subcategory += " " + info
@@ -383,6 +392,7 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 		// 1. Match with Contact first
 		if isContact(cleanVal) {
 			p.txn.ContactName = cleanVal
+			p.dropInjectedFragment(cleanVal)
 			return
 		}
 
@@ -393,6 +403,7 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 			} else {
 				p.txn.DstID = cleanVal
 			}
+			p.dropInjectedFragment(cleanVal)
 			return
 		}
 
@@ -405,6 +416,7 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 
 		if !strings.Contains(strings.ToLower(p.note), strings.ToLower(info)) {
 			p.appendNote(info)
+			p.recordInjected(val, info)
 		}
 	}
 
@@ -435,6 +447,8 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 			}
 			if rawTarget != "" {
 				p.appendNote(fmt.Sprintf("[Person: %s]", rawTarget))
+				// The marker is the record now — drop the classifier-context copy.
+				p.dropInjectedFragment(rawTarget)
 			}
 		}
 	}
@@ -447,6 +461,70 @@ func (p *transactionParser) isFormalSubcategoryID() bool {
 		}
 	}
 	return false
+}
+
+// isRecordedPerson reports whether a name is already captured as the transaction's
+// contact or as a [Person: ...] remark, so it isn't recorded a second time.
+func (p *transactionParser) isRecordedPerson(name string) bool {
+	if name == "" {
+		return false
+	}
+	if strings.EqualFold(p.txn.ContactName, name) {
+		return true
+	}
+	return strings.Contains(strings.ToLower(p.note), strings.ToLower(fmt.Sprintf("[Person: %s]", name)))
+}
+
+// recordInjected remembers a "from X"/"to X" fragment the parser added itself, so it
+// can be removed again once X turns out to be recorded elsewhere on the transaction.
+func (p *transactionParser) recordInjected(val, fragment string) {
+	if p.injected == nil {
+		p.injected = make(map[string]string)
+	}
+	p.injected[strings.ToLower(val)] = fragment
+}
+
+// dropInjectedFragment removes the "from X"/"to X" fragment enrichContext added for
+// classifier context, once X has resolved to a wallet or contact — the routing is on
+// the transaction itself, so repeating it in the remarks is noise. Only fragments the
+// parser injected are removed; the user's own note text is left alone.
+func (p *transactionParser) dropInjectedFragment(val string) {
+	fragment, ok := p.injected[strings.ToLower(val)]
+	if !ok {
+		return
+	}
+	delete(p.injected, strings.ToLower(val))
+	p.note = removeWordSequence(p.note, fragment)
+}
+
+// removeWordSequence deletes the first whole-word occurrence of seq from text. Matching
+// word by word keeps a fragment from being cut out of the middle of a longer word —
+// removing "from kar" must not turn "paid from karim later" into "paid im later".
+func removeWordSequence(text, seq string) string {
+	words := strings.Fields(text)
+	target := strings.Fields(seq)
+	if len(target) == 0 || len(words) < len(target) {
+		return text
+	}
+	for i := 0; i+len(target) <= len(words); i++ {
+		if !matchesWords(words[i:i+len(target)], target) {
+			continue
+		}
+		remaining := append(append([]string{}, words[:i]...), words[i+len(target):]...)
+		return strings.Join(remaining, " ")
+	}
+	return text
+}
+
+// matchesWords compares two word slices case-insensitively, ignoring trailing
+// punctuation so "from karim," still matches "from karim".
+func matchesWords(words, target []string) bool {
+	for i := range target {
+		if !strings.EqualFold(strings.Trim(words[i], ".,!?"), target[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *transactionParser) appendNote(s string) {
@@ -466,21 +544,7 @@ func (p *transactionParser) flushBuffer(key string, buffer []string, isContact C
 		return
 	}
 
-	// Bare wallet/contact mentions ("salary 50k ebl", "lent 500 karim") carry
-	// routing info even without a preposition. Wallet names are stripped from
-	// the classifier text (noise); contact names stay in it — the person is
-	// context the classifier uses (matching keyed from/to behavior).
-	kept := make([]string, 0, len(buffer))
-	for _, w := range buffer {
-		token := strings.ToLower(strings.Trim(w, ".,!?"))
-		if isContact(token) {
-			p.bareContacts = append(p.bareContacts, token)
-		} else if isAccount(token) {
-			p.bareAccounts = append(p.bareAccounts, token)
-			continue
-		}
-		kept = append(kept, w)
-	}
+	kept := p.collectBareEntities(buffer, isContact, isAccount)
 	if len(kept) == 0 {
 		return
 	}
@@ -550,14 +614,58 @@ func (p *transactionParser) cleanSubcategory() {
 	}
 }
 
-// isKnownEntity reports whether a token names one of the user's own wallets or
-// contacts. Punctuation is trimmed so "from pay," still matches.
-func isKnownEntity(w string, isContact ContactVerifier, isAccount AccountVerifier) bool {
-	token := strings.Trim(w, ".,!?")
+// maxEntityWords caps how many words a wallet or contact name may span when matched
+// inside a sentence ("brac bank", "google pay").
+const maxEntityWords = 3
+
+// isKnownEntity reports whether a name is one of the user's own wallets or contacts.
+// Punctuation is trimmed so "from pay," still matches.
+func isKnownEntity(name string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	token := strings.ToLower(strings.Trim(name, ".,!?"))
 	if token == "" {
 		return false
 	}
 	return isAccount(token) || isContact(token)
+}
+
+// entityMatchLen returns how many words starting at i name a wallet or contact,
+// longest match first so "brac bank" wins over a wallet merely called "brac".
+// Zero means no match.
+func entityMatchLen(words []string, i int, isContact ContactVerifier, isAccount AccountVerifier) int {
+	span := maxEntityWords
+	if rem := len(words) - i; rem < span {
+		span = rem
+	}
+	for n := span; n >= 1; n-- {
+		if isKnownEntity(strings.Join(words[i:i+n], " "), isContact, isAccount) {
+			return n
+		}
+	}
+	return 0
+}
+
+// collectBareEntities pulls wallet and contact names mentioned without a preposition
+// ("salary 50k ebl", "lent 500 karim") out of a buffer and returns the remaining words.
+// Wallet names are dropped from the classifier text (noise); contact names stay in it —
+// the person is context the classifier uses (matching keyed from/to behavior).
+func (p *transactionParser) collectBareEntities(buffer []string, isContact ContactVerifier, isAccount AccountVerifier) []string {
+	kept := make([]string, 0, len(buffer))
+	for i := 0; i < len(buffer); i++ {
+		n := entityMatchLen(buffer, i, isContact, isAccount)
+		if n == 0 {
+			kept = append(kept, buffer[i])
+			continue
+		}
+		name := strings.ToLower(strings.Trim(strings.Join(buffer[i:i+n], " "), ".,!?"))
+		if isContact(name) {
+			p.bareContacts = append(p.bareContacts, name)
+			kept = append(kept, buffer[i:i+n]...)
+		} else {
+			p.bareAccounts = append(p.bareAccounts, name)
+		}
+		i += n - 1
+	}
+	return kept
 }
 
 func isStandardKeyword(w string) bool {
