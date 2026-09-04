@@ -173,7 +173,7 @@ func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountV
 	p.cleanSubcategory()
 
 	// --- STEP 3: Resolve debt direction (subject-aware, pre-AI) ---
-	p.resolveDebtDirection(isContact)
+	p.resolveDebtDirection(isContact, isAccount)
 
 	// --- STEP 3.5: Enrich Context (Pre-AI) ---
 	p.enrichContext(isAccount)

@@ -17,6 +17,15 @@ func debtContacts(name string) bool {
 	return false
 }
 
+// debtAccounts for debt tests: wallet names that must never be read as a person.
+func debtAccounts(name string) bool {
+	switch strings.ToLower(name) {
+	case "cash", "bkash", "ebl":
+		return true
+	}
+	return false
+}
+
 // TestClassifyDebt covers every lending/recovering case listed in the README.
 func TestClassifyDebt(t *testing.T) {
 	tests := []struct {
@@ -53,7 +62,7 @@ func TestClassifyDebt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.text, func(t *testing.T) {
-			got, ok := classifyDebt(tt.text, debtContacts)
+			got, ok := classifyDebt(tt.text, debtContacts, debtAccounts)
 			if tt.want == "" {
 				if ok {
 					t.Fatalf("classifyDebt(%q) = %q, want not-debt", tt.text, got)
@@ -73,7 +82,7 @@ func TestClassifyDebt(t *testing.T) {
 // TestClassifyDebt_incomeVariants asserts the Banglish "received from person" reads as
 // money-in (borrow or recover), never as an expense.
 func TestClassifyDebt_incomeVariants(t *testing.T) {
-	got, ok := classifyDebt("friend theke 1000 pelam", debtContacts)
+	got, ok := classifyDebt("friend theke 1000 pelam", debtContacts, debtAccounts)
 	if !ok {
 		t.Fatal("expected debt classification")
 	}
@@ -118,6 +127,45 @@ func TestParseTransaction_debtPerson(t *testing.T) {
 			}
 			if tt.wantRemarkSub != "" && !strings.Contains(got.Remarks, tt.wantRemarkSub) {
 				t.Errorf("Remarks = %q, want to contain %q", got.Remarks, tt.wantRemarkSub)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_walletIsNotPerson verifies a wallet mentioned in a debt
+// sentence is routed as a wallet, never recorded as the person involved.
+func TestParseTransaction_walletIsNotPerson(t *testing.T) {
+	initCache()
+
+	tests := []struct {
+		name        string
+		text        string
+		wantSub     string
+		wantContact string
+	}{
+		{"bare wallet is not a person", "lent 500 bkash", models.LendSubID, ""},
+		{"keyed wallet is not a person", "lent 500 from bkash", models.LendSubID, ""},
+		{"contact wins over wallet", "lent 500 to karim from bkash", models.LendSubID, "karim"},
+		{"banglish money-in wallet", "bkash theke 1000 pelam", models.BorrowSubID, ""},
+		{"settlement keeps contact", "john returned 1000 to bkash", models.LendRecoverySubID, "john"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, debtContacts, debtAccounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+			if got.ContactName != tt.wantContact {
+				t.Errorf("ContactName = %q, want %q", got.ContactName, tt.wantContact)
+			}
+			if strings.Contains(strings.ToLower(got.Remarks), "[person: bkash]") {
+				t.Errorf("Remarks = %q, wallet recorded as person", got.Remarks)
 			}
 		})
 	}
