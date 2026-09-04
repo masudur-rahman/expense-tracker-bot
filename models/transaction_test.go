@@ -70,3 +70,18 @@ func TestContainsType(t *testing.T) {
 	assert.False(t, ContainsType(types, TransferTransaction))
 	assert.False(t, ContainsType(nil, ExpenseTransaction))
 }
+
+func TestIsKnownSubcategory(t *testing.T) {
+	tests := map[string]bool{
+		"food-rest":     true,
+		GeneralSubID:    true,
+		LendSubID:       true,
+		"some raw text": false,
+		"":              false,
+	}
+	for id, want := range tests {
+		if got := IsKnownSubcategory(id); got != want {
+			t.Errorf("IsKnownSubcategory(%q) = %v, want %v", id, got, want)
+		}
+	}
+}

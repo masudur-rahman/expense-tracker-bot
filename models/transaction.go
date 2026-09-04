@@ -26,6 +26,9 @@ const (
 	BorrowSubID        = "fin-borrow"
 	BorrowReturnSubID  = "fin-return"
 
+	// GeneralSubID is the last-resort bucket for text no classifier could place.
+	GeneralSubID = "misc-misc"
+
 	// Separator is the standard visual divider for Telegram messages.
 	Separator = "──────────────"
 )
@@ -162,6 +165,13 @@ func ContainsType(types []TransactionType, typ TransactionType) bool {
 		}
 	}
 	return false
+}
+
+// IsKnownSubcategory reports whether id is a real subcategory ID. Free text that
+// slipped through a classifier passthrough must never be stored as one.
+func IsKnownSubcategory(id string) bool {
+	_, ok := SubcategoryTypes[id]
+	return ok
 }
 
 var (
@@ -344,7 +354,7 @@ var miscSubs = []TxnSubcategory{
 	{ID: "misc-loss", Name: "Lost/Stolen", CatID: "misc", Hint: "lost money, theft, pickpocket, damaged item"},
 	{ID: "misc-adj", Name: "Balance Adjustment", CatID: "misc", Hint: "correction entry, balance fix, rounding adjustment"},
 	{ID: "misc-asset", Name: "Asset Buy/Sell", CatID: "misc", Hint: "buying or selling durable goods: vehicle, bike, car, furniture, appliance, gadget resale, secondhand item"},
-	{ID: "misc-refund", Name: "Refund/Reimbursement", CatID: "misc", Hint: "refund received, reimbursement, money returned for a cancelled/returned purchase"},
+	{ID: "misc-refund", Name: "Refund/Reimbursement", CatID: "misc", Hint: "refund received, reimbursement, money returned for a canceled/returned purchase"},
 	{ID: "misc-misc", Name: "General", CatID: "misc", Hint: "LAST RESORT only — use when no other subcategory fits at all"},
 }
 

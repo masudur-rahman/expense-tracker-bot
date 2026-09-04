@@ -253,28 +253,15 @@ func (p *transactionParser) enrichContext(isAccount AccountVerifier) {
 }
 
 func (p *transactionParser) subcategoryAIParser() error {
-	for _, subcat := range models.TxnSubcategories {
-		if subcat.ID == p.subcategory {
-			return nil
-		}
+	if p.isFormalSubcategoryID() {
+		return nil
 	}
-
-	if p.note == "" {
-		p.note = p.subcategory
-	} else {
-		p.note = p.subcategory + " " + p.note
-	}
-
+	p.mergeSubcategoryIntoNote()
 	p.subcategory = normalizePhrase(p.subcategory)
-	if cached, exist := cache.GetCache(p.subcategory); exist {
-		var result ai.ClassificationResult
-		if err := json.Unmarshal([]byte(cached), &result); err == nil {
-			p.subcategory = result.Subcategory
-			p.setIntent(result.Intent)
-			return nil
-		}
-		// Fallback for old cache format
-		p.subcategory = cached
+
+	if subID, intent, ok := lookupCachedClassification(p.subcategory); ok {
+		p.subcategory = subID
+		p.setIntent(intent)
 		return nil
 	}
 
@@ -291,30 +278,80 @@ func (p *transactionParser) subcategoryAIParser() error {
 		// Degrade gracefully on ANY classifier failure (rate-limit, network, bad
 		// key, malformed response) so a transaction is never dropped or surfaced
 		// to the user as a generic "unexpected server error".
-		logr.DefaultLogger.Warnw("AI classification failed, falling back to misc",
+		logr.DefaultLogger.Warnw("AI classification failed, falling back to keywords",
 			"input", inputText, "rateLimited", isRateLimitErr(err), "error", err.Error())
-		p.subcategory = "misc-misc"
+		p.subcategory = p.fallbackSubcategory(inputText)
+		return nil
+	}
+	// A passthrough (no AI provider configured) echoes the input back — free text
+	// must never be stored or cached as a subcategory ID.
+	if !models.IsKnownSubcategory(result.Subcategory) {
+		p.subcategory = p.fallbackSubcategory(inputText)
 		return nil
 	}
 
-	// Only cache when AI actually classified (not a passthrough from missing API key).
-	if result.Subcategory != "" && result.Subcategory != inputText {
-		resultJSON, _ := json.Marshal(result)
-		_ = cache.SetCache(inputText, string(resultJSON), -1)
-		if dbErr := configs.InsertAICache(models.AICache{
-			InputText:     inputText,
-			SubcategoryID: result.Subcategory,
-			Intent:        result.Intent,
-			Confidence:    result.Confidence,
-			CreatedAt:     time.Now().In(p.tz).Unix(),
-		}); dbErr != nil {
-			logr.DefaultLogger.Errorw("Failed to persist AI cache", "error", dbErr.Error())
-		}
-	}
-
+	p.persistClassification(inputText, result)
 	p.subcategory = result.Subcategory
 	p.setIntent(result.Intent)
 	return nil
+}
+
+// mergeSubcategoryIntoNote keeps the user's own wording in the remarks before the
+// phrase is replaced by a classifier result.
+func (p *transactionParser) mergeSubcategoryIntoNote() {
+	if p.note == "" {
+		p.note = p.subcategory
+	} else {
+		p.note = p.subcategory + " " + p.note
+	}
+}
+
+// lookupCachedClassification returns the cached subcategory and intent for a phrase.
+// Entries that don't name a real subcategory are ignored, so an entry written before
+// ID validation cannot resurrect free text.
+func lookupCachedClassification(phrase string) (subID, intent string, ok bool) {
+	cached, exist := cache.GetCache(phrase)
+	if !exist {
+		return "", "", false
+	}
+	var result ai.ClassificationResult
+	if err := json.Unmarshal([]byte(cached), &result); err == nil {
+		if models.IsKnownSubcategory(result.Subcategory) {
+			return result.Subcategory, result.Intent, true
+		}
+		return "", "", false
+	}
+	// Old cache format: the bare subcategory ID.
+	if models.IsKnownSubcategory(cached) {
+		return cached, "", true
+	}
+	return "", "", false
+}
+
+// fallbackSubcategory resolves text no classifier could place: retry the keyword
+// match without the type lock (a type-incompatible hit is reconciled later), else
+// the General bucket.
+func (p *transactionParser) fallbackSubcategory(inputText string) string {
+	if subID, ok := localClassify(inputText, p.txnType, false); ok {
+		return subID
+	}
+	return models.GeneralSubID
+}
+
+// persistClassification write-through caches a validated AI result: memory first so
+// the next lookup is free, then the DB so it survives a restart.
+func (p *transactionParser) persistClassification(inputText string, result *ai.ClassificationResult) {
+	resultJSON, _ := json.Marshal(result)
+	_ = cache.SetCache(inputText, string(resultJSON), -1)
+	if err := configs.InsertAICache(models.AICache{
+		InputText:     inputText,
+		SubcategoryID: result.Subcategory,
+		Intent:        result.Intent,
+		Confidence:    result.Confidence,
+		CreatedAt:     time.Now().In(p.tz).Unix(),
+	}); err != nil {
+		logr.DefaultLogger.Errorw("Failed to persist AI cache", "error", err.Error())
+	}
 }
 
 func (p *transactionParser) setIntent(intent string) {
@@ -379,7 +416,7 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 		} else {
 			p.txnType = models.ExpenseTransaction
 			if p.subcategory == "fin-transfer" {
-				p.subcategory = "misc-misc"
+				p.subcategory = models.GeneralSubID
 			}
 		}
 	}
@@ -577,7 +614,7 @@ func (p *transactionParser) parseTransaction() error {
 				p.txn.SubcategoryID = "fin-ccpay"
 			}
 		} else {
-			p.txn.SubcategoryID = "misc-misc"
+			p.txn.SubcategoryID = models.GeneralSubID
 		}
 	}
 	p.reconcileSubcategoryType()
@@ -587,14 +624,14 @@ func (p *transactionParser) parseTransaction() error {
 	return p.parseTransactionTime()
 }
 
-// reconcileSubcategoryType is the final safety net: if a known subcategory is
-// type-incompatible with the resolved transaction type (e.g. a locked Income verb
-// that still landed on an expense-only subcategory), fall back to the General bucket
-// so the transaction is never rejected by service-level validation.
+// reconcileSubcategoryType is the final safety net: an unknown ID (free text that
+// slipped through a classifier passthrough) or a known-but-type-incompatible one
+// (e.g. a locked Income verb that landed on an expense-only subcategory) falls back
+// to the General bucket, so nothing unusable is ever stored.
 func (p *transactionParser) reconcileSubcategoryType() {
 	types, ok := models.SubcategoryTypes[p.txn.SubcategoryID]
-	if ok && !models.ContainsType(types, p.txn.Type) {
-		p.txn.SubcategoryID = "misc-misc"
+	if !ok || !models.ContainsType(types, p.txn.Type) {
+		p.txn.SubcategoryID = models.GeneralSubID
 	}
 }
 

@@ -540,3 +540,48 @@ func TestParseTransaction_entityNameShadowsKeyword(t *testing.T) {
 		})
 	}
 }
+
+// TestParseTransaction_subcategoryIDAlwaysValid verifies that free text never
+// reaches Transaction.SubcategoryID: a classifier passthrough, an unknown AI
+// answer, or a poisoned cache entry all resolve to a real subcategory ID.
+func TestParseTransaction_subcategoryIDAlwaysValid(t *testing.T) {
+	initCache()
+	// Cache entries written before ID validation must not resurrect free text.
+	_ = cache.SetCache("qwrty zzz", `{"intent":"expense","subcategory_id":"some free text"}`, -1)
+	_ = cache.SetCache("plmko zzz", "not a subcategory id", -1)
+	_ = cache.SetCache("dinner with plmko", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	// Old cache format: a bare, valid subcategory ID.
+	_ = cache.SetCache("qazwsx zzz", "food-rest", -1)
+
+	tests := []struct {
+		name    string
+		text    string
+		wantSub string // empty means "any known subcategory ID"
+	}{
+		{"poisoned json cache ignored", "qwrty zzz 500", ""},
+		{"poisoned legacy cache ignored", "plmko zzz 500", ""},
+		{"valid legacy cache used", "qazwsx zzz 500", "food-rest"},
+		{"unclassifiable text falls back", "vbnmklj hgfdsa 500", ""},
+		{"type-locked unclassifiable text falls back", "sold vbnmklj hgfdsa 10k", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, nil, nil, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if !models.IsKnownSubcategory(got.SubcategoryID) {
+				t.Fatalf("SubcategoryID = %q, want a known subcategory ID", got.SubcategoryID)
+			}
+			if !models.ContainsType(models.SubcategoryTypes[got.SubcategoryID], got.Type) {
+				t.Errorf("SubcategoryID %q not allowed for type %v", got.SubcategoryID, got.Type)
+			}
+			if tt.wantSub != "" && got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+		})
+	}
+}
