@@ -312,6 +312,9 @@ func (p *transactionParser) subcategoryAIParser() error {
 // mergeSubcategoryIntoNote keeps the user's own wording in the remarks before the
 // phrase is replaced by a classifier result.
 func (p *transactionParser) mergeSubcategoryIntoNote() {
+	if p.subcategory == "" {
+		return
+	}
 	if p.note == "" {
 		p.note = p.subcategory
 	} else {
@@ -422,6 +425,11 @@ func (p *transactionParser) finalizeMapping(isContact ContactVerifier, isAccount
 
 	processField(p.fromValue, true)
 	processField(p.toValue, false)
+
+	// Route preposition-less wallets before judging a transfer: "transfer 1000 ebl bkash"
+	// only has a destination once the bare mentions are placed.
+	p.ensureTypeMatchesCategory()
+	p.applyBareMentions()
 
 	if p.txnType == models.TransferTransaction && p.txn.DstID == "" {
 		// If it was supposed to be a transfer but no destination wallet found,
@@ -713,7 +721,6 @@ func (p *transactionParser) parseTransaction() error {
 	p.txn.Type = p.txnType
 	p.txn.SubcategoryID = p.subcategory
 	p.txn.Remarks = p.note
-	p.applyBareMentions()
 	p.setDefaultSourceDestination()
 
 	if p.txn.SubcategoryID == "" {
@@ -753,16 +760,16 @@ func (p *transactionParser) parseAmount() error {
 	return err
 }
 
-// applyBareMentions routes preposition-less wallet and contact mentions into
-// the slots the final transaction type needs. Runs after type/subcategory are
-// settled and never overrides an explicitly keyed value (from/to/in). The
-// debt path attaches its person earlier; this covers the non-debt cases.
+// applyBareMentions routes preposition-less wallet and contact mentions into the slots
+// the resolved transaction type needs. Runs once type and subcategory are settled but
+// before a transfer is judged complete, and never overrides an explicitly keyed value
+// (from/to/in). The debt path attaches its person earlier; this covers the rest.
 func (p *transactionParser) applyBareMentions() {
 	if p.txn.ContactName == "" && len(p.bareContacts) > 0 {
 		p.txn.ContactName = p.bareContacts[0]
 	}
 	for _, acc := range p.bareAccounts {
-		switch p.txn.Type {
+		switch p.txnType {
 		case models.IncomeTransaction:
 			if p.txn.DstID == "" {
 				p.txn.DstID = acc
@@ -774,9 +781,9 @@ func (p *transactionParser) applyBareMentions() {
 		case models.TransferTransaction:
 			switch {
 			// "withdraw 5k ebl" takes from the bank; "deposit 5k ebl" puts into it.
-			case p.txn.SubcategoryID == "fin-with" && p.txn.SrcID == "":
+			case p.subcategory == "fin-with" && p.txn.SrcID == "":
 				p.txn.SrcID = acc
-			case p.txn.SubcategoryID == "fin-deposit" && p.txn.DstID == "":
+			case p.subcategory == "fin-deposit" && p.txn.DstID == "":
 				p.txn.DstID = acc
 			case p.txn.SrcID == "":
 				p.txn.SrcID = acc

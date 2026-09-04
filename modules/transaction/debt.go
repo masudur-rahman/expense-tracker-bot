@@ -389,7 +389,7 @@ func (p *transactionParser) resolveDebtDirection(isContact ContactVerifier, isAc
 // finalizeMapping.
 func (p *transactionParser) attachDebtPerson(isContact ContactVerifier, isAccount AccountVerifier) {
 	person := p.findDebtPerson(isContact, isAccount)
-	if person == "" || person == p.toValue || person == p.fromValue {
+	if person == "" || p.keyedValueCovers(person) {
 		return
 	}
 	if isContact(person) {
@@ -402,6 +402,26 @@ func (p *transactionParser) attachDebtPerson(isContact ContactVerifier, isAccoun
 	if !strings.Contains(p.note, marker) {
 		p.appendNote(marker)
 	}
+}
+
+// keyedValueCovers reports whether a from/to value already refers to this person, either
+// as the whole value or as one of its words ("guard" inside "security guard"). The keyed
+// value is the fuller reference, so finalizeMapping records that one instead.
+func (p *transactionParser) keyedValueCovers(person string) bool {
+	for _, val := range []string{p.fromValue, p.toValue} {
+		if val == "" {
+			continue
+		}
+		if strings.EqualFold(val, person) {
+			return true
+		}
+		for _, w := range strings.Fields(val) {
+			if strings.EqualFold(strings.Trim(w, ".,!?"), person) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // findDebtPerson picks the person referenced in a debt sentence: a known contact first,

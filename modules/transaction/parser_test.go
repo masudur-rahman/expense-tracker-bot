@@ -161,6 +161,9 @@ func TestParseTransaction_bareWalletMention(t *testing.T) {
 		{"expense routes to source", "lunch 250 ebl", models.ExpenseTransaction, "ebl", "", ""},
 		{"explicit wallet wins", "dinner 400 ebl from dbbl", models.ExpenseTransaction, "dbbl", "", ""},
 		{"bare contact resolved", "lent 500 karim", models.ExpenseTransaction, "cash", "", "karim"},
+		{"bare wallets complete a transfer", "transfer 1000 ebl dbbl", models.TransferTransaction, "ebl", "dbbl", ""},
+		{"withdraw takes from the bank", "withdraw 5000 ebl", models.TransferTransaction, "ebl", "cash", ""},
+		{"deposit puts into the bank", "deposit 5000 ebl", models.TransferTransaction, "cash", "ebl", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -673,6 +676,7 @@ func TestParseTransaction_remarksHygiene(t *testing.T) {
 		{"debt person recorded once", "borrowed 1000 from rahim", "[Person: rahim]", true},
 		{"user note keeps similar wording", "spent 500 lunch from kar note paid from karim later", "lunch paid from karim later", true},
 		{"unknown context kept", "salary 50k ebl from office", "salary from office", true},
+		{"explicit note without a phrase", "spent 500 from ebl note bought at the shop", "bought at the shop", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

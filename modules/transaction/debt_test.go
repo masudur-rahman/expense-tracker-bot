@@ -149,6 +149,7 @@ func TestParseTransaction_walletIsNotPerson(t *testing.T) {
 		{"contact wins over wallet", "lent 500 to karim from bkash", models.LendSubID, "karim"},
 		{"banglish money-in wallet", "bkash theke 1000 pelam", models.BorrowSubID, ""},
 		{"settlement keeps contact", "john returned 1000 to bkash", models.LendRecoverySubID, "john"},
+		{"person recorded once, fullest reference", "gave 500 loan to security guard", models.LendSubID, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -167,6 +168,9 @@ func TestParseTransaction_walletIsNotPerson(t *testing.T) {
 			}
 			if strings.Contains(strings.ToLower(got.Remarks), "[person: bkash]") {
 				t.Errorf("Remarks = %q, wallet recorded as person", got.Remarks)
+			}
+			if strings.Count(got.Remarks, "[Person:") > 1 {
+				t.Errorf("Remarks = %q, person recorded more than once", got.Remarks)
 			}
 		})
 	}
