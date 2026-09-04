@@ -116,9 +116,11 @@ func classifyDebt(text string, isContact ContactVerifier, isAccount AccountVerif
 	words := canonicalizeDebt(text)
 	verbIdx, dir, matched := primaryDebtVerb(words)
 
-	// Engage only on a strong debt token, or a bare "person + amount" reference. A generic
-	// verb next to a real category ("paid masud for lunch") is a normal transaction.
-	if !hasStrongDebt(words) && !bareContactContext(words, isContact, isAccount) {
+	// Engage on a strong debt token, a bare "person + amount" reference, or a direction
+	// verb acting on a person with no ordinary category in sight. A generic verb next to
+	// a real category ("paid masud for lunch") is a normal transaction.
+	if !hasStrongDebt(words) && !bareContactContext(words, isContact, isAccount) &&
+		!personVerbContext(words, isContact, isAccount) {
 		return "", false
 	}
 	if !matched {
@@ -131,6 +133,109 @@ func classifyDebt(text string, isContact ContactVerifier, isAccount AccountVerif
 		dir = moneyIn
 	}
 	return debtSubcategory(dir, settlement), true
+}
+
+// hasPersonReference reports whether the text names a person: a contact on file or a
+// generic person word. Only these anchor a direction claim — an unknown noun is too
+// weak a signal to override a classifier.
+func hasPersonReference(words []string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	for _, w := range words {
+		if isAccount(w) {
+			continue
+		}
+		if isContact(w) || personWords[w] {
+			return true
+		}
+	}
+	return false
+}
+
+// personVerbContext reports whether a direction verb acts on a person while no ordinary
+// category keyword is present ("held gun and got 500 from someone"). Extra words must not
+// disable direction resolution, but a real category ("paid john for lunch") still wins.
+func personVerbContext(words []string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	if !hasPersonReference(words, isContact, isAccount) {
+		return false
+	}
+	if _, _, matched := primaryDebtVerb(words); !matched {
+		return false
+	}
+	_, categoryHit := localClassify(strings.Join(words, " "), models.ExpenseTransaction, false)
+	return !categoryHit
+}
+
+// theftVerbs mark money taken by force or stealth. Direction depends on who was robbed,
+// so they are read together with the person reference, never on their own.
+var theftVerbs = map[string]bool{
+	"snatched": true, "snatch": true, "snached": true, "robbed": true, "rob": true,
+	"mugged": true, "mug": true, "pickpocketed": true, "chinatai": true, "chhinatai": true,
+}
+
+// theftDirection reads a theft sentence: "<theft verb> ... from <person>" means the money
+// came to me, anything else means it was taken from me.
+func theftDirection(words []string, isContact ContactVerifier) (moneyDir, bool) {
+	idx := -1
+	for i, w := range words {
+		if theftVerbs[w] {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		return moneyOut, false
+	}
+	for i := idx + 1; i < len(words)-1; i++ {
+		if words[i] == "from" && (isContact(words[i+1]) || personWords[words[i+1]]) {
+			return moneyIn, true
+		}
+	}
+	return moneyOut, true
+}
+
+// statedMoneyDirection reports the money direction the sentence states outright — a
+// direction verb (or a theft verb) applied to a named person. Person-anchored only:
+// "takeaway food 500" names nobody, so it never reads as money coming in.
+func statedMoneyDirection(words []string, isContact ContactVerifier, isAccount AccountVerifier) (moneyDir, bool) {
+	if !hasPersonReference(words, isContact, isAccount) {
+		return moneyOut, false
+	}
+	if dir, ok := theftDirection(words, isContact); ok {
+		return dir, true
+	}
+	verbIdx, dir, matched := primaryDebtVerb(words)
+	if !matched {
+		return moneyOut, false
+	}
+	if personActedOnMe(words, verbIdx, isContact, isAccount) {
+		dir = moneyIn
+	}
+	return dir, true
+}
+
+// applyDirectionGuard is the deterministic check over a classifier verdict: when the
+// sentence states who gave whom, that direction outranks an inferred one. The
+// subcategory is kept whenever it allows the corrected type, else it falls back to the
+// matching debt subcategory. An explicit verb from the user still wins over both.
+func (p *transactionParser) applyDirectionGuard(isContact ContactVerifier, isAccount AccountVerifier) {
+	if p.typeLocked {
+		return
+	}
+	words := canonicalizeDebt(p.rawText)
+	dir, ok := statedMoneyDirection(words, isContact, isAccount)
+	if !ok {
+		return
+	}
+	want := models.IncomeTransaction
+	if dir == moneyOut {
+		want = models.ExpenseTransaction
+	}
+	if p.txnType == want {
+		return
+	}
+	if !models.ContainsType(models.SubcategoryTypes[p.subcategory], want) {
+		p.subcategory = debtSubcategory(dir, hasSettlement(words))
+	}
+	p.txnType = want
 }
 
 // hasStrongDebt reports whether any token unambiguously marks a debt transaction.

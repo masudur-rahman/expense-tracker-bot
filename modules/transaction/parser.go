@@ -183,6 +183,10 @@ func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountV
 		return models.Transaction{}, err
 	}
 
+	// --- STEP 4.5: Direction Guard (Post-AI) ---
+	// A stated direction ("got 500 from someone") outranks a classifier's guess.
+	p.applyDirectionGuard(isContact, isAccount)
+
 	// --- STEP 5: Finalize Mapping (Post-AI) ---
 	p.finalizeMapping(isContact, isAccount)
 

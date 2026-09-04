@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/masudur-rahman/khorcha-pati/models"
+	"github.com/masudur-rahman/khorcha-pati/modules/cache"
 )
 
 // knownContacts for debt tests: John/Sarah/Karim/Rifat are on file; Friend/Ali are not,
@@ -166,6 +167,80 @@ func TestParseTransaction_walletIsNotPerson(t *testing.T) {
 			}
 			if strings.Contains(strings.ToLower(got.Remarks), "[person: bkash]") {
 				t.Errorf("Remarks = %q, wallet recorded as person", got.Remarks)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_directionGuard verifies that a stated money direction
+// ("got 500 from someone", "snatched 500 from someone") outranks a classifier's
+// guess, while sentences that name no person keep their normal classification.
+func TestParseTransaction_directionGuard(t *testing.T) {
+	initCache()
+	// Force the wrong direction from cache to prove the guard corrects it.
+	_ = cache.SetCache("held gun and got from someone", `{"intent":"expense","subcategory_id":"fin-lend"}`, -1)
+
+	tests := []struct {
+		name    string
+		text    string
+		wantTyp models.TransactionType
+		wantSub string
+	}{
+		{"money in overrides lend verdict", "held gun and got 500 from someone", models.IncomeTransaction, models.BorrowSubID},
+		{"theft from a person is income", "snatched 500 from someone", models.IncomeTransaction, "misc-loss"},
+		{"theft spelling variant", "snached 500 from someone", models.IncomeTransaction, "misc-loss"},
+		{"theft against me stays expense", "someone snatched 500 from me", models.ExpenseTransaction, "misc-loss"},
+		{"loss without a person stays expense", "stolen 500", models.ExpenseTransaction, "misc-loss"},
+		{"loss from a place stays expense", "500 stolen from my pocket", models.ExpenseTransaction, "misc-loss"},
+		{"money in from a contact", "got 500 from karim", models.IncomeTransaction, models.BorrowSubID},
+		// Guard must not fire where no person is named or a real category wins.
+		{"category keyword wins over person", "paid karim for lunch 300", models.ExpenseTransaction, "food-rest"},
+		{"in-verb without a person", "takeaway food 500", models.ExpenseTransaction, "food-take"},
+		{"income keyword unaffected", "got bonus 20k", models.IncomeTransaction, "fin-prof"},
+		{"expense keyword unaffected", "paid 1500 for wifi bill", models.ExpenseTransaction, "house-net"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, debtContacts, debtAccounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.Type != tt.wantTyp {
+				t.Errorf("Type = %v, want %v", got.Type, tt.wantTyp)
+			}
+			if got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+		})
+	}
+}
+
+// TestTheftDirection_directionFromPerson checks the theft reading in isolation:
+// taking from a named person is money in, everything else is money out.
+func TestTheftDirection_directionFromPerson(t *testing.T) {
+	tests := []struct {
+		text    string
+		wantDir moneyDir
+		wantOK  bool
+	}{
+		{"snatched from someone", moneyIn, true},
+		{"robbed karim", moneyOut, true},
+		{"mugged from friend", moneyIn, true},
+		{"someone snatched from me", moneyOut, true},
+		{"stolen from my pocket", moneyOut, false},
+		{"lunch with karim", moneyOut, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.text, func(t *testing.T) {
+			dir, ok := theftDirection(strings.Fields(tt.text), debtContacts)
+			if ok != tt.wantOK {
+				t.Fatalf("theftDirection(%q) ok = %v, want %v", tt.text, ok, tt.wantOK)
+			}
+			if ok && dir != tt.wantDir {
+				t.Errorf("theftDirection(%q) dir = %v, want %v", tt.text, dir, tt.wantDir)
 			}
 		})
 	}
