@@ -478,3 +478,65 @@ func TestParseTransaction(t *testing.T) {
 		})
 	}
 }
+
+// TestParseTransaction_entityNameShadowsKeyword verifies that a wallet or
+// contact named like a reserved word ("pay", "sale", "noon", "friday") is read
+// as the entity instead of being swallowed by the keyword scanner.
+func TestParseTransaction_entityNameShadowsKeyword(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("salary", `{"intent":"income","subcategory_id":"fin-sal"}`, -1)
+
+	contacts := func(name string) bool { return strings.ToLower(name) == "friday" }
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl", "pay", "sale", "noon":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name        string
+		text        string
+		wantTyp     models.TransactionType
+		wantSub     string
+		wantSrc     string
+		wantDst     string
+		wantContact string
+	}{
+		{"verb-named wallet as source", "spent 500 lunch from pay", models.ExpenseTransaction, "food-rest", "pay", "", ""},
+		{"verb-named wallet as destination", "got 5000 salary in pay", models.IncomeTransaction, "fin-sal", "", "pay", ""},
+		{"verb-named wallet bare", "lunch 250 pay", models.ExpenseTransaction, "food-rest", "pay", "", ""},
+		{"income-verb-named wallet", "spent 250 lunch from sale", models.ExpenseTransaction, "food-rest", "sale", "", ""},
+		{"named-hour wallet", "lunch 250 from noon", models.ExpenseTransaction, "food-rest", "noon", "", ""},
+		{"weekday contact", "lent 500 to friday", models.ExpenseTransaction, "fin-lend", "cash", "", "friday"},
+		{"transfer between wallets", "transfer 1000 from pay to ebl", models.TransferTransaction, "fin-transfer", "pay", "ebl", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.Type != tt.wantTyp {
+				t.Errorf("Type = %v, want %v", got.Type, tt.wantTyp)
+			}
+			if got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+			if got.SrcID != tt.wantSrc {
+				t.Errorf("SrcID = %q, want %q", got.SrcID, tt.wantSrc)
+			}
+			if got.DstID != tt.wantDst {
+				t.Errorf("DstID = %q, want %q", got.DstID, tt.wantDst)
+			}
+			if got.ContactName != tt.wantContact {
+				t.Errorf("ContactName = %q, want %q", got.ContactName, tt.wantContact)
+			}
+		})
+	}
+}

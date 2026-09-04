@@ -131,6 +131,14 @@ func ParseTransaction(text string, isContact ContactVerifier, isAccount AccountV
 			currentBuffer = nil
 			break
 		}
+		// A wallet or contact whose name collides with a reserved word ("pay",
+		// "sale", "noon", "friday") must be read as the entity, not the keyword —
+		// otherwise the token is swallowed and its from/to slot is lost. The
+		// literal "note" above still wins, since it ends the scan.
+		if isKnownEntity(lowerWord, isContact, isAccount) {
+			currentBuffer = append(currentBuffer, word)
+			continue
+		}
 		if p.isVerbKeyword(lowerWord) {
 			p.verbFound = true
 			p.flushBuffer(currentKey, currentBuffer, isContact, isAccount)
@@ -499,6 +507,16 @@ func (p *transactionParser) cleanSubcategory() {
 	if strings.HasSuffix(lower, " for") {
 		p.subcategory = p.subcategory[:len(p.subcategory)-4]
 	}
+}
+
+// isKnownEntity reports whether a token names one of the user's own wallets or
+// contacts. Punctuation is trimmed so "from pay," still matches.
+func isKnownEntity(w string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	token := strings.Trim(w, ".,!?")
+	if token == "" {
+		return false
+	}
+	return isAccount(token) || isContact(token)
 }
 
 func isStandardKeyword(w string) bool {
