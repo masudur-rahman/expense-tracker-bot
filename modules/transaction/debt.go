@@ -112,13 +112,15 @@ var (
 
 // classifyDebt resolves a debt subcategory from the (canonicalized, lower-cased) text, or
 // returns false when the input is not debt-related.
-func classifyDebt(text string, isContact ContactVerifier) (string, bool) {
+func classifyDebt(text string, isContact ContactVerifier, isAccount AccountVerifier) (string, bool) {
 	words := canonicalizeDebt(text)
 	verbIdx, dir, matched := primaryDebtVerb(words)
 
-	// Engage only on a strong debt token, or a bare "person + amount" reference. A generic
-	// verb next to a real category ("paid masud for lunch") is a normal transaction.
-	if !hasStrongDebt(words) && !bareContactContext(words, isContact) {
+	// Engage on a strong debt token, a bare "person + amount" reference, or a direction
+	// verb acting on a person with no ordinary category in sight. A generic verb next to
+	// a real category ("paid masud for lunch") is a normal transaction.
+	if !hasStrongDebt(words) && !bareContactContext(words, isContact, isAccount) &&
+		!personVerbContext(words, isContact, isAccount) {
 		return "", false
 	}
 	if !matched {
@@ -127,10 +129,113 @@ func classifyDebt(text string, isContact ContactVerifier) (string, bool) {
 	}
 
 	settlement := hasSettlement(words)
-	if personActedOnMe(words, verbIdx, isContact) {
+	if personActedOnMe(words, verbIdx, isContact, isAccount) {
 		dir = moneyIn
 	}
 	return debtSubcategory(dir, settlement), true
+}
+
+// hasPersonReference reports whether the text names a person: a contact on file or a
+// generic person word. Only these anchor a direction claim — an unknown noun is too
+// weak a signal to override a classifier.
+func hasPersonReference(words []string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	for _, w := range words {
+		if isAccount(w) {
+			continue
+		}
+		if isContact(w) || personWords[w] {
+			return true
+		}
+	}
+	return false
+}
+
+// personVerbContext reports whether a direction verb acts on a person while no ordinary
+// category keyword is present ("held gun and got 500 from someone"). Extra words must not
+// disable direction resolution, but a real category ("paid john for lunch") still wins.
+func personVerbContext(words []string, isContact ContactVerifier, isAccount AccountVerifier) bool {
+	if !hasPersonReference(words, isContact, isAccount) {
+		return false
+	}
+	if _, _, matched := primaryDebtVerb(words); !matched {
+		return false
+	}
+	_, categoryHit := localClassify(strings.Join(words, " "), models.ExpenseTransaction, false)
+	return !categoryHit
+}
+
+// theftVerbs mark money taken by force or stealth. Direction depends on who was robbed,
+// so they are read together with the person reference, never on their own.
+var theftVerbs = map[string]bool{
+	"snatched": true, "snatch": true, "snached": true, "robbed": true, "rob": true,
+	"mugged": true, "mug": true, "pickpocketed": true, "chinatai": true, "chhinatai": true,
+}
+
+// theftDirection reads a theft sentence: "<theft verb> ... from <person>" means the money
+// came to me, anything else means it was taken from me.
+func theftDirection(words []string, isContact ContactVerifier) (moneyDir, bool) {
+	idx := -1
+	for i, w := range words {
+		if theftVerbs[w] {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		return moneyOut, false
+	}
+	for i := idx + 1; i < len(words)-1; i++ {
+		if words[i] == "from" && (isContact(words[i+1]) || personWords[words[i+1]]) {
+			return moneyIn, true
+		}
+	}
+	return moneyOut, true
+}
+
+// statedMoneyDirection reports the money direction the sentence states outright — a
+// direction verb (or a theft verb) applied to a named person. Person-anchored only:
+// "takeaway food 500" names nobody, so it never reads as money coming in.
+func statedMoneyDirection(words []string, isContact ContactVerifier, isAccount AccountVerifier) (moneyDir, bool) {
+	if !hasPersonReference(words, isContact, isAccount) {
+		return moneyOut, false
+	}
+	if dir, ok := theftDirection(words, isContact); ok {
+		return dir, true
+	}
+	verbIdx, dir, matched := primaryDebtVerb(words)
+	if !matched {
+		return moneyOut, false
+	}
+	if personActedOnMe(words, verbIdx, isContact, isAccount) {
+		dir = moneyIn
+	}
+	return dir, true
+}
+
+// applyDirectionGuard is the deterministic check over a classifier verdict: when the
+// sentence states who gave whom, that direction outranks an inferred one. The
+// subcategory is kept whenever it allows the corrected type, else it falls back to the
+// matching debt subcategory. An explicit verb from the user still wins over both.
+func (p *transactionParser) applyDirectionGuard(isContact ContactVerifier, isAccount AccountVerifier) {
+	if p.typeLocked {
+		return
+	}
+	words := canonicalizeDebt(p.rawText)
+	dir, ok := statedMoneyDirection(words, isContact, isAccount)
+	if !ok {
+		return
+	}
+	want := models.IncomeTransaction
+	if dir == moneyOut {
+		want = models.ExpenseTransaction
+	}
+	if p.txnType == want {
+		return
+	}
+	if !models.ContainsType(models.SubcategoryTypes[p.subcategory], want) {
+		p.subcategory = debtSubcategory(dir, hasSettlement(words))
+	}
+	p.txnType = want
 }
 
 // hasStrongDebt reports whether any token unambiguously marks a debt transaction.
@@ -174,14 +279,14 @@ var debtFillers = map[string]bool{
 
 // bareContactContext reports whether, after removing the person and amount, only filler
 // words remain — i.e. the input is just a person + amount with no other category signal.
-func bareContactContext(words []string, isContact ContactVerifier) bool {
+func bareContactContext(words []string, isContact ContactVerifier, isAccount AccountVerifier) bool {
 	seenPerson := false
 	for _, w := range words {
 		switch {
 		case isContact(w) || personWords[w]:
 			seenPerson = true
-		case isNumericToken(w) || debtFillers[w] || debtInVerbs[w] || debtOutVerbs[w]:
-			// ignore amounts, connectors, and the debt verb itself
+		case isNumericToken(w) || debtFillers[w] || debtInVerbs[w] || debtOutVerbs[w] || isAccount(w):
+			// ignore amounts, connectors, wallets, and the debt verb itself
 		default:
 			return false
 		}
@@ -225,9 +330,10 @@ func hasSettlement(words []string) bool {
 
 // isPersonCandidate reports whether a token could be a person's name — an alphabetic word
 // that is not a reserved debt keyword, connector, or amount. This lets an unknown proper
-// noun ("sarah", "rahim") act as the subject even when it is not a listed contact.
-func isPersonCandidate(w string) bool {
-	if w == "" || subjectStopwords[w] || debtFillers[w] || isNumericToken(w) {
+// noun ("sarah", "rahim") act as the subject even when it is not a listed contact. A
+// wallet name is never a person — "lent 500 bkash" pays out of the bkash wallet.
+func isPersonCandidate(w string, isAccount AccountVerifier) bool {
+	if w == "" || subjectStopwords[w] || debtFillers[w] || isNumericToken(w) || isAccount(w) {
 		return false
 	}
 	if debtInVerbs[w] || debtOutVerbs[w] || settlementTokens[w] || strongDebtTokens[w] || objectMarkers[w] {
@@ -244,13 +350,13 @@ func isPersonCandidate(w string) bool {
 // personActedOnMe reports whether another person is the subject of the verb (so money
 // flows to me): a person token before the verb that is not marked as a recipient, or an
 // explicit "...me back"/"paid me" object.
-func personActedOnMe(words []string, verbIdx int, isContact ContactVerifier) bool {
+func personActedOnMe(words []string, verbIdx int, isContact ContactVerifier, isAccount AccountVerifier) bool {
 	for i := 0; i < verbIdx; i++ {
 		w := words[i]
 		if subjectStopwords[w] {
 			continue
 		}
-		if !isContact(w) && !personWords[w] && !isPersonCandidate(w) {
+		if !isContact(w) && !personWords[w] && !isPersonCandidate(w, isAccount) {
 			continue
 		}
 		if i+1 < len(words) && objectMarkers[words[i+1]] {
@@ -263,8 +369,8 @@ func personActedOnMe(words []string, verbIdx int, isContact ContactVerifier) boo
 
 // resolveDebtDirection sets the debt subcategory/type and attaches the person when the
 // input is debt-related. A no-op otherwise, leaving normal classification untouched.
-func (p *transactionParser) resolveDebtDirection(isContact ContactVerifier) {
-	subID, ok := classifyDebt(p.rawText, isContact)
+func (p *transactionParser) resolveDebtDirection(isContact ContactVerifier, isAccount AccountVerifier) {
+	subID, ok := classifyDebt(p.rawText, isContact, isAccount)
 	if !ok {
 		return
 	}
@@ -274,16 +380,16 @@ func (p *transactionParser) resolveDebtDirection(isContact ContactVerifier) {
 	} else {
 		p.txnType = models.IncomeTransaction
 	}
-	p.attachDebtPerson(isContact)
+	p.attachDebtPerson(isContact, isAccount)
 }
 
 // attachDebtPerson records the person involved: a known contact becomes ContactName
 // (driving balance updates); an unknown person is left as a [Person: name] remark so a
 // later crawler can reconcile it. Persons already captured by from/to are left to
 // finalizeMapping.
-func (p *transactionParser) attachDebtPerson(isContact ContactVerifier) {
-	person := p.findDebtPerson(isContact)
-	if person == "" || person == p.toValue || person == p.fromValue {
+func (p *transactionParser) attachDebtPerson(isContact ContactVerifier, isAccount AccountVerifier) {
+	person := p.findDebtPerson(isContact, isAccount)
+	if person == "" || p.keyedValueCovers(person) {
 		return
 	}
 	if isContact(person) {
@@ -298,9 +404,29 @@ func (p *transactionParser) attachDebtPerson(isContact ContactVerifier) {
 	}
 }
 
+// keyedValueCovers reports whether a from/to value already refers to this person, either
+// as the whole value or as one of its words ("guard" inside "security guard"). The keyed
+// value is the fuller reference, so finalizeMapping records that one instead.
+func (p *transactionParser) keyedValueCovers(person string) bool {
+	for _, val := range []string{p.fromValue, p.toValue} {
+		if val == "" {
+			continue
+		}
+		if strings.EqualFold(val, person) {
+			return true
+		}
+		for _, w := range strings.Fields(val) {
+			if strings.EqualFold(strings.Trim(w, ".,!?"), person) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // findDebtPerson picks the person referenced in a debt sentence: a known contact first,
 // else a generic person word, skipping stopwords/pronouns.
-func (p *transactionParser) findDebtPerson(isContact ContactVerifier) string {
+func (p *transactionParser) findDebtPerson(isContact ContactVerifier, isAccount AccountVerifier) string {
 	words := canonicalizeDebt(p.rawText)
 	for _, w := range words {
 		if isContact(w) {
@@ -313,7 +439,7 @@ func (p *transactionParser) findDebtPerson(isContact ContactVerifier) string {
 		}
 	}
 	for _, w := range words {
-		if isPersonCandidate(w) {
+		if isPersonCandidate(w, isAccount) {
 			return w
 		}
 	}

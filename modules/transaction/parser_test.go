@@ -161,6 +161,9 @@ func TestParseTransaction_bareWalletMention(t *testing.T) {
 		{"expense routes to source", "lunch 250 ebl", models.ExpenseTransaction, "ebl", "", ""},
 		{"explicit wallet wins", "dinner 400 ebl from dbbl", models.ExpenseTransaction, "dbbl", "", ""},
 		{"bare contact resolved", "lent 500 karim", models.ExpenseTransaction, "cash", "", "karim"},
+		{"bare wallets complete a transfer", "transfer 1000 ebl dbbl", models.TransferTransaction, "ebl", "dbbl", ""},
+		{"withdraw takes from the bank", "withdraw 5000 ebl", models.TransferTransaction, "ebl", "cash", ""},
+		{"deposit puts into the bank", "deposit 5000 ebl", models.TransferTransaction, "cash", "ebl", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -475,6 +478,241 @@ func TestParseTransaction(t *testing.T) {
 			//if !reflect.DeepEqual(got, tt.want) {
 			//	t.Errorf("ParseTransaction() got = %v, want %v", got, tt.want)
 			//}
+		})
+	}
+}
+
+// TestParseTransaction_entityNameShadowsKeyword verifies that a wallet or
+// contact named like a reserved word ("pay", "sale", "noon", "friday") is read
+// as the entity instead of being swallowed by the keyword scanner.
+func TestParseTransaction_entityNameShadowsKeyword(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("salary", `{"intent":"income","subcategory_id":"fin-sal"}`, -1)
+
+	contacts := func(name string) bool { return strings.ToLower(name) == "friday" }
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl", "pay", "sale", "noon":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name        string
+		text        string
+		wantTyp     models.TransactionType
+		wantSub     string
+		wantSrc     string
+		wantDst     string
+		wantContact string
+	}{
+		{"verb-named wallet as source", "spent 500 lunch from pay", models.ExpenseTransaction, "food-rest", "pay", "", ""},
+		{"verb-named wallet as destination", "got 5000 salary in pay", models.IncomeTransaction, "fin-sal", "", "pay", ""},
+		{"verb-named wallet bare", "lunch 250 pay", models.ExpenseTransaction, "food-rest", "pay", "", ""},
+		{"income-verb-named wallet", "spent 250 lunch from sale", models.ExpenseTransaction, "food-rest", "sale", "", ""},
+		{"named-hour wallet", "lunch 250 from noon", models.ExpenseTransaction, "food-rest", "noon", "", ""},
+		{"weekday contact", "lent 500 to friday", models.ExpenseTransaction, "fin-lend", "cash", "", "friday"},
+		{"transfer between wallets", "transfer 1000 from pay to ebl", models.TransferTransaction, "fin-transfer", "pay", "ebl", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.Type != tt.wantTyp {
+				t.Errorf("Type = %v, want %v", got.Type, tt.wantTyp)
+			}
+			if got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+			if got.SrcID != tt.wantSrc {
+				t.Errorf("SrcID = %q, want %q", got.SrcID, tt.wantSrc)
+			}
+			if got.DstID != tt.wantDst {
+				t.Errorf("DstID = %q, want %q", got.DstID, tt.wantDst)
+			}
+			if got.ContactName != tt.wantContact {
+				t.Errorf("ContactName = %q, want %q", got.ContactName, tt.wantContact)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_subcategoryIDAlwaysValid verifies that free text never
+// reaches Transaction.SubcategoryID: a classifier passthrough, an unknown AI
+// answer, or a poisoned cache entry all resolve to a real subcategory ID.
+func TestParseTransaction_subcategoryIDAlwaysValid(t *testing.T) {
+	initCache()
+	// Cache entries written before ID validation must not resurrect free text.
+	_ = cache.SetCache("qwrty zzz", `{"intent":"expense","subcategory_id":"some free text"}`, -1)
+	_ = cache.SetCache("plmko zzz", "not a subcategory id", -1)
+	_ = cache.SetCache("dinner with plmko", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	// Old cache format: a bare, valid subcategory ID.
+	_ = cache.SetCache("qazwsx zzz", "food-rest", -1)
+
+	tests := []struct {
+		name    string
+		text    string
+		wantSub string // empty means "any known subcategory ID"
+	}{
+		{"poisoned json cache ignored", "qwrty zzz 500", ""},
+		{"poisoned legacy cache ignored", "plmko zzz 500", ""},
+		{"valid legacy cache used", "qazwsx zzz 500", "food-rest"},
+		{"unclassifiable text falls back", "vbnmklj hgfdsa 500", ""},
+		{"type-locked unclassifiable text falls back", "sold vbnmklj hgfdsa 10k", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, nil, nil, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if !models.IsKnownSubcategory(got.SubcategoryID) {
+				t.Fatalf("SubcategoryID = %q, want a known subcategory ID", got.SubcategoryID)
+			}
+			if !models.ContainsType(models.SubcategoryTypes[got.SubcategoryID], got.Type) {
+				t.Errorf("SubcategoryID %q not allowed for type %v", got.SubcategoryID, got.Type)
+			}
+			if tt.wantSub != "" && got.SubcategoryID != tt.wantSub {
+				t.Errorf("SubcategoryID = %q, want %q", got.SubcategoryID, tt.wantSub)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_multiWordEntity verifies that wallet and contact names
+// spanning several words are matched whole — with or without a preposition, and
+// even when part of the name is a reserved keyword.
+func TestParseTransaction_multiWordEntity(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+
+	contacts := func(name string) bool { return strings.ToLower(name) == "boro bhai" }
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl", "brac bank", "google pay":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name        string
+		text        string
+		wantSrc     string
+		wantDst     string
+		wantContact string
+	}{
+		{"bare multi-word wallet", "spent 500 lunch brac bank", "brac bank", "", ""},
+		{"keyed multi-word wallet", "spent 500 lunch from brac bank", "brac bank", "", ""},
+		{"keyword inside wallet name", "spent 500 lunch from google pay", "google pay", "", ""},
+		{"bare wallet with keyword inside", "lunch 500 google pay", "google pay", "", ""},
+		{"multi-word transfer", "transfer 1000 from brac bank to ebl", "brac bank", "ebl", ""},
+		{"bare multi-word contact", "lent 500 boro bhai", "cash", "", "boro bhai"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if got.SrcID != tt.wantSrc {
+				t.Errorf("SrcID = %q, want %q", got.SrcID, tt.wantSrc)
+			}
+			if got.DstID != tt.wantDst {
+				t.Errorf("DstID = %q, want %q", got.DstID, tt.wantDst)
+			}
+			if got.ContactName != tt.wantContact {
+				t.Errorf("ContactName = %q, want %q", got.ContactName, tt.wantContact)
+			}
+		})
+	}
+}
+
+// TestParseTransaction_remarksHygiene verifies that routing captured on the
+// transaction itself is not repeated in the remarks, while genuine context
+// (an unknown place or person) is kept.
+func TestParseTransaction_remarksHygiene(t *testing.T) {
+	initCache()
+	_ = cache.SetCache("lunch", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("lunch from karim", `{"intent":"expense","subcategory_id":"food-rest"}`, -1)
+	_ = cache.SetCache("salary from office", `{"intent":"income","subcategory_id":"fin-sal"}`, -1)
+
+	contacts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "karim", "kar":
+			return true
+		}
+		return false
+	}
+	accounts := func(name string) bool {
+		switch strings.ToLower(name) {
+		case "cash", "ebl":
+			return true
+		}
+		return false
+	}
+
+	tests := []struct {
+		name      string
+		text      string
+		wantNote  string
+		wantExact bool
+	}{
+		{"resolved contact dropped from remarks", "spent 500 lunch from karim", "lunch", true},
+		{"resolved wallet dropped from remarks", "spent 500 lunch from ebl", "lunch", true},
+		{"debt person recorded once", "borrowed 1000 from rahim", "[Person: rahim]", true},
+		{"user note keeps similar wording", "spent 500 lunch from kar note paid from karim later", "lunch paid from karim later", true},
+		{"unknown context kept", "salary 50k ebl from office", "salary from office", true},
+		{"explicit note without a phrase", "spent 500 from ebl note bought at the shop", "bought at the shop", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseTransaction(tt.text, contacts, accounts, nil)
+			if err != nil {
+				if strings.Contains(err.Error(), "API error") || strings.Contains(err.Error(), "rate limit") {
+					t.Skipf("ParseTransaction(%q) hit AI: %v", tt.text, err)
+				}
+				t.Fatalf("ParseTransaction(%q) error = %v", tt.text, err)
+			}
+			if tt.wantExact && got.Remarks != tt.wantNote {
+				t.Errorf("Remarks = %q, want %q", got.Remarks, tt.wantNote)
+			}
+		})
+	}
+}
+
+func TestRemoveWordSequence(t *testing.T) {
+	tests := []struct {
+		name string
+		text string
+		seq  string
+		want string
+	}{
+		{"whole word match", "lunch from kar paid", "from kar", "lunch paid"},
+		{"prefix of longer word kept", "paid from karim later", "from kar", "paid from karim later"},
+		{"only first occurrence removed", "from ebl lunch from ebl", "from ebl", "lunch from ebl"},
+		{"trailing punctuation matched", "lunch from ebl, later", "from ebl", "lunch later"},
+		{"missing sequence is a no-op", "lunch today", "from ebl", "lunch today"},
+		{"empty sequence is a no-op", "lunch today", "", "lunch today"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeWordSequence(tt.text, tt.seq); got != tt.want {
+				t.Errorf("removeWordSequence(%q, %q) = %q, want %q", tt.text, tt.seq, got, tt.want)
+			}
 		})
 	}
 }
