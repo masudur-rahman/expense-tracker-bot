@@ -150,6 +150,48 @@ func hasPersonReference(words []string, isContact ContactVerifier, isAccount Acc
 	return false
 }
 
+// personPrepositions precede the person ("from meao"); personPostpositions follow them,
+// as Banglish word order puts the marker last ("meao ke disi").
+var (
+	personPrepositions  = map[string]bool{"from": true, "to": true}
+	personPostpositions = map[string]bool{"ke": true, "theke": true, "re": true}
+)
+
+// nonPersonObjects are the common non-human answers to "from what?" — money is lost from
+// a place or a container, not handed over by one.
+var nonPersonObjects = map[string]bool{
+	"pocket": true, "bag": true, "wallet": true, "purse": true, "house": true, "home": true,
+	"shop": true, "store": true, "atm": true, "room": true, "car": true, "bus": true,
+	"road": true, "street": true, "office": true, "drawer": true, "table": true,
+	"bank": true, "account": true, "market": true, "train": true,
+}
+
+// markedPersonObject reports whether a preposition introduces a name acting as a person
+// ("got from meao") — someone the contact list simply hasn't got on file yet. Weaker
+// evidence than a known contact, so callers treat it as a hint, not a fact.
+func markedPersonObject(words []string, isAccount AccountVerifier) bool {
+	for i, w := range words {
+		switch {
+		case personPrepositions[w] && i+1 < len(words):
+			if isMarkedPerson(words[i+1], isAccount) {
+				return true
+			}
+		case personPostpositions[w] && i > 0:
+			if isMarkedPerson(words[i-1], isAccount) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// isMarkedPerson reports whether a marked word reads as someone's name rather than a
+// place, a wallet, or a connector.
+func isMarkedPerson(word string, isAccount AccountVerifier) bool {
+	token := strings.Trim(word, ".,!?")
+	return !nonPersonObjects[token] && isPersonCandidate(token, isAccount)
+}
+
 // personVerbContext reports whether a direction verb acts on a person while no ordinary
 // category keyword is present ("held gun and got 500 from someone"). Extra words must not
 // disable direction resolution, but a real category ("paid john for lunch") still wins.
@@ -173,7 +215,7 @@ var theftVerbs = map[string]bool{
 
 // theftDirection reads a theft sentence: "<theft verb> ... from <person>" means the money
 // came to me, anything else means it was taken from me.
-func theftDirection(words []string, isContact ContactVerifier) (moneyDir, bool) {
+func theftDirection(words []string, isContact ContactVerifier, isAccount AccountVerifier) (moneyDir, bool) {
 	idx := -1
 	for i, w := range words {
 		if theftVerbs[w] {
@@ -185,7 +227,11 @@ func theftDirection(words []string, isContact ContactVerifier) (moneyDir, bool) 
 		return moneyOut, false
 	}
 	for i := idx + 1; i < len(words)-1; i++ {
-		if words[i] == "from" && (isContact(words[i+1]) || personWords[words[i+1]]) {
+		if words[i] != "from" {
+			continue
+		}
+		victim := strings.Trim(words[i+1], ".,!?")
+		if isContact(victim) || personWords[victim] || isMarkedPerson(victim, isAccount) {
 			return moneyIn, true
 		}
 	}
@@ -193,23 +239,26 @@ func theftDirection(words []string, isContact ContactVerifier) (moneyDir, bool) 
 }
 
 // statedMoneyDirection reports the money direction the sentence states outright — a
-// direction verb (or a theft verb) applied to a named person. Person-anchored only:
-// "takeaway food 500" names nobody, so it never reads as money coming in.
-func statedMoneyDirection(words []string, isContact ContactVerifier, isAccount AccountVerifier) (moneyDir, bool) {
-	if !hasPersonReference(words, isContact, isAccount) {
-		return moneyOut, false
+// direction verb (or a theft verb) applied to a person. Person-anchored only:
+// "takeaway food 500" names nobody, so it never reads as money coming in. strict marks a
+// person the parser is sure of (a contact on file or a generic person word); an unknown
+// name after a preposition is reported as a direction, but not a strict one.
+func statedMoneyDirection(words []string, isContact ContactVerifier, isAccount AccountVerifier) (dir moneyDir, ok, strict bool) {
+	strict = hasPersonReference(words, isContact, isAccount)
+	if !strict && !markedPersonObject(words, isAccount) {
+		return moneyOut, false, false
 	}
-	if dir, ok := theftDirection(words, isContact); ok {
-		return dir, true
+	if dir, found := theftDirection(words, isContact, isAccount); found {
+		return dir, true, strict
 	}
 	verbIdx, dir, matched := primaryDebtVerb(words)
 	if !matched {
-		return moneyOut, false
+		return moneyOut, false, false
 	}
 	if personActedOnMe(words, verbIdx, isContact, isAccount) {
 		dir = moneyIn
 	}
-	return dir, true
+	return dir, true, strict
 }
 
 // applyDirectionGuard is the deterministic check over a classifier verdict: when the
@@ -221,7 +270,7 @@ func (p *transactionParser) applyDirectionGuard(isContact ContactVerifier, isAcc
 		return
 	}
 	words := canonicalizeDebt(p.rawText)
-	dir, ok := statedMoneyDirection(words, isContact, isAccount)
+	dir, ok, strict := statedMoneyDirection(words, isContact, isAccount)
 	if !ok {
 		return
 	}
@@ -233,6 +282,11 @@ func (p *transactionParser) applyDirectionGuard(isContact ContactVerifier, isAcc
 		return
 	}
 	if !models.ContainsType(models.SubcategoryTypes[p.subcategory], want) {
+		// An unknown name is a hint, not grounds for replacing a category the
+		// classifier is confident about ("got groceries from bazar" stays groceries).
+		if !strict {
+			return
+		}
 		p.subcategory = debtSubcategory(dir, hasSettlement(words))
 	}
 	p.txnType = want

@@ -202,6 +202,14 @@ func TestParseTransaction_directionGuard(t *testing.T) {
 		{"in-verb without a person", "takeaway food 500", models.ExpenseTransaction, "food-take"},
 		{"income keyword unaffected", "got bonus 20k", models.IncomeTransaction, "fin-prof"},
 		{"expense keyword unaffected", "paid 1500 for wifi bill", models.ExpenseTransaction, "house-net"},
+		// An unknown name after a preposition is a person the contact list lacks.
+		{"unknown name is money in", "held gun and got from meao 500", models.IncomeTransaction, models.GeneralSubID},
+		{"theft from an unknown name", "snached from meao 1000tk", models.IncomeTransaction, "misc-loss"},
+		{"plain receipt from unknown name", "got 2000 from meao", models.IncomeTransaction, models.GeneralSubID},
+		// A place is not a person, and an unknown name never rewrites a confident category.
+		{"theft from a place stays expense", "stolen 500 from pocket", models.ExpenseTransaction, "misc-loss"},
+		{"unknown name cannot rewrite category", "got groceries from bazar 500", models.ExpenseTransaction, "food-groc"},
+		{"shopping from a place stays expense", "bought vegetables from bazar 300", models.ExpenseTransaction, "food-veg"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -234,17 +242,44 @@ func TestTheftDirection_directionFromPerson(t *testing.T) {
 		{"robbed karim", moneyOut, true},
 		{"mugged from friend", moneyIn, true},
 		{"someone snatched from me", moneyOut, true},
+		{"snatched from meao", moneyIn, true},
+		{"snatched from pocket", moneyOut, true},
 		{"stolen from my pocket", moneyOut, false},
 		{"lunch with karim", moneyOut, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.text, func(t *testing.T) {
-			dir, ok := theftDirection(strings.Fields(tt.text), debtContacts)
+			dir, ok := theftDirection(strings.Fields(tt.text), debtContacts, debtAccounts)
 			if ok != tt.wantOK {
 				t.Fatalf("theftDirection(%q) ok = %v, want %v", tt.text, ok, tt.wantOK)
 			}
 			if ok && dir != tt.wantDir {
 				t.Errorf("theftDirection(%q) dir = %v, want %v", tt.text, dir, tt.wantDir)
+			}
+		})
+	}
+}
+
+// TestMarkedPersonObject checks the weaker person signal: a name introduced by a
+// preposition counts, a place or a possessive does not.
+func TestMarkedPersonObject(t *testing.T) {
+	tests := []struct {
+		text string
+		want bool
+	}{
+		{"got from meao", true},
+		{"snatched from meao", true},
+		{"meao ke disi", true},
+		{"stolen from my pocket", false},
+		{"stolen from pocket", false},
+		{"got from atm", false},
+		{"lunch from ebl", false},
+		{"got bonus", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.text, func(t *testing.T) {
+			if got := markedPersonObject(strings.Fields(tt.text), debtAccounts); got != tt.want {
+				t.Errorf("markedPersonObject(%q) = %v, want %v", tt.text, got, tt.want)
 			}
 		})
 	}
